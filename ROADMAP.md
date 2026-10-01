@@ -17,8 +17,11 @@ Nothing else can be tested until the project runs and is on the internet.
       *(Done by hand, not `create-next-app`. App Router + TypeScript, and
       Tailwind v4 added early by choice — no `tailwind.config.js`, theme lives
       in `globals.css`. Commit `199ecaa`.)*
-- [ ] **0.3** Copy the Artora look: colours `#fbfaf8` / `#a45d79` / `#1d1b20`,
+- [x] **0.3** Copy the Artora look: colours `#fbfaf8` / `#a45d79` / `#1d1b20`,
       fonts DM Sans + Playfair Display
+      *(Cream, plum and ink as `cream`/`plum`/`ink`. Both fonts self-hosted via
+      `next/font/google` as CSS variables; `font-display` for Playfair. Commit
+      `12fc166`.)*
 - [ ] **0.4** Shared navbar and footer built as components
 - [ ] **0.5** Create the Supabase project and note the URL and anon key
 - [ ] **0.6** Put the URL and anon key in `.env.local`, confirm `.env.local` is
