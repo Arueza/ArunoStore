@@ -36,6 +36,9 @@ session. Do not skip step 4.
 3. Run the test loop (below).
 4. Fix anything the loop caught, and run it again. Repeat until it passes.
 5. Commit. Then stop and report.
+6. If this session ticked a `ROADMAP.md` box, make one more commit that writes the
+   hash of that commit into the ticked box. One hash commit per session, made after
+   all the work. A commit cannot contain its own hash, which is why it is separate.
 
 Never claim something works without having run the loop yourself.
 
@@ -44,11 +47,11 @@ Never claim something works without having run the loop yourself.
 ```bash
 npm run build   # must exit 0. This is the check that matters.
 npm run lint    # must be clean. Fix what it reports.
+npm test        # must pass
 ```
 
-There is no automated test suite yet, so `build` is the real gate. Do not add
-one unasked; when a task does have logic worth testing, add a single check for
-it and mention it in the commit.
+`build` is the real gate. `npm test` runs too, and must pass. Do not add a
+framework, or a test with no logic behind it, unasked.
 
 Then check by hand, and only for what you touched:
 
@@ -128,12 +131,12 @@ upgrade it later.
 - [ ] The touched pages work signed out and do not crash
 - [ ] `git status` shows no `.env*` and no other secret
 - [ ] Commit is 30 to 50 words and follows the format
-- [ ] The matching `ROADMAP.md` box is ticked
+- [ ] The matching `ROADMAP.md` box is ticked, and a follow-up commit records its hash
 - [ ] Nothing was pushed
 
 ## Work plan
 
-The step-by-step to-do list with owners is in `ROADMAP.md`. Read it before
+The step-by-step to-do list is in `ROADMAP.md`. Read it before
 starting. Tick a task only after the loop passes.
 
 <!-- BEGIN:nextjs-agent-rules -->
