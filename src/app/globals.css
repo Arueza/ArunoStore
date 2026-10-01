@@ -1,4 +1,14 @@
-/* ponytail: bare Tailwind v4 import only. Roadmap 0.3 adds the Artora colours
-   and DM Sans + Playfair Display here under @theme. No tailwind.config.js:
-   v4 configures itself from this file. */
 @import "tailwindcss";
+
+/* The Artora look. Tailwind v4 configures itself from this file — there is no
+   tailwind.config.js. `inline` because --font-dm-sans and --font-playfair are
+   injected onto <html> by next/font, so the utility must read the variable
+   directly instead of resolving it here. */
+@theme inline {
+  --color-cream: #fbfaf8;
+  --color-plum: #a45d79;
+  --color-ink: #1d1b20;
+
+  --font-sans: var(--font-dm-sans);
+  --font-display: var(--font-playfair);
+}
