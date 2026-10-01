@@ -113,7 +113,9 @@ nothing to pay for.
 - [ ] **6.2** Test the whole flow once more on the live site, signed out — **V+A**
 - [ ] **6.3** Write the demo script: what to click, in order — **V+A**
 - [ ] **6.4** Screenshots of every page — **V+A**
-- [ ] **6.5** Rewrite `README.md`: what it is, how to run, how to test — **V+A**
+- [x] **6.5** Rewrite `README.md`: what it is, how to run, how to test — **V+A**
+      *(Install, run, commands, layout, Tailwind notes, env vars, Vercel. The
+      demo script and screenshots are still 6.3 and 6.4.)*
 - [ ] **6.6** Check nothing secret is in the repository — **V+A**
 - [ ] **6.7** Custom domain, if time allows — **V+A**
 
