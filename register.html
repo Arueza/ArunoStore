@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register — Artora</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-page">
+<div class="auth-visual register-visual"><a class="logo auth-logo" href="index.html"><span class="logo-mark">A</span> artora</a><div class="auth-quote"><span>✦</span><h1>Create.<br>Share.<br>Inspire.</h1><p>Bergabung dengan komunitas client dan artist kreatif di Artora.</p></div></div>
+<div class="auth-form-wrap"><a class="back" href="index.html">← Back to home</a><div class="auth-form"><span class="eyebrow">JOIN ARTORA</span><h2>Create an account</h2><p class="muted">Daftar sebagai client atau artist.</p>
+<form id="registerForm"><label>Nama lengkap<input id="name" type="text" placeholder="Nama kamu" required></label><label>Email<input id="regEmail" type="email" placeholder="nama@email.com" required></label><label>Daftar sebagai<select id="role"><option value="client">Client — ingin membeli commission</option><option value="artist">Artist — ingin menjual jasa art</option></select></label><label>Password<div class="password-wrap"><input id="regPassword" type="password" placeholder="Minimal 6 karakter" minlength="6" required><button type="button" onclick="togglePassword('regPassword',this)">Show</button></div></label><label class="check terms"><input type="checkbox" required> Saya menyetujui Terms & Privacy.</label><button class="btn btn-dark full" type="submit">Create account <span>→</span></button></form>
+<p class="switch">Sudah punya akun? <a href="login.html">Log in</a></p></div></div>
+<script src="js/script.js"></script>
+</body></html>

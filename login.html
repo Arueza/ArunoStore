@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — Artora</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-page">
+<div class="auth-visual"><a class="logo auth-logo" href="index.html"><span class="logo-mark">A</span> artora</a><div class="auth-quote"><span>✦</span><h1>Your creativity<br>has a home.</h1><p>Connect with artists, commission original work, and bring your ideas to life.</p></div><div class="auth-art"><div class="portrait small"><div class="hair"></div><div class="face"></div><div class="eye e1"></div><div class="eye e2"></div><div class="neck"></div><div class="shirt"></div></div></div></div>
+<div class="auth-form-wrap"><a class="back" href="index.html">← Back to home</a><div class="auth-form"><span class="eyebrow">WELCOME BACK</span><h2>Log in to Artora</h2><p class="muted">Masuk untuk mengelola commission dan pesananmu.</p>
+<form id="loginForm"><label>Email<input id="email" type="email" placeholder="nama@email.com" required></label><label>Password<div class="password-wrap"><input id="password" type="password" placeholder="••••••••" required><button type="button" onclick="togglePassword('password',this)">Show</button></div></label><div class="form-row"><label class="check"><input type="checkbox"> Remember me</label><a href="#" onclick="showToast('Fitur reset password dapat dihubungkan ke backend.')">Forgot password?</a></div><button class="btn btn-dark full" type="submit">Log in <span>→</span></button></form>
+<div class="or"><span>atau</span></div><button class="social-btn" onclick="showToast('Google login adalah demo UI.')">G&nbsp; Continue with Google</button><p class="switch">Belum punya akun? <a href="register.html">Create account</a></p></div></div>
+<script src="js/script.js"></script>
+</body></html>

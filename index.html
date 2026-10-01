@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Artora — Art & Commission Marketplace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="navbar">
+    <a class="logo" href="index.html"><span class="logo-mark">A</span> artora</a>
+    <nav>
+      <a href="#home">Home</a>
+      <a href="#services">Commission</a>
+      <a href="#artists">Artists</a>
+      <a href="#how">How It Works</a>
+    </nav>
+    <div class="nav-actions">
+      <a class="login-link" href="login.html">Login</a>
+      <a class="btn btn-dark btn-small" href="register.html">Join as Artist</a>
+      <button class="menu-btn" aria-label="Buka menu">☰</button>
+    </div>
+  </header>
+
+  <main id="home">
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">CREATIVE COMMISSION MARKETPLACE</span>
+        <h1>Turn your <em>ideas</em><br>into beautiful art.</h1>
+        <p>Temukan artist berbakat dan pesan karya custom yang dibuat khusus untukmu — dari ilustrasi anime hingga character design.</p>
+        <div class="hero-buttons">
+          <a class="btn btn-dark" href="#services">Explore Commissions <span>→</span></a>
+          <a class="text-btn" href="#how">How it works <span>↗</span></a>
+        </div>
+        <div class="trust-row">
+          <div class="avatar-stack">
+            <span>🎨</span><span>🌸</span><span>🖌️</span><span>✨</span>
+          </div>
+          <div><strong>2,500+</strong><small>creative artists</small></div>
+          <div class="divider"></div>
+          <div><strong>4.9/5</strong><small>client rating</small></div>
+        </div>
+      </div>
+      <div class="hero-art">
+        <div class="art-card art-main">
+          <div class="art-glow"></div>
+          <div class="portrait">
+            <div class="hair"></div><div class="face"></div><div class="eye e1"></div><div class="eye e2"></div>
+            <div class="neck"></div><div class="shirt"></div>
+          </div>
+          <span class="floating-tag tag-top">✦ Custom Illustration</span>
+          <span class="floating-tag tag-bottom">Made with passion</span>
+        </div>
+        <div class="brush brush-one"></div><div class="brush brush-two"></div>
+        <div class="spark s1">✦</div><div class="spark s2">✧</div><div class="spark s3">✦</div>
+      </div>
+    </section>
+
+    <section class="section services" id="services">
+      <div class="section-heading">
+        <div><span class="eyebrow">EXPLORE SERVICES</span><h2>What are you looking<br>to create?</h2></div>
+        <a class="text-btn" href="#artists">View all services →</a>
+      </div>
+      <div class="service-grid">
+        <article class="service-card"><div class="service-icon purple">✦</div><h3>Illustration</h3><p>Custom artwork untuk personal project, cover, atau koleksi.</p><span>From $15 →</span></article>
+        <article class="service-card featured"><div class="service-icon pink">♡</div><h3>Anime & Character</h3><p>OC, fanart, avatar, VTuber, dan karakter favoritmu.</p><span>From $20 →</span></article>
+        <article class="service-card"><div class="service-icon orange">✎</div><h3>Graphic Design</h3><p>Logo, poster, banner, thumbnail, dan kebutuhan branding.</p><span>From $25 →</span></article>
+        <article class="service-card"><div class="service-icon blue">◉</div><h3>Portrait</h3><p>Ubah foto atau ide menjadi portrait dengan gaya pilihanmu.</p><span>From $18 →</span></article>
+      </div>
+    </section>
+
+    <section class="section artists" id="artists">
+      <div class="section-heading">
+        <div><span class="eyebrow">FEATURED ARTISTS</span><h2>Meet the creators.</h2></div>
+        <a class="text-btn" href="register.html">Become an artist →</a>
+      </div>
+      <div class="artist-grid">
+        <article class="artist-card">
+          <div class="artist-cover cover-one"><span>✦</span></div>
+          <div class="artist-info"><div class="artist-avatar">A</div><div><h3>Arielle Studio</h3><p>Anime • Illustration</p></div><b>★ 4.9</b></div>
+          <div class="artist-bottom"><span>From <strong>$25</strong></span><button onclick="showToast('Arielle Studio siap menerima commission!')">View profile</button></div>
+        </article>
+        <article class="artist-card">
+          <div class="artist-cover cover-two"><span>◈</span></div>
+          <div class="artist-info"><div class="artist-avatar">K</div><div><h3>Kuro Canvas</h3><p>Character • Concept Art</p></div><b>★ 5.0</b></div>
+          <div class="artist-bottom"><span>From <strong>$35</strong></span><button onclick="showToast('Kuro Canvas siap menerima commission!')">View profile</button></div>
+        </article>
+        <article class="artist-card">
+          <div class="artist-cover cover-three"><span>✧</span></div>
+          <div class="artist-info"><div class="artist-avatar">M</div><div><h3>Mika Atelier</h3><p>Portrait • Watercolor</p></div><b>★ 4.8</b></div>
+          <div class="artist-bottom"><span>From <strong>$20</strong></span><button onclick="showToast('Mika Atelier siap menerima commission!')">View profile</button></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="how section" id="how">
+      <div class="how-intro"><span class="eyebrow">SIMPLE PROCESS</span><h2>From idea to<br><em>masterpiece.</em></h2><p>Artora membuat proses commission lebih mudah, aman, dan transparan untuk client maupun artist.</p></div>
+      <div class="steps">
+        <div class="step"><span>01</span><div><h3>Choose an artist</h3><p>Jelajahi portfolio dan pilih artist yang paling cocok dengan style-mu.</p></div></div>
+        <div class="step"><span>02</span><div><h3>Discuss your idea</h3><p>Kirim brief, referensi, deadline, dan detail kebutuhan karya.</p></div></div>
+        <div class="step"><span>03</span><div><h3>Receive your art</h3><p>Artist mengerjakan karya, lalu kamu menerima hasil final sesuai kesepakatan.</p></div></div>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div><span class="eyebrow">YOUR IDEA STARTS HERE</span><h2>Have something in mind?</h2><p>Let's make it real.</p></div>
+      <a class="btn btn-light" href="register.html">Start a Commission <span>→</span></a>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-main">
+      <div><a class="logo" href="#"><span class="logo-mark">A</span> artora</a><p>Where ideas become art.</p></div>
+      <div class="footer-links"><div><b>Explore</b><a href="#services">Commissions</a><a href="#artists">Artists</a><a href="#how">How It Works</a></div><div><b>Account</b><a href="login.html">Login</a><a href="register.html">Register</a><a href="register.html">Sell Your Art</a></div></div>
+    </div>
+    <div class="footer-bottom"><span>© 2026 Artora. Demo e-commerce project.</span><span>Made for creators ✦</span></div>
+  </footer>
+  <div id="toast" class="toast"></div>
+  <script src="js/script.js"></script>
+</body>
+</html>
