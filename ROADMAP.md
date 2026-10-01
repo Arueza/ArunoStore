@@ -10,9 +10,12 @@ Owners: **V** = Verrel (commissions) · **A** = Alfreza (titipan) · **V+A** = s
 
 Nothing else can be tested until the project runs and is on the internet.
 
-- [ ] **0.1** `.gitignore` exists before any `npm install` — **V+A**
-- [ ] **0.2** Create the Next.js app in this repo (`create-next-app`, TypeScript,
+- [x] **0.1** `.gitignore` exists before any `npm install` — **V+A**
+- [x] **0.2** Create the Next.js app in this repo (`create-next-app`, TypeScript,
       no Tailwind, App Router) — **V+A**
+      *(Done by hand, not `create-next-app`. App Router + TypeScript, and
+      Tailwind v4 added early by choice — no `tailwind.config.js`, theme lives
+      in `globals.css`.)*
 - [ ] **0.3** Copy the Artora look: colours `#fbfaf8` / `#a45d79` / `#1d1b20`,
       fonts DM Sans + Playfair Display — **V+A**
 - [ ] **0.4** Shared navbar and footer built as components — **V+A**

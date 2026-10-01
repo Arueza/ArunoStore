@@ -1,0 +1,4 @@
+/* ponytail: bare Tailwind v4 import only. Roadmap 0.3 adds the Artora colours
+   and DM Sans + Playfair Display here under @theme. No tailwind.config.js:
+   v4 configures itself from this file. */
+@import "tailwindcss";
