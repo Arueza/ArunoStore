@@ -11,11 +11,12 @@ ticked box.
 Nothing else can be tested until the project runs and is on the internet.
 
 - [x] **0.1** `.gitignore` exists before any `npm install`
+      *(`199ecaa`)*
 - [x] **0.2** Create the Next.js app in this repo (`create-next-app`, TypeScript,
       no Tailwind, App Router)
       *(Done by hand, not `create-next-app`. App Router + TypeScript, and
       Tailwind v4 added early by choice — no `tailwind.config.js`, theme lives
-      in `globals.css`.)*
+      in `globals.css`. Commit `199ecaa`.)*
 - [ ] **0.3** Copy the Artora look: colours `#fbfaf8` / `#a45d79` / `#1d1b20`,
       fonts DM Sans + Playfair Display
 - [ ] **0.4** Shared navbar and footer built as components
@@ -115,7 +116,7 @@ nothing to pay for.
 - [ ] **6.4** Screenshots of every page
 - [x] **6.5** Rewrite `README.md`: what it is, how to run, how to test
       *(Install, run, commands, layout, Tailwind notes, env vars, Vercel. The
-      demo script and screenshots are still 6.3 and 6.4.)*
+      demo script and screenshots are still 6.3 and 6.4. Commit `9b6dddb`.)*
 - [ ] **6.6** Check nothing secret is in the repository
 - [ ] **6.7** Custom domain, if time allows
 
