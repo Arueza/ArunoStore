@@ -26,7 +26,8 @@ buyer asks  ->  staff quotes a price  ->  buyer accepts and pays  ->  staff deli
 
 ## Requirements
 
-- Node.js 22.12 or newer. Check with `node -v`.
+- Node.js 24 LTS, or 22.22.2 or newer on the 22 line. Check with `node -v`.
+  This is the same version Vercel runs, so what you build is what deploys.
 - npm, which ships with Node.
 
 ## Install and run
@@ -49,7 +50,7 @@ cache is the usual cause.
 | `npm run build` | Production build. Must pass before you commit. |
 | `npm start` | Serve the production build, after `npm run build` |
 | `npm run lint` | ESLint over the whole repo |
-| `npm test` | Vitest, single run |
+| `npm test` | Vitest, single run, in a jsdom browser |
 
 `npm run build` is the real gate. It type-checks and compiles every page.
 
@@ -57,9 +58,29 @@ cache is the usual cause.
 
 Pages live in `src/app`, one folder per route. `layout.tsx` wraps every page and
 imports the global stylesheet. Shared helpers sit in `src/lib`, with tests
-beside them as `*.test.ts`.
+beside them as `*.test.ts` or `*.test.tsx`.
 
 Imports use the `@` alias, so `@/lib/format` points at `src/lib/format`.
+
+## Tests
+
+Vitest, in a jsdom browser. Two kinds of test:
+
+- Logic, no DOM: `format.test.ts` tests `formatRupiah` directly.
+- Components: `page.test.tsx` renders a component and queries it the way a user
+  would, by role and label rather than by CSS class.
+
+```tsx
+render(<Home />);
+expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
+```
+
+`cleanup` runs after every test in `vitest.setup.ts`. Without it one test's DOM
+leaks into the next and the suite passes while asserting against stale markup.
+
+Vitest cannot test `async` server components, and pages that read from Supabase
+will be async. Those need an end-to-end test instead, coming with the payment
+work in phase 4.
 
 ## Styling
 
