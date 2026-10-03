@@ -24,9 +24,17 @@ Nothing else can be tested until the project runs and is on the internet.
       `12fc166`.)*
 - [x] **0.4** Shared navbar and footer built as components
       *(`20b9af2`)*
-- [ ] **0.5** Create the Supabase project and note the URL and anon key
-- [ ] **0.6** Put the URL and anon key in `.env.local`, confirm `.env.local` is
+- [x] **0.5** Create the Supabase project and note the URL and anon key
+      *(Project already existed under the partner's org; no second project
+      made. Noted Project URL and the new-format `sb_publishable_` key, not the
+      secret key. `sb_publishable_` is opaque, not a JWT, so it cannot reach
+      `/rest/v1/` root — that endpoint is schema and is locked to secret keys.
+      Verified with `/auth/v1/settings`, 200.)*
+- [x] **0.6** Put the URL and anon key in `.env.local`, confirm `.env.local` is
       ignored by `git status`
+      *(`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+      `git status --ignored` shows `.env.local` as `!!`. Added `.env.example`
+      with the two names and no values.)*
 - [ ] **0.7** Deploy to Vercel, confirm the site loads online
 - [ ] **0.8** Delete the three Artora HTML files and `css/`, `js/`
 
