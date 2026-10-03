@@ -35,7 +35,14 @@ Nothing else can be tested until the project runs and is on the internet.
       *(`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
       `git status --ignored` shows `.env.local` as `!!`. Added `.env.example`
       with the two names and no values. Commit `4da4914`.)*
-- [ ] **0.7** Deploy to Vercel, confirm the site loads online
+- [x] **0.7** Deploy to Vercel, confirm the site loads online
+      *(https://aruno-store.vercel.app — HTTP 200, no login wall. Production
+      CSS carries `.bg-cream` `#fbfaf8` and `.bg-ink` `#1d1b20`. Serving
+      `fe78ad0`, matching local `HEAD`. Both env vars set in Vercel as
+      Production and Preview, but **not yet provable**: no JS chunk contains
+      `sb_publishable_` because `src/` reads no Supabase value. Verified once
+      1.4 adds a client. Navbar 404s on `/commissions`, `/titipan`, `/login`,
+      `/register` — those routes land in Phase 1.)*
 - [x] **0.8** Delete the three Artora HTML files and `css/`, `js/`
       *(`index.html`, `login.html`, `register.html`, `css/style.css`,
       `js/script.js`. `assets/` kept — raw media staging, nothing reads it.
