@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans, Playfair_Display } from "next/font/google";
+import Footer from "@/components/Footer";
+import Navbar from "@/components/Navbar";
 import "./globals.css";
 
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans" });
@@ -21,7 +23,12 @@ export default function RootLayout({
       lang="en"
       className={`${dmSans.variable} ${playfair.variable}`}
     >
-      <body className="bg-cream text-ink antialiased">{children}</body>
+      <body className="flex min-h-dvh flex-col bg-cream text-ink antialiased">
+        <Navbar />
+        {/* flex-1 keeps the footer at the foot of the page on short pages. */}
+        <div className="flex-1">{children}</div>
+        <Footer />
+      </body>
     </html>
   );
 }
