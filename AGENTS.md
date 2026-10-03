@@ -16,8 +16,10 @@ and photos. Xendit in test mode for payments. Vercel free tier to host.
 
 ## Every session
 
-Take one task from `ROADMAP.md` — one, not three. Change only what that task
-needs. Then:
+Take the next task from `ROADMAP.md` and finish it before starting the next.
+More than one task per session is fine, as long as each one is finished and
+checked on its own first. Change only what the task in hand needs. For each
+task:
 
 1. `npm run build` exits 0. This is the gate that matters.
 2. `npm run lint` is clean. `npm test` passes. Add no framework, and no test
@@ -26,12 +28,17 @@ needs. Then:
 4. By hand, and only for what you touched: the page loads at `npm run dev`
    with no console error, it works signed out, and `git status` shows no
    `.env*`.
-5. Commit, then stop and report. If you ticked a `ROADMAP.md` box, make one
-   more commit that writes this commit's hash into it — a commit cannot
-   contain its own hash.
+5. Commit. If you ticked a `ROADMAP.md` box, make one more commit that writes
+   this commit's hash into it — a commit cannot contain its own hash.
+
+Report when the session's tasks are done.
 
 Never claim something works without running the loop yourself. Tick a box only
 after the loop passes.
+
+`assets/` is a staging folder for raw media — logos, images — kept before they
+are imported properly into `src/`. It stands on its own. Nothing reads it; do
+not delete it as cleanup.
 
 Before you finish:
 
