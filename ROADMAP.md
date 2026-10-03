@@ -42,7 +42,7 @@ Nothing else can be tested until the project runs and is on the internet.
       Production and Preview, but **not yet provable**: no JS chunk contains
       `sb_publishable_` because `src/` reads no Supabase value. Verified once
       1.4 adds a client. Navbar 404s on `/commissions`, `/titipan`, `/login`,
-      `/register` — those routes land in Phase 1.)*
+      `/register` — those routes land in Phase 1. Commit `05438b4`.)*
 - [x] **0.8** Delete the three Artora HTML files and `css/`, `js/`
       *(`index.html`, `login.html`, `register.html`, `css/style.css`,
       `js/script.js`. `assets/` kept — raw media staging, nothing reads it.
