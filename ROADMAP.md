@@ -34,7 +34,7 @@ Nothing else can be tested until the project runs and is on the internet.
       ignored by `git status`
       *(`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
       `git status --ignored` shows `.env.local` as `!!`. Added `.env.example`
-      with the two names and no values.)*
+      with the two names and no values. Commit `4da4914`.)*
 - [ ] **0.7** Deploy to Vercel, confirm the site loads online
 - [ ] **0.8** Delete the three Artora HTML files and `css/`, `js/`
 
