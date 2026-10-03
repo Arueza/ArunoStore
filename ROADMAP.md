@@ -22,7 +22,8 @@ Nothing else can be tested until the project runs and is on the internet.
       *(Cream, plum and ink as `cream`/`plum`/`ink`. Both fonts self-hosted via
       `next/font/google` as CSS variables; `font-display` for Playfair. Commit
       `12fc166`.)*
-- [ ] **0.4** Shared navbar and footer built as components
+- [x] **0.4** Shared navbar and footer built as components
+      *(`20b9af2`)*
 - [ ] **0.5** Create the Supabase project and note the URL and anon key
 - [ ] **0.6** Put the URL and anon key in `.env.local`, confirm `.env.local` is
       ignored by `git status`
