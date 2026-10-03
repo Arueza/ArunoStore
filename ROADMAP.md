@@ -39,7 +39,8 @@ Nothing else can be tested until the project runs and is on the internet.
 - [x] **0.8** Delete the three Artora HTML files and `css/`, `js/`
       *(`index.html`, `login.html`, `register.html`, `css/style.css`,
       `js/script.js`. `assets/` kept — raw media staging, nothing reads it.
-      Build output still lists only `/`, `/_not-found`, `/icon.png`.)*
+      Build output still lists only `/`, `/_not-found`, `/icon.png`.
+      Commit `4962955`.)*
 
 ## Phase 1 — Shared foundation
 
