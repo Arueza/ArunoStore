@@ -36,7 +36,10 @@ Nothing else can be tested until the project runs and is on the internet.
       `git status --ignored` shows `.env.local` as `!!`. Added `.env.example`
       with the two names and no values. Commit `4da4914`.)*
 - [ ] **0.7** Deploy to Vercel, confirm the site loads online
-- [ ] **0.8** Delete the three Artora HTML files and `css/`, `js/`
+- [x] **0.8** Delete the three Artora HTML files and `css/`, `js/`
+      *(`index.html`, `login.html`, `register.html`, `css/style.css`,
+      `js/script.js`. `assets/` kept — raw media staging, nothing reads it.
+      Build output still lists only `/`, `/_not-found`, `/icon.png`.)*
 
 ## Phase 1 — Shared foundation
 
