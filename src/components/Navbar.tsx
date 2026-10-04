@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { logout } from "@/app/logout/actions";
 import logo from "./aruno-logo.png";
 
 const LINKS = [
@@ -7,7 +9,12 @@ const LINKS = [
   { href: "/titipan", label: "Titipan" },
 ];
 
-export default function Navbar() {
+export default async function Navbar() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <header className="sticky top-0 z-20 border-b border-[#eeeae5] bg-cream">
       <div className="flex min-h-20 flex-wrap items-center gap-x-8 gap-y-2 px-5 sm:px-[6%]">
@@ -17,7 +24,10 @@ export default function Navbar() {
 
         {/* ponytail: no hamburger. The links wrap onto a second row on narrow
             screens. Add a toggle when the nav grows past three links. */}
-        <nav aria-label="Main" className="flex flex-wrap gap-8 text-sm text-[#6c6870]">
+        <nav
+          aria-label="Main"
+          className="flex flex-wrap gap-8 text-sm text-[#6c6870]"
+        >
           {LINKS.map((link) => (
             <Link key={link.href} href={link.href} className="hover:text-ink">
               {link.label}
@@ -26,15 +36,25 @@ export default function Navbar() {
         </nav>
 
         <div className="ml-auto flex items-center gap-6 text-sm">
-          <Link href="/login" className="font-semibold hover:text-ink">
-            Sign in
-          </Link>
-          <Link
-            href="/auth/sign-up"
-            className="rounded-[9px] bg-ink px-4 py-2.5 font-bold text-white hover:bg-black"
-          >
-            Sign up
-          </Link>
+          {user ? (
+            <form action={logout}>
+              <button type="submit" className="font-semibold hover:text-ink">
+                Log out
+              </button>
+            </form>
+          ) : (
+            <>
+              <Link href="/login" className="font-semibold hover:text-ink">
+                Sign in
+              </Link>
+              <Link
+                href="/auth/sign-up"
+                className="rounded-[9px] bg-ink px-4 py-2.5 font-bold text-white hover:bg-black"
+              >
+                Sign up
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>
