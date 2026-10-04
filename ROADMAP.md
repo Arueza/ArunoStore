@@ -58,7 +58,7 @@ Login, the database, and the shared layout. Both halves need all of this.
 - [x] **1.2** Migration `0002_enums.sql`: roles `buyer | artist | staff`,
       and the shared status list *(`4a1ae2e`)*
 - [x] **1.3** Turn on row level security on every table *(`98d2bb2`)*
-- [ ] **1.4** Sign-up page, role chosen at sign-up
+- [x] **1.4** Sign-up page, role chosen at sign-up *(`41c43ba`)*
 - [ ] **1.5** Log in and log out
 - [ ] **1.6** Read the signed-in user in a server component
 - [ ] **1.7** Protect `/dashboard` so only signed-in users reach it
