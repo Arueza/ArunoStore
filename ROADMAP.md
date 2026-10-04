@@ -53,10 +53,10 @@ Nothing else can be tested until the project runs and is on the internet.
 
 Login, the database, and the shared layout. Both halves need all of this.
 
-- [ ] **1.1** Migration `0001_profiles.sql`: `id`, `email`, `full_name`, `role`,
+- [x] **1.1** Migration `0001_profiles.sql`: `id`, `email`, `full_name`, `role`,
       `created_at` *(`0344c42`)*
-- [ ] **1.2** Migration `0002_enums.sql`: roles `buyer | artist | staff`,
-      and the shared status list
+- [x] **1.2** Migration `0002_enums.sql`: roles `buyer | artist | staff`,
+      and the shared status list *(`4a1ae2e`)*
 - [ ] **1.3** Turn on row level security on every table
 - [ ] **1.4** Sign-up page, role chosen at sign-up
 - [ ] **1.5** Log in and log out
