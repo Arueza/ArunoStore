@@ -30,7 +30,7 @@ export default function Navbar() {
             Sign in
           </Link>
           <Link
-            href="/register"
+            href="/auth/sign-up"
             className="rounded-[9px] bg-ink px-4 py-2.5 font-bold text-white hover:bg-black"
           >
             Sign up
