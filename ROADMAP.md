@@ -60,7 +60,7 @@ Login, the database, and the shared layout. Both halves need all of this.
 - [x] **1.3** Turn on row level security on every table *(`98d2bb2`)*
 - [x] **1.4** Sign-up page, role chosen at sign-up *(`41c43ba`)*
 - [x] **1.5** Log in and log out *(`aeba6c7`)*
-- [ ] **1.6** Read the signed-in user in a server component
+- [x] **1.6** Read the signed-in user in a server component *(6984188)*
 - [ ] **1.7** Protect `/dashboard` so only signed-in users reach it
 - [ ] **1.8** Protect `/staff` so only `artist` and `staff` reach it
 - [ ] **1.9** `/dashboard` shows the user's name and role
