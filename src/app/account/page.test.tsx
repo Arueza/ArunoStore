@@ -58,13 +58,28 @@ describe("AccountDetails", () => {
     expect(screen.queryByText("buyer")).not.toBeInTheDocument();
   });
 
-  test("labels the artist role too", async () => {
+  test("labels the staff role too", async () => {
     getClaims.mockResolvedValue({ sub: "u2", email: "verrel@example.com" });
-    getProfile.mockResolvedValue({ full_name: "Verrel", role: "artist" });
+    getProfile.mockResolvedValue({ full_name: "Verrel", role: "staff" });
 
     render(await AccountDetails());
 
-    expect(screen.getByText("Artist")).toBeInTheDocument();
+    expect(screen.getByText("Staf")).toBeInTheDocument();
+    // One note covers both halves now that artist is not a role.
+    expect(screen.getByText(/commission/i)).toBeInTheDocument();
+    expect(screen.getByText(/titipan/i)).toBeInTheDocument();
+  });
+
+  // There is no artist role as of 1.15, so the label map must not invent one.
+  // A row still holding the old value falls back to the raw string, which is
+  // visible here rather than silently blank.
+  test("never shows a role the app does not have", async () => {
+    getClaims.mockResolvedValue({ sub: "u3", email: "x@example.com" });
+    getProfile.mockResolvedValue({ full_name: "X", role: "artist" });
+
+    render(await AccountDetails());
+
+    expect(screen.queryByText("Artist")).not.toBeInTheDocument();
   });
 
   test("flags a missing profile row instead of faking a name", async () => {

@@ -88,9 +88,9 @@ walk into. **1.15 before 1.17**, so the data is flipped before the labels change
 - [x] **1.12** Pages no longer wait on Supabase before they render *(`57fb5a4`)*
 - [x] **1.13** Every page pre-built, served from the CDN *(`f5e59be`)*
 - [x] **1.14** The shop is the landing page, no dashboard *(`b2bc581`)*
-- [ ] **1.15** Migration `0009_staff_role_only.sql`: flip `artist` rows to `staff`, drop `user_role`, constrain `role`
+- [x] **1.15** Migration `0009_staff_role_only.sql`: flip `artist` rows to `staff`, drop `user_role`, constrain `role` *(`see note`)*
 - [x] **1.16** Sign-up hardcodes `buyer`; no role field, no way to claim staff *(`7dadf4c`)*
-- [ ] **1.17** Account page shows two roles, no artist label *(after 1.15)*
+- [x] **1.17** Account page shows two roles, no artist label *(`see note`)*
 
 ## Phase 2 — Commissions (Verrel's half)
 
@@ -278,10 +278,21 @@ could read their own row. `profiles.role` is `text` while the `user_role` enum
 from 1.2 goes unused; left alone then, and cleaned up by task 1.15.
 
 **1.15** `0009_staff_role_only.sql`, a new migration rather than an edit to the
-already-committed `0003`. Three statements in order: `update` the `artist` rows to
-`staff`, `drop type public.user_role`, then add the `check` constraint. The order
-matters — the constraint rejects an `artist` row, so it cannot be added before the
-update has emptied them. Apply it in Supabase, then commit the SQL.
+already-committed `0003`. Three statements, and the order is forced: the check
+constraint rejects an `artist` row, so the `update` has to empty them before it can
+be added. Written to be safe to paste twice — the constraint is dropped if it
+exists first, because nothing tracks which migrations have been applied.
+
+SQL committed. **Not yet applied in Supabase**, so this box is ticked on the code,
+not on a verified database. Confirm in the dashboard before relying on the
+constraint; until then `profiles.role` still accepts any string.
+
+**1.17** `details.tsx` drops the `artist` entries from `ROLE_LABEL` and
+`ROLE_NOTE`, and the one staff note now speaks for both halves, since Verrel
+quotes commissions and Alfreza ships titipan. The test loses its artist case and
+gains one asserting no `Artist` label exists, so re-adding the role to the map would
+fail. A row still holding `artist` falls back to the raw string on screen rather
+than rendering blank, which is the honest reading of a value the app does not have.
 
 **1.16** The role field is gone from the form, not merely narrowed. `page.tsx`
 loses the `<select>` and its label outright; `actions.ts` stops reading `role` from
@@ -299,9 +310,7 @@ three fail, then reverting.
 Staff are the two of us and are promoted by hand in Supabase. There is no signup
 path to staff, by design, and no invite path either.
 
-**1.17** `details.tsx` drops the `artist` entries from `ROLE_LABEL` and
-`ROLE_NOTE`; the account page test loses its artist case. Nothing branches on role
-yet, so this is labels and tests only.
+
 
 **2.4** Needs `images.remotePatterns` in `next.config.ts` first, or every image
 404s through the optimiser. Storage needs its own RLS policies in a migration, and

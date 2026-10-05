@@ -1,20 +1,18 @@
 import { getClaims, getProfile } from "@/lib/auth";
 
-// The three roles in words rather than as `buyer` / `artist` / `staff`, because
-// the buyer is the one reading this and the column value is not English.
+// The two roles in words rather than as `buyer` / `staff`, because the buyer is
+// the one reading this and the column value is not English. There is no artist
+// role: staff cover both halves, so the note has to speak for either one.
 const ROLE_LABEL: Record<string, string> = {
   buyer: "Pembeli",
-  artist: "Artist",
   staff: "Staf",
 };
 
 const ROLE_NOTE: Record<string, string> = {
   buyer:
     "Kamu memesan commission atau titipan, lalu membayar setelah kutipan diterima.",
-  artist:
-    "Kamu menerima permintaan commission, menentukan harganya, dan mengunggah hasil karyamu.",
   staff:
-    "Kamu mengecek permintaan, memberikan kutipan, dan mengirim barang titipan.",
+    "Kamu mengecek permintaan, memberikan kutipan, lalu mengunggah hasil commission atau mengirim barang titipan.",
 };
 
 /**
@@ -29,7 +27,7 @@ const ROLE_NOTE: Record<string, string> = {
  * cannot render an async Server Component.
  *
  * Reads the profile rather than the JWT, because the role is the app's own
- * buyer/artist/staff and Supabase Auth knows nothing about it.
+ * buyer/staff and Supabase Auth knows nothing about it.
  */
 export default async function AccountDetails() {
   const [claims, profile] = await Promise.all([getClaims(), getProfile()]);
