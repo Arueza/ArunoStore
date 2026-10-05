@@ -1,5 +1,6 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export type LoginState = {
@@ -35,7 +36,8 @@ export async function login(
     return { message: "Email atau password salah." };
   }
 
-  return {
-    message: "Login berhasil.",
-  };
+  // Signed-in visitors have nothing to do on /login, and 1.7 guards /dashboard,
+  // so sign-in lands there. redirect() throws to end the action, which is why
+  // it cannot sit inside the try/catch above.
+  redirect("/dashboard");
 }
