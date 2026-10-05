@@ -89,22 +89,9 @@ export default function SignUpPage() {
             />
           </div>
 
-          <div>
-            <label htmlFor="role" className="mb-1.5 block text-sm font-medium text-ink">
-              Role
-            </label>
-            <select
-              id="role"
-              name="role"
-              defaultValue="buyer"
-              required
-              className="w-full rounded border border-[#d6d0ca] bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-plum focus:ring-1 focus:ring-plum transition-colors"
-            >
-              <option value="buyer">Buyer</option>
-              <option value="artist">Artist</option>
-              <option value="staff">Staff</option>
-            </select>
-          </div>
+          {/* No role field. Sign-up cannot grant staff, so offering a picker is a
+              lie the server has to contradict. The action hardcodes `buyer`; staff
+              are promoted by hand in Supabase. See roadmap task 1.16. */}
 
           {state.message && (
             <p aria-live="polite" className="text-sm text-plum">

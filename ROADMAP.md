@@ -24,9 +24,10 @@ time, not a style preference.
 - **There are two roles: `buyer` and `staff`.** Artist is not a role. Verrel and
   Alfreza are the sole sellers, both `staff`, and what they sell differs, not
   what they can reach. Never branch UI or guards on `artist`.
-- **Sign-up must never offer `staff`.** Today the form lists it and `signUp()`
-  accepts it, so any visitor can self-promote. Promotion is a deliberate manual
-  update, by design. Close this before task 1.8 or the guard protects nothing.
+- **Sign-up cannot grant `staff`, and never will.** There is no role field on the
+  form; `signUp()` hardcodes `role: "buyer"` and never reads a role from the
+  FormData, so a forged field is ignored rather than validated. Promotion is a
+  manual update in Supabase. Do not add a role picker back.
 - **`profiles.role` is `text`, and nothing enforces its domain.** Migration `0002`
   created a `user_role` enum that is dead code. Migration `0009` drops it and adds
   a `check` constraint for `buyer | staff`.
@@ -88,7 +89,7 @@ walk into. **1.15 before 1.17**, so the data is flipped before the labels change
 - [x] **1.13** Every page pre-built, served from the CDN *(`f5e59be`)*
 - [x] **1.14** The shop is the landing page, no dashboard *(`b2bc581`)*
 - [ ] **1.15** Migration `0009_staff_role_only.sql`: flip `artist` rows to `staff`, drop `user_role`, constrain `role`
-- [ ] **1.16** Sign-up cannot grant `staff` — drop it from the form, accept `buyer` only
+- [x] **1.16** Sign-up hardcodes `buyer`; no role field, no way to claim staff *(`see note`)*
 - [ ] **1.17** Account page shows two roles, no artist label *(after 1.15)*
 
 ## Phase 2 — Commissions (Verrel's half)
@@ -183,10 +184,9 @@ Never cut: payment, login, or the quote step. They are the assignment.
   migrations were applied by hand.
 - **`/staff` has no route.** Tasks 1.8 and 2.8 both need it; the proxy guard for
   it is written but the page does not exist.
-- **Sign-up currently lets anyone self-select `staff`.** `sign-up/page.tsx` offers
-  it and `actions.ts` only checks the value is in its list, so any visitor can
-  register as staff. Harmless while `/staff` is empty, a full escalation the moment
-  1.8 lands. Task 1.16 closes it, and it must land before 1.8.
+- **Sign-up escalation: closed by 1.16.** It used to offer `staff` and only checked
+  the value was in its own list. The field is gone and the role is hardcoded now, so
+  task 1.8 can rely on `profiles.role` meaning something.
 - **Nothing applies migrations for us.** `git push` ships SQL text only; CI runs
   build, lint and test, and has no Supabase credentials, so there is no
   `supabase db push` anywhere. Every migration is a manual step in the Supabase
@@ -283,11 +283,21 @@ already-committed `0003`. Three statements in order: `update` the `artist` rows 
 matters — the constraint rejects an `artist` row, so it cannot be added before the
 update has emptied them. Apply it in Supabase, then commit the SQL.
 
-**1.16** The role `<select>` in `sign-up/page.tsx` loses `staff`, and
-`actions.ts` narrows its allow-list to `buyer` alone. Keep the server-side check:
-the client list is not a guard, a visitor can post any field they like. Being able
-to sign up as `staff` is the whole bug, so the form must not offer it even though
-the server would now refuse it.
+**1.16** The role field is gone from the form, not merely narrowed. `page.tsx`
+loses the `<select>` and its label outright; `actions.ts` stops reading `role` from
+the FormData and hardcodes `role: "buyer"` into `signUp()`'s metadata. Ignoring the
+posted value beats validating it: there is no code path left that could ever set a
+role from client input, so the hole cannot reopen by adding a field back.
+
+`actions.test.ts` is new and is why this could not regress unnoticed — nothing
+tested `signUp()` before. Six cases: a buyer signup, a forged `staff`, a forged
+`artist`, an assertion that the posted role never reaches Supabase, a mismatched
+password that must not call Supabase, and a surfaced Supabase error. The forged
+cases were verified by reintroducing the old `role` from FormData and watching all
+three fail, then reverting.
+
+Staff are the two of us and are promoted by hand in Supabase. There is no signup
+path to staff, by design, and no invite path either.
 
 **1.17** `details.tsx` drops the `artist` entries from `ROLE_LABEL` and
 `ROLE_NOTE`; the account page test loses its artist case. Nothing branches on role

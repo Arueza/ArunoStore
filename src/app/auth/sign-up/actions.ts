@@ -14,14 +14,12 @@ export async function signUp(
   const email = formData.get("email");
   const password = formData.get("password");
   const confirmPassword = formData.get("confirmPassword");
-  const role = formData.get("role");
 
   if (
     typeof fullName !== "string" ||
     typeof email !== "string" ||
     typeof password !== "string" ||
-    typeof confirmPassword !== "string" ||
-    typeof role !== "string"
+    typeof confirmPassword !== "string"
   ) {
     return { message: "Data pendaftaran tidak valid." };
   }
@@ -34,10 +32,11 @@ export async function signUp(
     return { message: "Password dan konfirmasi password tidak sama." };
   }
 
-  if (!["buyer", "artist", "staff"].includes(role)) {
-    return { message: "Role tidak valid." };
-  }
-
+  // Every signup is a buyer. Staff are the two of us and are promoted by hand in
+  // Supabase, never from a form: the form is public, so any role it can post is a
+  // role anyone can claim. Hardcoding here means a forged `role=staff` in the
+  // FormData is ignored rather than validated, so the hole cannot reopen by
+  // adding a field. See roadmap task 1.16.
   const supabase = await createClient();
 
   const { error } = await supabase.auth.signUp({
@@ -46,7 +45,7 @@ export async function signUp(
     options: {
       data: {
         full_name: fullName.trim(),
-        role,
+        role: "buyer",
       },
     },
   });
