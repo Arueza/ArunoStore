@@ -50,6 +50,20 @@ time, not a style preference.
   it never runs it. CI has no Supabase credentials and never calls
   `supabase db push`, so every migration is a manual dashboard step, and one has
   already been missed. Apply, then commit. See open items.
+- **Paste migrations one statement at a time.** `0003` was pasted in a batch with
+  others and aborted silently, leaving `pg_policies` empty while the later
+  statements in the same paste appeared to succeed. Verify each one:
+  `select policyname, qual from pg_policies where tablename = 'profiles';` for a
+  policy, `to_regtype('public.user_role')` for a type.
+- **Supabase Auth has an Email provider toggle, and turning it off breaks sign-in
+  entirely** — for every account, not just new ones. It does not merely skip email
+  confirmation. Leave it on. If sign-in suddenly fails for accounts that worked a
+  minute ago, check this before suspecting the code.
+- **Sign-up errors are swallowed in three places.** `login/actions.ts`,
+  `auth/sign-up/actions.ts` and `lib/auth.ts` all return null or a generic message
+  regardless of the real Supabase error, so a denied read, a disabled provider and a
+  wrong password look identical from the page. That is why 1.8 took three wrong
+  diagnoses. Log `error.message` in development before debugging one of these.
 - **The signup route is `/auth/sign-up`,** not `/register`. Nav and footer links
   are tested against real files by `pendingPages.ts`.
 
@@ -72,8 +86,10 @@ Nothing else can be tested until the project runs and is on the internet.
 
 Login, the database, and the shared layout. Both halves need all of this.
 
-Order matters twice: **1.16 before 1.8**, or the guard protects a route anyone can
-walk into. **1.15 before 1.17**, so the data is flipped before the labels change.
+**Code-complete.** The only box left is 1.18, Verrel's login, which is a manual step
+in the browser and Supabase. Order mattered twice on the way here: **1.16 before
+1.8**, or the guard protects a route anyone can walk into, and **1.15 before 1.17**,
+so the data was flipped before the labels changed.
 
 - [x] **1.1** Migration `0001_profiles.sql`: id, email, full_name, role, created_at *(`0344c42`)*
 - [x] **1.2** Migration `0002_enums.sql`: roles `buyer | artist | staff`, shared status list *(`4a1ae2e`)*
@@ -82,16 +98,17 @@ walk into. **1.15 before 1.17**, so the data is flipped before the labels change
 - [x] **1.5** Log in and log out *(`aeba6c7`)*
 - [x] **1.6** Read the signed-in user in a server component *(`6984188`)*
 - [x] **1.7** Keep signed-out visitors out of the signed-in pages *(`947fdc0`, `7d40284`)*
-- [ ] **1.8** Guard `/staff` so only `staff` can reach it *(code done, needs your sign-in check)*
+- [x] **1.8** Guard `/staff` so only `staff` can reach it *(`74e3375`)*
 - [x] **1.9** Account page shows the user's name and role *(`b2bc581`)*
-- [ ] **1.10** Promote Verrel and Alfreza to `staff` — manual, no commit *(SQL below, with 1.8)*
+- [x] **1.10** Promote Alfreza to `staff` — manual, no commit *(manual)*
 - [x] **1.11** Fix the dead sign-up link in the footer *(`5685a8c`)*
 - [x] **1.12** Pages no longer wait on Supabase before they render *(`57fb5a4`)*
 - [x] **1.13** Every page pre-built, served from the CDN *(`f5e59be`)*
 - [x] **1.14** The shop is the landing page, no dashboard *(`b2bc581`)*
-- [x] **1.15** Migration `0009_staff_role_only.sql`: flip `artist` rows to `staff`, drop `user_role`, constrain `role` *(`see note`)*
+- [x] **1.15** Migration `0009_staff_role_only.sql`: flip `artist` rows to `staff`, drop `user_role`, constrain `role` *(`381ced3`)*
 - [x] **1.16** Sign-up hardcodes `buyer`; no role field, no way to claim staff *(`7dadf4c`)*
-- [x] **1.17** Account page shows two roles, no artist label *(`see note`)*
+- [x] **1.17** Account page shows two roles, no artist label *(`381ced3`)*
+- [ ] **1.18** Create Verrel's login and set the role to `staff` — manual *(SQL below)*
 
 ## Phase 2 — Commissions (Verrel's half)
 
@@ -179,18 +196,18 @@ Never cut: payment, login, or the quote step. They are the assignment.
 
 ## Known open items, not yet tasks
 
-- **Two migrations are written but not applied: `0003_profiles_select_policy.sql`
-  and `0009_staff_role_only.sql`.** Both are ready to paste. `0003` has to run
-  before `/account` shows a name and role, and before task 1.8's guard can let
-  anyone in, since the guard reads the caller's own row and RLS currently denies
-  it. `0009` adds the check constraint from 1.15. The other four were applied by
-  hand.
-- **Task 1.8 is waiting on a human sign-in check.** The code and eleven tests are
-  done; what is missing is a buyer and a staff member actually loading `/staff`.
-  Nothing else in Phase 1 can close until 0003, 0009 and 1.10 are done by hand.
+- **All five migrations are now applied.** `0003` had been written but never run
+  for days, which is why `/account` showed "Belum diisi" and `/staff` bounced
+  everyone. `0009` went in at the same time. Nothing records which migrations have
+  been run, so this can happen again without warning.
 - **Sign-up escalation: closed by 1.16.** It used to offer `staff` and only checked
   the value was in its own list. The field is gone and the role is hardcoded now, so
   task 1.8 can rely on `profiles.role` meaning something.
+- **Verrel has no login.** 1.18 is the last open item in Phase 1, and it is manual.
+- **Test accounts sit in the live database.** `wagakami@gmail.com` (TESTO) and
+  `alamak@gmail.com` are throwaways. They will show up in the 6.4 screenshots and in
+  any demo run. Delete them, or keep `alamak` as the standing buyer for guard tests
+  — it is the account that proved 1.8.
 - **Nothing applies migrations for us.** `git push` ships SQL text only; CI runs
   build, lint and test, and has no Supabase credentials, so there is no
   `supabase db push` anywhere. Every migration is a manual step in the Supabase
@@ -236,26 +253,44 @@ and offered all three roles; task 1.16 removes `staff` from it.
 lives on and now covers `/account`: same shape, same place, `proxy.ts`. Confirmed
 by hand — `/account` answers 307 to `/login` signed out.
 
-**1.8** Code is written and the loop passes, but **the box is not ticked**: the
-signed-in half of the check is untested by hand, because that needs a logged-in
-buyer and a logged-in staff member and no agent should hold those passwords.
+**1.8** Verified by hand, all three cases: signed out on `/staff` gets 307 to
+`/login`; signed in as Alfreza the staff page renders; signed in as a buyer it
+bounces to the storefront. `proxy.ts` grew `STAFF_ROUTES` and `isStaff()`, which
+reads the caller's own `profiles` row. Eleven tests in `proxy.test.ts` cover buyer
+to `/`, staff through, missing row blocked, unknown role blocked, nested paths
+guarded, `/staffing` left alone. Four of them were watched failing with the role
+check removed before it was put back.
 
-What is done: `proxy.ts` grows `STAFF_ROUTES`, and `isStaff()` reads the caller's
-own `profiles` row, which the 0003 policy already allows. Signed out on `/staff`
-answers 307 to `/login`, confirmed at `npm run dev`. Eleven tests in
-`proxy.test.ts` cover the rest — buyer to `/`, staff through, missing row blocked,
-an unknown role blocked, nested paths guarded, `/staffing` left alone. Four of
-them were verified to fail with the role check removed.
+`app/staff/page.tsx` is a bare shell on purpose: a guard on a 404 proves nothing,
+since blocked and allowed would look identical. 2.8 fills it in.
 
-The page `app/staff/page.tsx` is a bare shell on purpose: a guard on a 404 proves
-nothing, since blocked and allowed would look the same. 2.8 fills it in.
+Fails closed on a missing row deliberately. Every row read null while 0003 was
+unapplied, and a fail-open guard would have handed `/staff` to the public the
+moment it had data behind it.
 
-**To tick it**, with 0003 and 0009 applied and 1.10 done: sign in as a buyer, open
-`/staff`, expect the storefront. Sign in as Verrel or Alfreza, expect the staff
-page. Failing to read your own profile in step two means 0003 is still unapplied.
+**The bug was never in this task.** `/account` said "Belum diisi" and `/staff`
+bounced everyone because `0003_profiles_select_policy.sql` had never actually been
+applied — RLS was on with zero policies, so every read of `profiles` was denied.
+Applying it fixed both symptoms at once. Three wrong diagnoses got there first:
+a stale router cache, then mismatched profile ids, then a disabled Email provider.
+None of them were it. `select * from pg_policies where tablename = 'profiles'` was
+the query worth running first.
 
-Fails closed on a missing row on purpose. Until 0003 runs, every row reads null and
-a fail-open guard would hand `/staff` to everyone the moment it had data on it.
+**1.10** Alfreza only. `tomomiogawa764@gmail.com` is `staff`, applied by hand and
+confirmed by signing in and loading `/staff`. Verrel was not promoted here because
+he has no login yet; that is 1.18.
+
+**1.18** Verrel has no account at all, so there is nothing to promote. Sign him up
+through `/auth/sign-up` in the browser — that path hardcodes `buyer`, which is
+exactly what we want as the starting point — then:
+
+```sql
+update public.profiles set role = 'staff' where email = 'verrel@…';
+```
+
+Confirm the address with `select id, email, full_name, role from public.profiles
+order by created_at;` rather than guessing at it. Tick by hand, write `manual` in
+place of a hash. No commit: nothing in the repo changes.
 
 **1.9** Now `/account`, not `/dashboard`. Reads the `profiles` row through
 `getProfile()` in `lib/auth.ts` and shows the role in words, never as the stored
@@ -311,9 +346,8 @@ constraint rejects an `artist` row, so the `update` has to empty them before it 
 be added. Written to be safe to paste twice — the constraint is dropped if it
 exists first, because nothing tracks which migrations have been applied.
 
-SQL committed. **Not yet applied in Supabase**, so this box is ticked on the code,
-not on a verified database. Confirm in the dashboard before relying on the
-constraint; until then `profiles.role` still accepts any string.
+Applied and confirmed. `to_regtype('public.user_role')` now returns null, so the
+enum is gone and the constraint is live.
 
 **1.17** `details.tsx` drops the `artist` entries from `ROLE_LABEL` and
 `ROLE_NOTE`, and the one staff note now speaks for both halves, since Verrel
