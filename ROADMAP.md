@@ -4,50 +4,42 @@ Tick a box only after the task actually works. One commit per task. The commit
 that finishes a task is followed by one more commit that writes its hash into the
 ticked box.
 
+Work done outside the roadmap still gets a task here, in the phase it fits, or in
+a new phase if nothing fits. Follow the template below. Trivial one-line fixes
+need no task of their own.
+
+Notes stay short: what shipped, and anything surprising a reader would get wrong.
+No essays.
+
 ---
 
 ## Phase 0 — Running and online
 
 Nothing else can be tested until the project runs and is on the internet.
 
-- [x] **0.1** `.gitignore` exists before any `npm install`
-      *(`199ecaa`)*
-- [x] **0.2** Create the Next.js app in this repo (`create-next-app`, TypeScript,
-      no Tailwind, App Router)
-      *(Done by hand, not `create-next-app`. App Router + TypeScript, and
-      Tailwind v4 added early by choice — no `tailwind.config.js`, theme lives
-      in `globals.css`. Commit `199ecaa`.)*
-- [x] **0.3** Copy the Artora look: colours `#fbfaf8` / `#a45d79` / `#1d1b20`,
-      fonts DM Sans + Playfair Display
-      *(Cream, plum and ink as `cream`/`plum`/`ink`. Both fonts self-hosted via
-      `next/font/google` as CSS variables; `font-display` for Playfair. Commit
-      `12fc166`.)*
-- [x] **0.4** Shared navbar and footer built as components
-      *(`20b9af2`)*
-- [x] **0.5** Create the Supabase project and note the URL and anon key
-      *(Project already existed under the partner's org; no second project
-      made. Noted Project URL and the new-format `sb_publishable_` key, not the
-      secret key. `sb_publishable_` is opaque, not a JWT, so it cannot reach
-      `/rest/v1/` root — that endpoint is schema and is locked to secret keys.
-      Verified with `/auth/v1/settings`, 200.)*
-- [x] **0.6** Put the URL and anon key in `.env.local`, confirm `.env.local` is
-      ignored by `git status`
-      *(`NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
-      `git status --ignored` shows `.env.local` as `!!`. Added `.env.example`
-      with the two names and no values. Commit `4da4914`.)*
-- [x] **0.7** Deploy to Vercel, confirm the site loads online
-      *(https://aruno-store.vercel.app — HTTP 200, no login wall. Production
-      CSS carries `.bg-cream` `#fbfaf8` and `.bg-ink` `#1d1b20`. Serving
-      `fe78ad0`, matching local `HEAD`. Both env vars set in Vercel as
-      Production and Preview, but **not yet provable**: no JS chunk contains
-      `sb_publishable_` because `src/` reads no Supabase value. Verified once
-      1.4 adds a client. Navbar 404s on `/commissions`, `/titipan`, `/login`,
-      `/register` — those routes land in Phase 1. Commit `05438b4`.)*
+- [x] **0.1** `.gitignore` exists before any `npm install` *(`199ecaa`)*
+- [x] **0.2** Next.js app in this repo, TypeScript, App Router
+      *(Hand-built, not `create-next-app`. Tailwind v4 added early by choice —
+      no config file, theme lives in `globals.css`. Commit `199ecaa`.)*
+- [x] **0.3** Artora look: `#fbfaf8` / `#a45d79` / `#1d1b20`, DM Sans +
+      Playfair Display *(`12fc166`)*
+      *(Tokens `cream`/`plum`/`ink`. Fonts self-hosted via `next/font/google`
+      as CSS variables, so the theme can reference them.)*
+- [x] **0.4** Shared navbar and footer as components *(`20b9af2`)*
+- [x] **0.5** Supabase project exists, URL and anon key noted *(`05438b4`)*
+      *(Project already lived under the partner's org; no second one made.
+      Noted the new-format `sb_publishable_` key, not the secret key. Verified
+      with `/auth/v1/settings`, 200.)*
+- [x] **0.6** URL and anon key in `.env.local`, confirmed ignored *(`4da4914`)*
+      *(`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+      `.env.example` carries the two names, no values.)*
+- [x] **0.7** Deploy to Vercel, site loads online *(`05438b4`)*
+      *(Both env vars set as Production and Preview. The key is not provable in
+      any JS chunk until `src/` reads it. Navbar 404s on `/commissions` and
+      `/titipan`; those land in Phase 2 and 3.)*
 - [x] **0.8** Delete the three Artora HTML files and `css/`, `js/`
       *(`index.html`, `login.html`, `register.html`, `css/style.css`,
-      `js/script.js`. `assets/` kept — raw media staging, nothing reads it.
-      Build output still lists only `/`, `/_not-found`, `/icon.png`.
-      Commit `4962955`.)*
+      `js/script.js`. `assets/` stays — raw media staging. Commit `4962955`.)*
 
 ## Phase 1 — Shared foundation
 
@@ -55,17 +47,33 @@ Login, the database, and the shared layout. Both halves need all of this.
 
 - [x] **1.1** Migration `0001_profiles.sql`: `id`, `email`, `full_name`, `role`,
       `created_at` *(`0344c42`)*
-- [x] **1.2** Migration `0002_enums.sql`: roles `buyer | artist | staff`,
-      and the shared status list *(`4a1ae2e`)*
-- [x] **1.3** Turn on row level security on every table *(`98d2bb2`)*
+- [x] **1.2** Migration `0002_enums.sql`: roles `buyer | artist | staff`, and
+      the shared status list *(`4a1ae2e`)*
+- [x] **1.3** Row level security on every table *(`98d2bb2`)*
 - [x] **1.4** Sign-up page, role chosen at sign-up *(`41c43ba`)*
+      *(Route is `/auth/sign-up`, not `/register`.)*
 - [x] **1.5** Log in and log out *(`aeba6c7`)*
 - [x] **1.6** Read the signed-in user in a server component *(6984188)*
 - [ ] **1.7** Protect `/dashboard` so only signed-in users reach it
 - [ ] **1.8** Protect `/staff` so only `artist` and `staff` reach it
 - [ ] **1.9** `/dashboard` shows the user's name and role
-- [ ] **1.10** Promote Verrel to `artist` and Alfreza to `staff` by editing the
-      row in Supabase
+- [ ] **1.10** Promote Verrel to `artist` and Alfreza to `staff`
+- [x] **1.11** Fix the dead sign-up link in the footer
+      *(Footer linked `/register`, which never gets built, so it 404ed. Now
+      points at `/auth/sign-up`. A test checks every nav and footer link
+      resolves, verified by breaking the link and watching it fail. Also dropped
+      the empty `supabase/client.ts` and lint ignores for files deleted in 0.8.)*
+- [x] **1.12** Pages no longer wait on Supabase before they render
+      *(The navbar read the user while rendering, so every page waited on a
+      round trip to Supabase Auth — including `/login` and `/auth/sign-up`,
+      which never needed to know. That read moved into `getClaims()` in
+      `lib/auth.ts` behind a `<Suspense>` boundary, deduped with React `cache()`.
+      `proxy.ts` refreshes the session per request; note Next 16 renamed
+      `middleware.ts` to `proxy.ts`. Keeps 1.7/1.8 in reach.)*
+- [x] **1.13** Every page pre-built, served from the CDN
+      *(`cacheComponents: true`. Build output went from all routes `ƒ` dynamic
+      to `◐` partial prerender, `/login` and `/auth/sign-up` included. Only the
+      auth controls are filled in per request. Depends on 1.12.)*
 
 ## Phase 2 — Commissions (Verrel's half)
 
@@ -77,6 +85,8 @@ The artist quotes a price for custom work, buyer accepts and pays.
       links, quote, status, delivery image
 - [ ] **2.3** Public page listing the services
 - [ ] **2.4** Artwork gallery from Supabase Storage, upload only for `artist`
+      *(Needs `images.remotePatterns` in `next.config.ts` first, or every image
+      404s through the optimiser.)*
 - [ ] **2.5** Artwork gallery page
 - [ ] **2.6** Request form: pick a service, write the brief, add reference links
 - [ ] **2.7** Save the form as a row with status `requested`
@@ -138,8 +148,7 @@ nothing to pay for.
 - [ ] **6.3** Write the demo script: what to click, in order
 - [ ] **6.4** Screenshots of every page
 - [x] **6.5** Rewrite `README.md`: what it is, how to run, how to test
-      *(Install, run, commands, layout, Tailwind notes, env vars, Vercel. The
-      demo script and screenshots are still 6.3 and 6.4. Commit `9b6dddb`.)*
+      *(`9b6dddb`. The demo script and screenshots are still 6.3 and 6.4.)*
 - [ ] **6.6** Check nothing secret is in the repository
 - [ ] **6.7** Custom domain, if time allows
 
@@ -155,3 +164,13 @@ Drop in this order, and do not drop them silently — say so in the final write-
 4. Gallery uploads — use a link to an image instead.
 
 Never cut: payment, login, or the quote step. They are the assignment.
+
+---
+
+## Known open items, not yet tasks
+
+- **Lighthouse against the live site.** 1.12 and 1.13 changed the shape of every
+  response, but nothing has measured the win yet. Do it after the next deploy.
+- **Region mismatch.** Unknown whether Supabase and the Vercel functions sit in
+  the same region. Measure before assuming; move whichever side is cheap to
+  move.
