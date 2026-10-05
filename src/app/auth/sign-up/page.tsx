@@ -1,7 +1,10 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import { useActionState } from "react";
 import { signUp, type SignUpState } from "./actions";
+import logo from "@/components/aruno-logo.png";
 
 const initialState: SignUpState = {
   message: "",
@@ -11,35 +14,39 @@ export default function SignUpPage() {
   const [state, formAction, pending] = useActionState(signUp, initialState);
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <h1 className="mb-2 text-3xl font-semibold">Create an account</h1>
-        <p className="mb-6 text-sm text-gray-600">
-          Sign up to continue to Aruno Store.
+    <main className="flex min-h-screen items-center justify-center bg-cream px-4 py-12">
+      <div className="w-full max-w-sm">
+        {/* Logo */}
+        <div className="mb-8 flex justify-center">
+          <Link href="/">
+            <Image src={logo} alt="Aruno Store" width={146} height={80} priority />
+          </Link>
+        </div>
+
+        <h1 className="mb-1 text-center font-display text-2xl font-semibold text-ink">
+          Buat Akun
+        </h1>
+        <p className="mb-8 text-center text-sm text-[#6c6870]">
+          Daftar untuk mulai menggunakan Aruno Store.
         </p>
 
-        <form action={formAction} className="space-y-4">
+        <form action={formAction} className="space-y-5">
           <div>
-            <label
-              htmlFor="fullName"
-              className="mb-1 block text-sm font-medium"
-            >
-              Full Name
+            <label htmlFor="fullName" className="mb-1.5 block text-sm font-medium text-ink">
+              Nama Lengkap
             </label>
             <input
               id="fullName"
               name="fullName"
               type="text"
               required
-              className="w-full rounded border px-3 py-2"
+              autoComplete="name"
+              className="w-full rounded border border-[#d6d0ca] bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-plum focus:ring-1 focus:ring-plum transition-colors"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="email"
-              className="mb-1 block text-sm font-medium"
-            >
+            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-ink">
               Email
             </label>
             <input
@@ -47,15 +54,13 @@ export default function SignUpPage() {
               name="email"
               type="email"
               required
-              className="w-full rounded border px-3 py-2"
+              autoComplete="email"
+              className="w-full rounded border border-[#d6d0ca] bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-plum focus:ring-1 focus:ring-plum transition-colors"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="password"
-              className="mb-1 block text-sm font-medium"
-            >
+            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-ink">
               Password
             </label>
             <input
@@ -64,16 +69,14 @@ export default function SignUpPage() {
               type="password"
               minLength={6}
               required
-              className="w-full rounded border px-3 py-2"
+              autoComplete="new-password"
+              className="w-full rounded border border-[#d6d0ca] bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-plum focus:ring-1 focus:ring-plum transition-colors"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="confirmPassword"
-              className="mb-1 block text-sm font-medium"
-            >
-              Confirm Password
+            <label htmlFor="confirmPassword" className="mb-1.5 block text-sm font-medium text-ink">
+              Konfirmasi Password
             </label>
             <input
               id="confirmPassword"
@@ -81,15 +84,13 @@ export default function SignUpPage() {
               type="password"
               minLength={6}
               required
-            className="w-full rounded border px-3 py-2"
+              autoComplete="new-password"
+              className="w-full rounded border border-[#d6d0ca] bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-plum focus:ring-1 focus:ring-plum transition-colors"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="role"
-              className="mb-1 block text-sm font-medium"
-            >
+            <label htmlFor="role" className="mb-1.5 block text-sm font-medium text-ink">
               Role
             </label>
             <select
@@ -97,7 +98,7 @@ export default function SignUpPage() {
               name="role"
               defaultValue="buyer"
               required
-              className="w-full rounded border px-3 py-2"
+              className="w-full rounded border border-[#d6d0ca] bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-plum focus:ring-1 focus:ring-plum transition-colors"
             >
               <option value="buyer">Buyer</option>
               <option value="artist">Artist</option>
@@ -106,7 +107,7 @@ export default function SignUpPage() {
           </div>
 
           {state.message && (
-            <p aria-live="polite" className="text-sm">
+            <p aria-live="polite" className="text-sm text-plum">
               {state.message}
             </p>
           )}
@@ -114,11 +115,18 @@ export default function SignUpPage() {
           <button
             type="submit"
             disabled={pending}
-            className="w-full rounded bg-black px-4 py-2 text-white disabled:opacity-50"
+            className="w-full rounded bg-plum px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#8f4f67] disabled:opacity-50 transition-colors"
           >
-            {pending ? "Creating account..." : "Sign Up"}
+            {pending ? "Memproses..." : "Daftar"}
           </button>
         </form>
+
+        <p className="mt-6 text-center text-sm text-[#6c6870]">
+          Sudah punya akun?{" "}
+          <Link href="/login" className="font-semibold text-plum hover:underline">
+            Masuk di sini
+          </Link>
+        </p>
       </div>
     </main>
   );
