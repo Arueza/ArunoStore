@@ -54,7 +54,8 @@ Login, the database, and the shared layout. Both halves need all of this.
       *(Route is `/auth/sign-up`, not `/register`.)*
 - [x] **1.5** Log in and log out *(`aeba6c7`)*
 - [x] **1.6** Read the signed-in user in a server component *(6984188)*
-- [ ] **1.7** Protect `/dashboard` so only signed-in users reach it
+- [x] **1.7** Protect `/dashboard` so only signed-in users reach it
+      *(`947fdc0`)*
 - [ ] **1.8** Protect `/staff` so only `artist` and `staff` reach it
 - [ ] **1.9** `/dashboard` shows the user's name and role
 - [ ] **1.10** Promote Verrel to `artist` and Alfreza to `staff`
