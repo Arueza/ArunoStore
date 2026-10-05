@@ -65,7 +65,7 @@ Login, the database, and the shared layout. Both halves need all of this.
       `getProfile()` in `lib/auth.ts` and shows the role as Pembeli/Artist/Staf,
       never as the stored `buyer`/`artist`/`staff`. The rows sit behind a
       `<Suspense>` boundary so the route still prerenders, same rule as 1.12;
-      without it `next build` fails on uncached data.)*
+      without it `next build` fails on uncached data. Commit `b2bc581`.)*
 - [ ] **1.10** Promote Verrel to `artist` and Alfreza to `staff`
 - [x] **1.11** Fix the dead sign-up link in the footer
       *(Footer linked `/register`, which never gets built, so it 404ed. Now
@@ -93,9 +93,10 @@ Login, the database, and the shared layout. Both halves need all of this.
       with nothing on it was a dead end. Cottonink's account area is `/account`.
       Tech: deleted `app/dashboard/` and `components/dashboard/`, header moved to
       `components/Navbar.tsx` with `Panels.tsx` holding one-open-at-a-time state,
-      `login/actions.ts` redirects to `/`. **Migration `0003` was required and is
-      still unapplied** — RLS was on `profiles` with no policy at all, so no
-      signed-in user could read their own row and 1.9 could not have worked.
+      `login/actions.ts` redirects to `/`. Commit `b2bc581`. **Migration `0003`
+      was required and is still unapplied** — RLS was on `profiles` with no
+      policy at all, so no signed-in user could read their own row and 1.9 could
+      not have worked.
       `profiles.role` is `text` while the `user_role` enum from 1.2 goes unused;
       left alone, not this task's.)*
 
