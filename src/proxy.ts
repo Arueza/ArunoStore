@@ -66,8 +66,10 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
-// Sign-in only. Task 1.8 adds /staff, which also checks the role.
-const SIGNED_IN_ROUTES = ["/dashboard"];
+// Sign-in only. /account holds the visitor's own name and role, so it must never
+// render for a signed-out visitor. Task 1.8 adds /staff, which also checks the
+// role.
+const SIGNED_IN_ROUTES = ["/account"];
 
 function needsUser(pathname: string) {
   return SIGNED_IN_ROUTES.some(

@@ -1,47 +1,80 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const getClaims = vi.fn();
+const getProfile = vi.fn();
 
 vi.mock("@/lib/auth", () => ({
   getClaims: () => getClaims(),
+  getProfile: () => getProfile(),
 }));
 
 import AuthSlot from "./AuthSlot";
+import { PanelProvider } from "./Panels";
 import { PENDING, pageExists } from "./pendingPages";
 
 describe("AuthSlot", () => {
   beforeEach(() => {
     getClaims.mockReset();
+    getProfile.mockReset();
     getClaims.mockResolvedValue(null);
+    getProfile.mockResolvedValue(null);
   });
 
-  test("offers sign in and sign up while signed out", async () => {
+  test("offers a way in while signed out", async () => {
     render(await AuthSlot());
 
-    expect(screen.getByRole("link", { name: "Sign in" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Sign up" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Masuk" })).toBeInTheDocument();
   });
 
-  test("both signed-out links point at a page that exists", () => {
-    for (const href of ["/login", "/auth/sign-up"]) {
-      expect(PENDING.includes(href) || pageExists(href), `${href} has no page`).toBe(
-        true,
-      );
-    }
+  test("the signed-out link points at a page that exists", () => {
+    expect(PENDING.includes("/login") || pageExists("/login")).toBe(true);
   });
 
-  test("offers log out instead once a session exists", async () => {
+  test("offers the account menu instead once a session exists", async () => {
     getClaims.mockResolvedValue({ sub: "u1", email: "buyer@example.com" });
 
     render(await AuthSlot());
 
-    expect(screen.getByRole("button", { name: "Log out" })).toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: "Sign in" }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: "Sign up" }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Akun" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Masuk" })).not.toBeInTheDocument();
+  });
+
+  // The point of reading the profile: the greeting says who the buyer is, not
+  // what their address happens to be. The greeting lives inside the menu, so it
+  // only exists once the menu is opened — that is cottonink's behaviour, and the
+  // header deliberately shows no name at rest.
+  test("greets the signed-in visitor by their profile name", async () => {
+    getClaims.mockResolvedValue({ sub: "u1", email: "buyer@example.com" });
+    getProfile.mockResolvedValue({
+      full_name: "Siti Rahayu",
+      role: "buyer",
+    });
+
+    render(
+      <PanelProvider>
+        {await AuthSlot()}
+      </PanelProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Akun" }));
+
+    expect(screen.getByText(/Siti Rahayu/)).toBeInTheDocument();
+  });
+
+  // A signup whose trigger has not fired has a session but no profile row. The
+  // greeting must still name someone, and must not render "Halo, !".
+  test("falls back to the email when the profile row is missing", async () => {
+    getClaims.mockResolvedValue({ sub: "u1", email: "buyer@example.com" });
+    getProfile.mockResolvedValue(null);
+
+    render(
+      <PanelProvider>
+        {await AuthSlot()}
+      </PanelProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Akun" }));
+
+    expect(screen.getByText(/buyer@example.com/)).toBeInTheDocument();
+    expect(screen.queryByText(/Halo,  *!/)).not.toBeInTheDocument();
   });
 });

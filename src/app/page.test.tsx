@@ -1,52 +1,35 @@
-import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, test, vi } from "vitest";
-
-const getClaims = vi.fn();
-
-vi.mock("@/lib/auth", () => ({
-  getClaims: () => getClaims(),
-}));
-
+import { describe, expect, test } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import Home from "./page";
-import SignedInAs from "./signed-in-as";
+import { PENDING, pageExists } from "@/components/pendingPages";
 
 describe("Home", () => {
-  beforeEach(() => {
-    getClaims.mockReset();
-    getClaims.mockResolvedValue(null);
-  });
-
-  test("shows the shop name in the static shell", () => {
+  test("shows the shop name", () => {
     expect(renderToStaticMarkup(<Home />)).toContain("Aruno Store");
   });
 
-  test("the greeting is not in the static shell", () => {
-    getClaims.mockResolvedValue({ sub: "u1", email: "buyer@example.com" });
+  test("offers both halves of the shop", () => {
+    const shell = renderToStaticMarkup(<Home />);
 
+    expect(shell).toContain('href="/commissions"');
+    expect(shell).toContain('href="/titipan"');
+  });
+
+  // Same guarantee task 1.11 gave the footer. Both services are unbuilt until
+  // Phase 2 and 3, so this only holds while they are declared pending.
+  test("every link on the page has a page or is declared pending", () => {
+    for (const href of ["/", "/commissions", "/titipan"]) {
+      expect(
+        PENDING.includes(href) || pageExists(href),
+        `${href} has no page`,
+      ).toBe(true);
+    }
+  });
+
+  // The storefront must render identically signed out and signed in: signing in
+  // returns the buyer here, so a session read would only add a Supabase round
+  // trip to the most-visited page.
+  test("carries no session read at all", () => {
     expect(renderToStaticMarkup(<Home />)).not.toContain("Signed in as");
-  });
-});
-
-describe("SignedInAs", () => {
-  beforeEach(() => {
-    getClaims.mockReset();
-    getClaims.mockResolvedValue(null);
-  });
-
-  test("says nothing while signed out", async () => {
-    render(await SignedInAs());
-
-    expect(screen.queryByText(/Signed in as/)).not.toBeInTheDocument();
-  });
-
-  test("names the signed-in visitor", async () => {
-    getClaims.mockResolvedValue({ sub: "u1", email: "buyer@example.com" });
-
-    render(await SignedInAs());
-
-    expect(
-      screen.getByText("Signed in as buyer@example.com"),
-    ).toBeInTheDocument();
   });
 });

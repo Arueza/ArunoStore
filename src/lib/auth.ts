@@ -16,9 +16,9 @@ import { createClient } from "@/lib/supabase/server";
  * level of paranoia: it authorises against the Auth server instead of trusting
  * a local signature check.
  *
- * ponytail: this returns the JWT claims, which carry `sub` and `email` but not
- * the app's own buyer/artist/staff role. Roadmap 1.8 reads that from the
- * profiles table. Add a profiles lookup here when the first page needs it.
+ * The claims carry `sub` and `email` but not the app's own buyer/artist/staff
+ * role. Those live in the profiles table, so read them with getProfile below
+ * rather than widening this function.
  */
 export const getClaims = cache(async () => {
   const supabase = await createClient();
@@ -28,4 +28,34 @@ export const getClaims = cache(async () => {
   if (error || !data) return null;
 
   return data.claims;
+});
+
+/**
+ * The signed-in user's profile row: their full name and app role, or null when
+ * signed out or when the row is missing.
+ *
+ * The claims alone cannot answer "who is this and what can they do" — the role
+ * is the app's own buyer/artist/staff, not anything Supabase Auth knows about.
+ * `sub` is the profiles primary key, so the signed-in user matches their own row
+ * and nothing else, which is what the select policy in migration 0003 allows.
+ *
+ * maybeSingle() rather than single(): a signup whose trigger has not run yet has
+ * no row at all, and that should read as "no profile", not as an error.
+ */
+export const getProfile = cache(async () => {
+  const claims = await getClaims();
+
+  if (!claims?.sub) return null;
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("full_name, role")
+    .eq("id", claims.sub)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  return data as { full_name: string; role: string };
 });

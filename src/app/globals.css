@@ -11,4 +11,18 @@
 
   --font-sans: var(--font-dm-sans);
   --font-display: var(--font-playfair);
+
+  /* The announcement bar scroll. Shifts a quarter of the strip, because
+     AnnouncementBar repeats the line four times, so the fourth copy lands
+     exactly where the first started. */
+  --animate-marquee: marquee 30s linear infinite;
+
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-25%);
+    }
+  }
 }

@@ -55,9 +55,17 @@ Login, the database, and the shared layout. Both halves need all of this.
 - [x] **1.5** Log in and log out *(`aeba6c7`)*
 - [x] **1.6** Read the signed-in user in a server component *(6984188)*
 - [x] **1.7** Protect `/dashboard` so only signed-in users reach it
-      *(`947fdc0`)*
+      *(`947fdc0`. Written for `/dashboard`, which task 1.14 then removed. The
+      guard itself lives on and now covers `/account`: same shape, same place,
+      `proxy.ts`. Confirmed by hand — `/account` answers 307 to `/login` signed
+      out. History is in commits `947fdc0` and `7d40284`.)*
 - [ ] **1.8** Protect `/staff` so only `artist` and `staff` reach it
-- [ ] **1.9** `/dashboard` shows the user's name and role
+- [x] **1.9** The account page shows the user's name and role
+      *(Now `/account`, not `/dashboard`. Reads the `profiles` row through
+      `getProfile()` in `lib/auth.ts` and shows the role as Pembeli/Artist/Staf,
+      never as the stored `buyer`/`artist`/`staff`. The rows sit behind a
+      `<Suspense>` boundary so the route still prerenders, same rule as 1.12;
+      without it `next build` fails on uncached data.)*
 - [ ] **1.10** Promote Verrel to `artist` and Alfreza to `staff`
 - [x] **1.11** Fix the dead sign-up link in the footer
       *(Footer linked `/register`, which never gets built, so it 404ed. Now
@@ -76,6 +84,20 @@ Login, the database, and the shared layout. Both halves need all of this.
       *(`cacheComponents: true`. Build output went from all routes `ƒ` dynamic
       to `◐` partial prerender, `/login` and `/auth/sign-up` included. Only the
       auth controls are filled in per request. Depends on 1.12. Commit `f5e59be`.)*
+- [x] **1.14** The shop is the landing page; no dashboard
+      *(What: signing in no longer lands on a separate dashboard. The home page
+      is the storefront, login returns to it, and the one signed-in page is
+      `/account`. Header rebuilt after cottonink.co.id — pink announcement bar,
+      hamburger, centred wordmark, account/search/bag icons.
+      Why: a buyer signs in mid-shop and wants to keep shopping; a dashboard
+      with nothing on it was a dead end. Cottonink's account area is `/account`.
+      Tech: deleted `app/dashboard/` and `components/dashboard/`, header moved to
+      `components/Navbar.tsx` with `Panels.tsx` holding one-open-at-a-time state,
+      `login/actions.ts` redirects to `/`. **Migration `0003` was required and is
+      still unapplied** — RLS was on `profiles` with no policy at all, so no
+      signed-in user could read their own row and 1.9 could not have worked.
+      `profiles.role` is `text` while the `user_role` enum from 1.2 goes unused;
+      left alone, not this task's.)*
 
 ## Phase 2 — Commissions (Verrel's half)
 
@@ -166,6 +188,17 @@ Drop in this order, and do not drop them silently — say so in the final write-
 4. Gallery uploads — use a link to an image instead.
 
 Never cut: payment, login, or the quote step. They are the assignment.
+
+---
+
+## Known open items, not yet tasks
+
+- **Migration `0003_profiles_select_policy.sql` is written but not applied.** It
+  has to run in Supabase before `/account` shows a name and role. Until then
+  `getProfile()` returns null and the page says "Belum diisi". The other four
+  migrations were applied by hand.
+- **`/staff` has no route.** Tasks 1.8 and 2.8 both need it; the proxy guard for
+  it is written but the page does not exist.
 
 ---
 

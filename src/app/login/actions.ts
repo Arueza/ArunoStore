@@ -36,8 +36,9 @@ export async function login(
     return { message: "Email atau password salah." };
   }
 
-  // Signed-in visitors have nothing to do on /login, and 1.7 guards /dashboard,
-  // so sign-in lands there. redirect() throws to end the action, which is why
-  // it cannot sit inside the try/catch above.
-  redirect("/dashboard");
+  // Back to the storefront, not a separate dashboard: signing in is something a
+  // buyer does mid-shop, and cottonink leaves them looking at the same page they
+  // were on. redirect() throws to end the action, which is why it cannot sit
+  // inside the try/catch above.
+  redirect("/");
 }
