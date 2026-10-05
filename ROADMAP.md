@@ -89,7 +89,7 @@ walk into. **1.15 before 1.17**, so the data is flipped before the labels change
 - [x] **1.13** Every page pre-built, served from the CDN *(`f5e59be`)*
 - [x] **1.14** The shop is the landing page, no dashboard *(`b2bc581`)*
 - [ ] **1.15** Migration `0009_staff_role_only.sql`: flip `artist` rows to `staff`, drop `user_role`, constrain `role`
-- [x] **1.16** Sign-up hardcodes `buyer`; no role field, no way to claim staff *(`see note`)*
+- [x] **1.16** Sign-up hardcodes `buyer`; no role field, no way to claim staff *(`7dadf4c`)*
 - [ ] **1.17** Account page shows two roles, no artist label *(after 1.15)*
 
 ## Phase 2 — Commissions (Verrel's half)
