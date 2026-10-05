@@ -62,18 +62,19 @@ Login, the database, and the shared layout. Both halves need all of this.
       *(Footer linked `/register`, which never gets built, so it 404ed. Now
       points at `/auth/sign-up`. A test checks every nav and footer link
       resolves, verified by breaking the link and watching it fail. Also dropped
-      the empty `supabase/client.ts` and lint ignores for files deleted in 0.8.)*
+      the empty `supabase/client.ts` and lint ignores for files deleted in 0.8.
+      Commit `5685a8c`.)*
 - [x] **1.12** Pages no longer wait on Supabase before they render
       *(The navbar read the user while rendering, so every page waited on a
       round trip to Supabase Auth — including `/login` and `/auth/sign-up`,
       which never needed to know. That read moved into `getClaims()` in
       `lib/auth.ts` behind a `<Suspense>` boundary, deduped with React `cache()`.
       `proxy.ts` refreshes the session per request; note Next 16 renamed
-      `middleware.ts` to `proxy.ts`. Keeps 1.7/1.8 in reach.)*
+      `middleware.ts` to `proxy.ts`. Keeps 1.7/1.8 in reach. Commit `57fb5a4`.)*
 - [x] **1.13** Every page pre-built, served from the CDN
       *(`cacheComponents: true`. Build output went from all routes `ƒ` dynamic
       to `◐` partial prerender, `/login` and `/auth/sign-up` included. Only the
-      auth controls are filled in per request. Depends on 1.12.)*
+      auth controls are filled in per request. Depends on 1.12. Commit `f5e59be`.)*
 
 ## Phase 2 — Commissions (Verrel's half)
 
