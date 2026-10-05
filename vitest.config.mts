@@ -9,6 +9,12 @@ export default defineConfig({
     // paths on its own, and one line here beats the vite-tsconfig-paths dep.
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      // Next.js aliases this itself. Vite does not, and an import of it fails
+      // to resolve. The guard only matters in a real client bundle, which these
+      // tests never build.
+      "server-only": fileURLToPath(
+        new URL("./src/test/serverOnlyStub.ts", import.meta.url),
+      ),
     },
   },
   test: {

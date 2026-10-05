@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
-import { logout } from "@/app/logout/actions";
+import { Suspense } from "react";
+import AuthSlot from "./AuthSlot";
 import logo from "./aruno-logo.png";
 
 const LINKS = [
@@ -9,12 +9,11 @@ const LINKS = [
   { href: "/titipan", label: "Titipan" },
 ];
 
-export default async function Navbar() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+// Navbar itself never awaits. Awaiting the session here used to hold the whole
+// root segment, children included, behind a round trip to Supabase, so every
+// page waited on it. The read now lives in AuthSlot behind a boundary, which
+// leaves the logo and links free to render immediately.
+export default function Navbar() {
   return (
     <header className="sticky top-0 z-20 border-b border-[#eeeae5] bg-cream">
       <div className="flex min-h-20 flex-wrap items-center gap-x-8 gap-y-2 px-5 sm:px-[6%]">
@@ -36,27 +35,19 @@ export default async function Navbar() {
         </nav>
 
         <div className="ml-auto flex items-center gap-6 text-sm">
-          {user ? (
-            <form action={logout}>
-              <button type="submit" className="font-semibold hover:text-ink">
-                Log out
-              </button>
-            </form>
-          ) : (
-            <>
-              <Link href="/login" className="font-semibold hover:text-ink">
-                Sign in
-              </Link>
-              <Link
-                href="/auth/sign-up"
-                className="rounded-[9px] bg-ink px-4 py-2.5 font-bold text-white hover:bg-black"
-              >
-                Sign up
-              </Link>
-            </>
-          )}
+          <Suspense fallback={<AuthSlotFallback />}>
+            <AuthSlot />
+          </Suspense>
         </div>
       </div>
     </header>
   );
+}
+
+// Reserves roughly the width of the signed-out links so the header does not
+// jump when the slot resolves. It shows nothing rather than the signed-out
+// links, because flashing a working sign-in button at someone who is already
+// signed in is worse than a small layout shift.
+function AuthSlotFallback() {
+  return <div aria-hidden="true" className="h-10 w-[9.5rem]" />;
 }

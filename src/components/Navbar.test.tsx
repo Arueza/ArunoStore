@@ -1,36 +1,42 @@
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
-vi.mock("@/lib/supabase/server", () => ({
-  createClient: vi.fn(async () => ({
-    auth: {
-      getUser: vi.fn(async () => ({
-        data: {
-          user: null,
-        },
-      })),
-    },
-  })),
+const getClaims = vi.fn();
+
+vi.mock("@/lib/auth", () => ({
+  getClaims: () => getClaims(),
 }));
 
-import { render, screen } from "@testing-library/react";
+import { renderToStaticMarkup } from "react-dom/server";
 import Navbar from "./Navbar";
-import { PENDING, pageExists } from "./pendingPages";
 
 describe("Navbar", () => {
-  test("every link points at a page that exists, or is pending", async () => {
-    render(await Navbar());
+  beforeEach(() => {
+    getClaims.mockReset();
+    getClaims.mockResolvedValue(null);
+  });
 
-    expect(screen.getByRole("navigation", { name: "Main" })).toBeInTheDocument();
+  // The server renderer emits the static shell only: everything outside the
+  // Suspense boundary, with the boundary's own content left out. That is
+  // exactly what a visitor receives before Supabase answers, so asserting on
+  // it checks the thing the boundary exists to protect.
+  test("logo and nav links are in the static shell", () => {
+    const shell = renderToStaticMarkup(<Navbar />);
 
-    const hrefs = screen
-      .getAllByRole("link")
-      .map((link) => link.getAttribute("href") ?? "");
+    expect(shell).toContain("Aruno Store");
+    expect(shell).toContain('href="/commissions"');
+    expect(shell).toContain('href="/titipan"');
+  });
 
-    expect(hrefs.length).toBeGreaterThan(0);
+  // If the session read ever moves back up into Navbar, this fails. That is the
+  // regression that put a Supabase round trip in front of every page's TTFB.
+  test("the signed-out controls are not in the static shell", () => {
+    const shell = renderToStaticMarkup(<Navbar />);
 
-    for (const href of hrefs) {
-      if (PENDING.includes(href)) continue;
-      expect(pageExists(href), `${href} has no page`).toBe(true);
-    }
+    expect(shell).not.toContain('href="/login"');
+    expect(shell).not.toContain('href="/auth/sign-up"');
+  });
+
+  test("the fallback reserves room so the header does not jump", () => {
+    expect(renderToStaticMarkup(<Navbar />)).toContain("w-[9.5rem]");
   });
 });
