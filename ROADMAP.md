@@ -86,10 +86,11 @@ Nothing else can be tested until the project runs and is on the internet.
 
 Login, the database, and the shared layout. Both halves need all of this.
 
-**Code-complete.** The only box left is 1.18, Verrel's login, which is a manual step
-in the browser and Supabase. Order mattered twice on the way here: **1.16 before
-1.8**, or the guard protects a route anyone can walk into, and **1.15 before 1.17**,
-so the data was flipped before the labels changed.
+**Closed.** Every box is ticked; the last three were applied by hand in Supabase
+rather than committed, so they carry `manual` instead of a hash. Order mattered
+twice on the way here: **1.16 before 1.8**, or the guard protects a route anyone can
+walk into, and **1.15 before 1.17**, so the data was flipped before the labels
+changed.
 
 - [x] **1.1** Migration `0001_profiles.sql`: id, email, full_name, role, created_at *(`0344c42`)*
 - [x] **1.2** Migration `0002_enums.sql`: roles `buyer | artist | staff`, shared status list *(`4a1ae2e`)*
@@ -108,7 +109,7 @@ so the data was flipped before the labels changed.
 - [x] **1.15** Migration `0009_staff_role_only.sql`: flip `artist` rows to `staff`, drop `user_role`, constrain `role` *(`381ced3`)*
 - [x] **1.16** Sign-up hardcodes `buyer`; no role field, no way to claim staff *(`7dadf4c`)*
 - [x] **1.17** Account page shows two roles, no artist label *(`381ced3`)*
-- [ ] **1.18** Create Verrel's login and set the role to `staff` — manual *(SQL below)*
+- [x] **1.18** Create Verrel's login and set the role to `staff` — manual *(manual)*
 
 ## Phase 2 — Commissions (Verrel's half)
 
@@ -203,7 +204,8 @@ Never cut: payment, login, or the quote step. They are the assignment.
 - **Sign-up escalation: closed by 1.16.** It used to offer `staff` and only checked
   the value was in its own list. The field is gone and the role is hardcoded now, so
   task 1.8 can rely on `profiles.role` meaning something.
-- **Verrel has no login.** 1.18 is the last open item in Phase 1, and it is manual.
+- **Verrel's login now exists** and is `staff`, so both sellers can reach `/staff`.
+  Phase 1 is closed.
 - **Test accounts sit in the live database.** `wagakami@gmail.com` (TESTO) and
   `alamak@gmail.com` are throwaways. They will show up in the 6.4 screenshots and in
   any demo run. Delete them, or keep `alamak` as the standing buyer for guard tests
@@ -277,20 +279,14 @@ None of them were it. `select * from pg_policies where tablename = 'profiles'` w
 the query worth running first.
 
 **1.10** Alfreza only. `tomomiogawa764@gmail.com` is `staff`, applied by hand and
-confirmed by signing in and loading `/staff`. Verrel was not promoted here because
-he has no login yet; that is 1.18.
+confirmed by signing in and loading `/staff`. Verrel was not promoted here because he
+had no login yet, which is what 1.18 then fixed.
 
-**1.18** Verrel has no account at all, so there is nothing to promote. Sign him up
-through `/auth/sign-up` in the browser — that path hardcodes `buyer`, which is
-exactly what we want as the starting point — then:
-
-```sql
-update public.profiles set role = 'staff' where email = 'verrel@…';
-```
-
-Confirm the address with `select id, email, full_name, role from public.profiles
-order by created_at;` rather than guessing at it. Tick by hand, write `manual` in
-place of a hash. No commit: nothing in the repo changes.
+**1.18** Done by hand, no commit. Verrel signed up through `/auth/sign-up`, which
+hardcodes `buyer` as intended, then the role was set with the same `update` as
+1.10. Both sellers can now reach `/staff`. The whole sign-up-then-promote path is
+now exercised once end to end, which is the first time this phase had two real staff
+accounts to check the guard against.
 
 **1.9** Now `/account`, not `/dashboard`. Reads the `profiles` row through
 `getProfile()` in `lib/auth.ts` and shows the role in words, never as the stored
@@ -298,17 +294,16 @@ value, because the buyer is the one reading it and the column is not English. Th
 rows sit behind a `<Suspense>` boundary so the route still prerenders, same rule as
 1.12; without it `next build` fails on uncached data.
 
-**1.10** Not a code task, and deliberately no commit. Run this in the Supabase
-SQL editor after 0009:
+**1.10** Not a code task, and deliberately no commit. One `update` in the
+Supabase SQL editor after 0009:
 
 ```sql
-update public.profiles set role = 'staff' where email = 'verrel@…';
 update public.profiles set role = 'staff' where email = 'alfreza@…';
 ```
 
 Check the address first with `select id, email, full_name, role from
-public.profiles order by created_at;` — do not guess at them. Then sign in as
-each one and open `/staff`. Tick by hand and write `manual` in place of a hash.
+public.profiles order by created_at;` — do not guess at it. Then sign in and open
+`/staff`. Tick by hand and write `manual` in place of a hash. Verrel is 1.18.
 
 **1.11** The footer linked `/register`, which never gets built, so it 404ed. Now
 points at `/auth/sign-up`. A test checks every nav and footer link resolves,
