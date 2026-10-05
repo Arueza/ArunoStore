@@ -3,12 +3,11 @@ import { NextResponse, type NextRequest } from "next/server";
 
 /**
  * Refreshes the Supabase session cookie once per request, then keeps signed-out
- * visitors out of the signed-in routes.
+ * visitors out of the signed-in routes and non-staff out of /staff.
  *
  * Without the refresh, nothing renews a session on navigation: `setAll` in
  * src/lib/supabase/server.ts can only fire from a Server Action, and it
- * swallows the write when called from a Server Component. Roadmap 1.8 adds
- * `/staff` to the guard below.
+ * swallows the write when called from a Server Component.
  *
  * Note the filename. Next.js 16 renamed `middleware.ts` to `proxy.ts`;
  * `middleware.ts` is deprecated in this version.
@@ -53,13 +52,13 @@ export async function proxy(request: NextRequest) {
     if (!user) {
       // Carries any refreshed cookie onto the redirect, otherwise a session that
       // had just been renewed would be dropped on the way to the login page.
-      const redirect = NextResponse.redirect(new URL("/login", request.url));
+      return redirectTo(request, response, "/login");
+    }
 
-      for (const cookie of response.cookies.getAll()) {
-        redirect.cookies.set(cookie);
-      }
-
-      return redirect;
+    if (needsStaff(request.nextUrl.pathname) && !(await isStaff(supabase, user.id))) {
+      // Signed in, so /login would be the wrong place to send them. The store is
+      // where a buyer actually wants to be.
+      return redirectTo(request, response, "/");
     }
   }
 
@@ -67,14 +66,63 @@ export async function proxy(request: NextRequest) {
 }
 
 // Sign-in only. /account holds the visitor's own name and role, so it must never
-// render for a signed-out visitor. Task 1.8 adds /staff, which also checks the
-// role.
+// render for a signed-out visitor.
 const SIGNED_IN_ROUTES = ["/account"];
 
-function needsUser(pathname: string) {
-  return SIGNED_IN_ROUTES.some(
+// Also needs the role. There is no artist role as of roadmap 1.15: staff are the
+// two of us and cover both halves.
+const STAFF_ROUTES = ["/staff"];
+
+function matches(pathname: string, routes: string[]) {
+  return routes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
+}
+
+function needsUser(pathname: string) {
+  return matches(pathname, SIGNED_IN_ROUTES) || matches(pathname, STAFF_ROUTES);
+}
+
+function needsStaff(pathname: string) {
+  return matches(pathname, STAFF_ROUTES);
+}
+
+type Supabase = ReturnType<typeof createServerClient>;
+
+/**
+ * Whether this user is staff, read from the profiles row.
+ *
+ * The 0003 select policy allows a signed-in user to read exactly their own row
+ * (auth.uid() = id), which is all this needs. Staff reading other people's
+ * profiles for /staff is task 2.8's problem and widens the policy in its own
+ * migration.
+ *
+ * A missing row answers false rather than throwing: migration 0003 may not be
+ * applied yet, and a guard that fails open here would open /staff to everyone.
+ */
+async function isStaff(supabase: Supabase, userId: string) {
+  const { data } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .maybeSingle();
+
+  return data?.role === "staff";
+}
+
+/** Redirects, carrying any refreshed cookie so a renewal is not dropped. */
+function redirectTo(
+  request: NextRequest,
+  response: NextResponse,
+  path: string,
+) {
+  const redirect = NextResponse.redirect(new URL(path, request.url));
+
+  for (const cookie of response.cookies.getAll()) {
+    redirect.cookies.set(cookie);
+  }
+
+  return redirect;
 }
 
 export const config = {

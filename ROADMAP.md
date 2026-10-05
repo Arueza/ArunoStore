@@ -81,7 +81,7 @@ walk into. **1.15 before 1.17**, so the data is flipped before the labels change
 - [x] **1.5** Log in and log out *(`aeba6c7`)*
 - [x] **1.6** Read the signed-in user in a server component *(`6984188`)*
 - [x] **1.7** Keep signed-out visitors out of the signed-in pages *(`947fdc0`, `7d40284`)*
-- [ ] **1.8** Guard `/staff` so only `staff` can reach it
+- [ ] **1.8** Guard `/staff` so only `staff` can reach it *(code done, needs your sign-in check)*
 - [x] **1.9** Account page shows the user's name and role *(`b2bc581`)*
 - [ ] **1.10** Promote Verrel and Alfreza to `staff` — manual, no commit *(see note)*
 - [x] **1.11** Fix the dead sign-up link in the footer *(`5685a8c`)*
@@ -232,9 +232,26 @@ and offered all three roles; task 1.16 removes `staff` from it.
 lives on and now covers `/account`: same shape, same place, `proxy.ts`. Confirmed
 by hand — `/account` answers 307 to `/login` signed out.
 
-**1.8** Needs 1.16 first. The guard checks `profiles.role` is `staff`, but
-sign-up lets anyone claim that today, so the guard would hand `/staff` to the
-public.
+**1.8** Code is written and the loop passes, but **the box is not ticked**: the
+signed-in half of the check is untested by hand, because that needs a logged-in
+buyer and a logged-in staff member and no agent should hold those passwords.
+
+What is done: `proxy.ts` grows `STAFF_ROUTES`, and `isStaff()` reads the caller's
+own `profiles` row, which the 0003 policy already allows. Signed out on `/staff`
+answers 307 to `/login`, confirmed at `npm run dev`. Eleven tests in
+`proxy.test.ts` cover the rest — buyer to `/`, staff through, missing row blocked,
+an unknown role blocked, nested paths guarded, `/staffing` left alone. Four of
+them were verified to fail with the role check removed.
+
+The page `app/staff/page.tsx` is a bare shell on purpose: a guard on a 404 proves
+nothing, since blocked and allowed would look the same. 2.8 fills it in.
+
+**To tick it**, with 0003 and 0009 applied and 1.10 done: sign in as a buyer, open
+`/staff`, expect the storefront. Sign in as Verrel or Alfreza, expect the staff
+page. Failing to read your own profile in step two means 0003 is still unapplied.
+
+Fails closed on a missing row on purpose. Until 0003 runs, every row reads null and
+a fail-open guard would hand `/staff` to everyone the moment it had data on it.
 
 **1.9** Now `/account`, not `/dashboard`. Reads the `profiles` row through
 `getProfile()` in `lib/auth.ts` and shows the role in words, never as the stored
