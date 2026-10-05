@@ -42,9 +42,10 @@ time, not a style preference.
 - **`request_status` holds only `requested | quoted`.** Phases 2, 3 and 4 all need
   more values; widen the enum in its own migration, one phase at a time.
 - **Money is whole rupiah.** Store `15000`, never `15000.50`. Format at display.
-- **`/staff` has no route yet.** Tasks 1.8 and 2.8 both need one. The 0003 policy
-  also lets a user read only their own row, so staff reading others needs its own
-  migration.
+- **`/staff` exists but is an empty shell.** Task 1.8 added the page so its guard
+  could be verified by hand; 2.8 fills it with the request queue. The 0003 policy
+  lets a user read only their own row, so staff reading others' profiles needs its
+  own migration in 2.8.
 - **A migration in git is not an applied migration.** `git push` moves SQL text;
   it never runs it. CI has no Supabase credentials and never calls
   `supabase db push`, so every migration is a manual dashboard step, and one has
@@ -83,7 +84,7 @@ walk into. **1.15 before 1.17**, so the data is flipped before the labels change
 - [x] **1.7** Keep signed-out visitors out of the signed-in pages *(`947fdc0`, `7d40284`)*
 - [ ] **1.8** Guard `/staff` so only `staff` can reach it *(code done, needs your sign-in check)*
 - [x] **1.9** Account page shows the user's name and role *(`b2bc581`)*
-- [ ] **1.10** Promote Verrel and Alfreza to `staff` — manual, no commit *(see note)*
+- [ ] **1.10** Promote Verrel and Alfreza to `staff` — manual, no commit *(SQL below, with 1.8)*
 - [x] **1.11** Fix the dead sign-up link in the footer *(`5685a8c`)*
 - [x] **1.12** Pages no longer wait on Supabase before they render *(`57fb5a4`)*
 - [x] **1.13** Every page pre-built, served from the CDN *(`f5e59be`)*
@@ -178,12 +179,15 @@ Never cut: payment, login, or the quote step. They are the assignment.
 
 ## Known open items, not yet tasks
 
-- **Migration `0003_profiles_select_policy.sql` is written but not applied.** It
-  has to run in Supabase before `/account` shows a name and role. Until then
-  `getProfile()` returns null and the page says "Belum diisi". The other four
-  migrations were applied by hand.
-- **`/staff` has no route.** Tasks 1.8 and 2.8 both need it; the proxy guard for
-  it is written but the page does not exist.
+- **Two migrations are written but not applied: `0003_profiles_select_policy.sql`
+  and `0009_staff_role_only.sql`.** Both are ready to paste. `0003` has to run
+  before `/account` shows a name and role, and before task 1.8's guard can let
+  anyone in, since the guard reads the caller's own row and RLS currently denies
+  it. `0009` adds the check constraint from 1.15. The other four were applied by
+  hand.
+- **Task 1.8 is waiting on a human sign-in check.** The code and eleven tests are
+  done; what is missing is a buyer and a staff member actually loading `/staff`.
+  Nothing else in Phase 1 can close until 0003, 0009 and 1.10 are done by hand.
 - **Sign-up escalation: closed by 1.16.** It used to offer `staff` and only checked
   the value was in its own list. The field is gone and the role is hardcoded now, so
   task 1.8 can rely on `profiles.role` meaning something.
@@ -259,10 +263,17 @@ value, because the buyer is the one reading it and the column is not English. Th
 rows sit behind a `<Suspense>` boundary so the route still prerenders, same rule as
 1.12; without it `next build` fails on uncached data.
 
-**1.10** Not a code task, and deliberately no commit. Two `update` statements in
-the Supabase dashboard, or one SQL query each, and nothing in the repo changes.
-Verrel and Alfreza are both `staff`; what they sell differs, not what they can
-reach. Tick the box by hand and write `manual` in place of a hash.
+**1.10** Not a code task, and deliberately no commit. Run this in the Supabase
+SQL editor after 0009:
+
+```sql
+update public.profiles set role = 'staff' where email = 'verrel@…';
+update public.profiles set role = 'staff' where email = 'alfreza@…';
+```
+
+Check the address first with `select id, email, full_name, role from
+public.profiles order by created_at;` — do not guess at them. Then sign in as
+each one and open `/staff`. Tick by hand and write `manual` in place of a hash.
 
 **1.11** The footer linked `/register`, which never gets built, so it 404ed. Now
 points at `/auth/sign-up`. A test checks every nav and footer link resolves,
