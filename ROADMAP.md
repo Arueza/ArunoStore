@@ -136,7 +136,7 @@ The artist quotes a price for custom work, buyer accepts and pays.
 
 Buyer sends a Japanese product link, staff quotes price + shipping + fee.
 
-- [x] **3.1** Migration `0006_titipan_requests.sql`: link, size, colour, budget, quote split, tracking
+- [x] **3.1** Migration `0006_titipan_requests.sql`: link, size, colour, budget, quote split, tracking *(`ef5dbc6`)*
 - [ ] **3.2** Explain the service on the page: what a titipan is, what it costs
 - [ ] **3.3** Request form: product link, size, colour, quantity, budget
 - [ ] **3.4** Save the form as a row with status `requested`
