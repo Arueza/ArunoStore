@@ -25,32 +25,48 @@
 -- gained a policy — so the other twenty-seven names in 0010 to 0014 matched the
 -- live database exactly.
 --
--- Safe to paste twice. Each drop is `if exists` and each create is preceded by
--- one, so this converges from either state: four policies, two, or none.
+-- One statement, on purpose. The rest of this repository's migrations are a list
+-- of separate statements, and the dashboard aborts a batch silently when one of
+-- them fails — which rolls back the whole paste and leaves the database looking
+-- untouched, with no error anyone reads. That is exactly how 0003 sat unapplied
+-- for days. So this repair is a single `do` block: it either applies completely or
+-- not at all, and there is nothing to sequence.
+--
+-- It drops every policy on the table by looking names up in pg_policy, so it
+-- does not care what any of them are called. Both spellings that have existed
+-- here are handled, and so is a third nobody has typed yet.
+--
+-- Safe to paste twice, and safe to paste after 0012 has already run.
 
--- Both spellings, so the file is correct whether the database still holds the
--- typo or has already been repaired.
-drop policy if exists "Admin kelola consignment imaget_images" on public.consignment_images;
-drop policy if exists "Public baca consignment imaget_images" on public.consignment_images;
-drop policy if exists "Admin kelola consignment images" on public.consignment_images;
-drop policy if exists "Public baca consignment images" on public.consignment_images;
+do $$
+declare
+  stale text;
+begin
+  for stale in
+    select polname
+      from pg_policy
+     where polrelid = 'public.consignment_images'::regclass
+  loop
+    execute format('drop policy if exists %I on public.consignment_images', stale);
+  end loop;
 
--- Recreated from 0012, unchanged. Read the migration as a whole: a comment is not
--- a policy, and these two lines are what the table ends up with.
+  -- Recreated from 0012, unchanged. A comment is not a policy, and these two are
+  -- what the table ends up with.
+  execute $p$create policy "Admin kelola consignment images"
+    on public.consignment_images
+    for all
+    to public
+    using (exists (select 1 from admins where admins.id = auth.uid()))$p$;
 
-drop policy if exists "Admin kelola consignment images" on public.consignment_images;
-create policy "Admin kelola consignment images"
-  on public.consignment_images
-  for all
-  to public
-  using (exists (select 1 from admins where admins.id = auth.uid()));
+  execute $p$create policy "Public baca consignment images"
+    on public.consignment_images
+    for select
+    to public
+    using (true)$p$;
+end $$;
 
-drop policy if exists "Public baca consignment images" on public.consignment_images;
-create policy "Public baca consignment images"
-  on public.consignment_images
-  for select
-  to public
-  using (true);
-
--- After this file, `select count(*) from pg_policies where schemaname = 'public'`
--- is 37 and consignment_images holds 2.
+-- After this file:
+--
+--   select count(*) from pg_policies where schemaname = 'public';                                  -- 37
+--   select count(*) from pg_policies where schemaname = 'public'
+--    and tablename = 'consignment_images';                                                          -- 2
