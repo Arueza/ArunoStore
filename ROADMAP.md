@@ -15,94 +15,54 @@ Long notes live at the bottom under **Task notes**, keyed by task number.
 Read this before writing code. Each line is a real trap that has already cost
 time, not a style preference.
 
-- **Migration numbers.** Two naming schemes are on disk: `0001_profiles.sql` and
-  Supabase's own `20261004133000_profiles_rls.sql`. Use the `000N_name.sql` form
-  from here. `0003` is taken by `0003_profiles_select_policy.sql`. **`0004` and
-  `0005` went to Phase 2** (the services catalogue and the commissions table),
-  **`0006` is taken by task 3.1**, `0007` and `0008` are reserved for Phase 4, and
-  `0010`–`0015` are reserved for P1**, which captures the dashboard tables, and
-  **`0016` repairs two policies P1 created wrongly.** `0009` is taken and `0010` is
-  the next free number, so the gap is deliberate: gaps are harmless, every migration
-  is independent. Anything further Phase 2 needs — 2.11's staff update policy,
-  2.14's delivery image, 2.5's Storage — starts at `0017`. Both of us write into
-  this one project, so a number is claimed by committing it, not by intending it.
-- **RLS on with no policy denies every row, silently.** This was `0003`'s state
-  for days: `getProfile()` returned null and `/account` said "Belum diisi" while
-  nothing anywhere reported a permission error. It is applied now, but the trap is
-  the shape, not the file — a policy on a table whose RLS is *off* is inert and
-  grants every row to everyone. Check both, never one.
-- **There are two roles: `buyer` and `staff`.** Artist is not a role. Verrel and
-  Alfreza are the sole sellers, both `staff`, and what they sell differs, not
-  what they can reach. Never branch UI or guards on `artist`.
-- **Sign-up cannot grant `staff`, and never will.** There is no role field on the
-  form; `signUp()` hardcodes `role: "buyer"` and never reads a role from the
-  FormData, so a forged field is ignored rather than validated. Promotion is a
-  manual update in Supabase. Do not add a role picker back.
-- **`profiles.role` is `text`, enforced by a `check`.** Migration `0002` created a
-  `user_role` enum that was dead code; `0009` dropped it and constrains the column
-  to `buyer | staff`. Both applied.
-- **Next 16 renamed `middleware.ts` to `src/proxy.ts`.** The signed-in guard is
-  the `SIGNED_IN_ROUTES` array in `src/proxy.ts`. `/staff` is not in it yet.
-- **`cacheComponents: true` is on.** Any read of the session behind a page needs a
-  `<Suspense>` boundary, or `next build` fails on uncached data.
-- **Render with `getClaims()`, never `getUser()`.** `getClaims()` is wrapped in
-  React `cache()` and verifies locally, so a warm server does no network call.
-  `getUser()` hits the Auth server and belongs only in Server Actions and Route
-  Handlers.
-- **`request_status` holds only `requested | quoted`.** Phases 2, 3 and 4 all need
-  more values; widen the enum in its own migration, one phase at a time.
+- **Migration numbers.** Two naming schemes on disk: `0001_profiles.sql` and
+  Supabase's own `20261004133000_profiles_rls.sql`. Use `000N_name.sql`.
+  `0003` taken. `0004`–`0005` Phase 2. `0006` task 3.1. `0007`–`0008` Phase 4.
+  `0010`–`0015` P1 (dashboard tables). `0016` repairs two policies P1 created
+  wrongly. `0009` taken, `0010` next free — gap deliberate. Phase 2 leftovers
+  (2.11 staff update policy, 2.14 delivery image, 2.5 Storage) start at `0017`.
+- **RLS on with no policy denies every row, silently.** `0003` sat unapplied for
+  days — `getProfile()` returned null, `/account` said "Belum diisi", no error.
+  A policy on a table whose RLS is *off* is inert. Check both.
+- **Two roles: `buyer` and `staff`.** Artist is not a role. Verrel and Alfreza
+  are both `staff`. Never branch UI or guards on `artist`.
+- **Sign-up cannot grant `staff`.** `signUp()` hardcodes `role: "buyer"`, never
+  reads role from FormData. Promotion is manual in Supabase. No role picker.
+- **`profiles.role` is `text`, enforced by a `check`.** `0002` created a
+  `user_role` enum (dead code); `0009` dropped it, constrains to `buyer | staff`.
+- **Next 16 renamed `middleware.ts` to `src/proxy.ts`.** Guard is
+  `SIGNED_IN_ROUTES` array. `/staff` not in it yet.
+- **`cacheComponents: true` is on.** Session read behind a page needs
+  `<Suspense>`, or `next build` fails on uncached data.
+- **Render with `getClaims()`, never `getUser()`.** `getClaims()` wrapped in
+  React `cache()`, verifies locally. `getUser()` hits Auth server — Server
+  Actions and Route Handlers only.
+- **`request_status` holds only `requested | quoted`.** Widen in own migration,
+  one phase at a time.
 - **Money is whole rupiah.** Store `15000`, never `15000.50`. Format at display.
-- **`/staff` exists but is an empty shell.** Task 1.8 added the page so its guard
-  could be verified by hand; 2.8 fills it with the request queue. The 0003 policy
-  lets a user read only their own row, so staff reading others' profiles needs its
-  own migration in 2.8.
-- **A migration in git is not an applied migration.** `git push` moves SQL text;
-  it never runs it. CI has no Supabase credentials and never calls
-  `supabase db push`, so every migration is a manual dashboard step, and one has
-  already been missed. Apply, then commit. A GitHub integration is connected but
-  deploys nothing — see open items before trying to rely on it.
-- **A `drop policy if exists "name"` can silently do nothing.** Two policies on
-  `consignment_images` were created misspelled, `… consignment imaget_images`, so
-  the drops in `0012` matched nothing and the creates added a second copy beside
-  the typo. Nothing was ever widened — the pairs were byte-identical in `qual` and
-  `with_check`, and permissive policies OR — but a paste-twice guarantee that
-  silently does nothing is not a guarantee. **Read names as hex before trusting a
-  dump**: `encode(convert_to(polname,'utf8'),'hex')` shows what the JSON will not.
-  `0016` repairs the database; `0012` now drops through `pg_policy` instead.
-- **A `drop` then a `create` on a policy is a name-equality test.** Net zero when
-  the name matches, one extra when it does not. That is how the single misspelled
-  table was isolated without checking all twenty-nine by hand — the other twenty-
-  seven names matched exactly, so the one that moved is the one that was wrong.
-- **Never read a table's shape from the dashboard's schema export.** It is not
-  authoritative. It omitted four foreign keys that exist —
-  `commission_order_references.order_id`, `consignment_images.item_id` and both
-  columns of `consignment_order_items` — and showed no `on delete` action on any
-  of the eight it did list, so eight keys were wrong rather than missing. It also
-  claims no trigger moves `updated_at`, and a trigger does on five tables. Read
-  `pg_constraint` and `pg_trigger`, and note that event triggers live in
-  `pg_event_trigger`, so a `pg_trigger` query misses `ensure_rls` entirely.
-- **Paste migrations one statement at a time.** `0003` was pasted in a batch with
-  others and aborted silently, leaving `pg_policies` empty while the later
-  statements in the same paste appeared to succeed. Verify each one:
-  `select policyname, qual from pg_policies where tablename = 'profiles';` for a
-  policy, `to_regtype('public.user_role')` for a type.
-- **Supabase Auth has an Email provider toggle, and turning it off breaks sign-in
-  entirely** — for every account, not just new ones. It does not merely skip email
-  confirmation. Leave it on. If sign-in suddenly fails for accounts that worked a
-  minute ago, check this before suspecting the code.
-- **Sign-up errors are swallowed in three places.** `login/actions.ts`,
-  `auth/sign-up/actions.ts` and `lib/auth.ts` all return null or a generic message
-  regardless of the real Supabase error, so a denied read, a disabled provider and a
-  wrong password look identical from the page. That is why 1.8 took three wrong
-  diagnoses. Log `error.message` in development before debugging one of these.
-- **The signup route is `/auth/sign-up`,** not `/register`. Nav and footer links
-  are tested against real files by `pendingPages.ts`.
+- **`/staff` exists but is an empty shell.** 1.8 added page for guard testing;
+  2.8 fills it. `0003` policy lets user read only own row — staff reading others'
+  profiles needs own migration in 2.8.
+- **A migration in git is not an applied migration.** Every migration is a manual
+  dashboard step. Apply, then commit.
+- **A `drop policy if exists "name"` can silently do nothing.** Read names as hex
+  before trusting a dump: `encode(convert_to(polname,'utf8'),'hex')`.
+- **Never read a table's shape from the dashboard's schema export.** It omitted
+  four FKs and showed no `on delete` actions. Read `pg_constraint` and
+  `pg_trigger`. Event triggers live in `pg_event_trigger`.
+- **Paste migrations one statement at a time.** `0003` was pasted in a batch and
+  aborted silently. Verify each: `select policyname, qual from pg_policies where
+  tablename = 'profiles';`
+- **Supabase Auth Email provider toggle.** Turning it off breaks sign-in for every
+  account. Leave it on.
+- **Sign-up errors swallowed in three places.** `login/actions.ts`,
+  `auth/sign-up/actions.ts`, `lib/auth.ts` return null or generic message. Log
+  `error.message` in development.
+- **Signup route is `/auth/sign-up`**, not `/register`. Tested by `pendingPages.ts`.
 
 ---
 
 ## Phase 0 — Running and online
-
-Nothing else can be tested until the project runs and is on the internet.
 
 - [x] **0.1** `.gitignore` exists before any `npm install` *(`199ecaa`)*
 - [x] **0.2** Next.js app in this repo, TypeScript, App Router *(`199ecaa`)*
@@ -115,13 +75,8 @@ Nothing else can be tested until the project runs and is on the internet.
 
 ## Phase 1 — Shared foundation
 
-Login, the database, and the shared layout. Both halves need all of this.
-
-**Closed.** Every box is ticked; the last three were applied by hand in Supabase
-rather than committed, so they carry `manual` instead of a hash. Order mattered
-twice on the way here: **1.16 before 1.8**, or the guard protects a route anyone can
-walk into, and **1.15 before 1.17**, so the data was flipped before the labels
-changed.
+**Closed.** Order mattered: **1.16 before 1.8** (guard protects route anyone can
+walk into), **1.15 before 1.17** (data flipped before labels changed).
 
 - [x] **1.1** Migration `0001_profiles.sql`: id, email, full_name, role, created_at *(`0344c42`)*
 - [x] **1.2** Migration `0002_enums.sql`: roles `buyer | artist | staff`, shared status list *(`4a1ae2e`)*
@@ -147,7 +102,7 @@ changed.
 Not a phase. A gate, because Phase 2 would otherwise build on schema that exists
 only in the live database and in nobody's git history.
 
-- [ ] **P1** Migration files `0010`–`0014`, Alfreza: the thirteen tables built in the dashboard get written down
+- [x] **P1** Migration files `0010`–`0014`: the thirteen tables built in the dashboard get written down *(HASH_PLACEHOLDER)*
 
 ## Phase 2 — Commissions (Verrel's half)
 
@@ -187,8 +142,7 @@ Buyer sends a Japanese product link, staff quotes price + shipping + fee.
 
 ## Phase 4 — Payments (Xendit test mode)
 
-Do this after both halves can reach "buyer accepts a quote", otherwise there is
-nothing to pay for.
+Do this after both halves can reach "buyer accepts a quote".
 
 - [ ] **4.1** Create the Xendit account, switch to test mode
 - [ ] **4.2** Put the test secret key in `.env.local` and Vercel
@@ -235,408 +189,110 @@ Never cut: payment, login, or the quote step. They are the assignment.
 
 ## Known open items, not yet tasks
 
-- **Every migration in this repository has been applied by hand.** All nine, as of
-  the Phase 2 tables going in: `0001`, `0002`, `0003`, `0004`, `0005`, `0006`,
-  `0009`, and Supabase's own two. Nothing records that, so check the database
-  rather than trusting this line or a green build. `0003` sat unapplied for days and
-  cost 1.8 three wrong diagnoses before anyone looked at `pg_policies`.
-- **Sign-up escalation: closed by 1.16.** It used to offer `staff` and only checked
-  the value was in its own list. The field is gone and the role is hardcoded now, so
-  task 1.8 can rely on `profiles.role` meaning something.
-- **Verrel's login now exists** and is `staff`, so both sellers can reach `/staff`.
-  Phase 1 is closed.
-- **Test accounts sit in the live database.** `wagakami@gmail.com` (TESTO) and
-  `alamak@gmail.com` are throwaways. They will show up in the 6.4 screenshots and in
-  any demo run. Delete them, or keep `alamak` as the standing buyer for guard tests
-  — it is the account that proved 1.8.
-- **Nothing applies migrations for us.** `git push` ships SQL text only; CI runs
-  build, lint and test, and has no Supabase credentials, so there is no
-  `supabase db push` anywhere. Every migration is a manual step in the Supabase
-  dashboard. Both of us share one project, so apply it once — but tell the other
-  person, because their local code has to expect the new schema.
-- **The GitHub integration is connected but does nothing.** Checked and left off:
-  the Integrations page shows only Data API and Vault, and `supabase/` has no
-  `config.toml`, so no migration was ever deployed by a push. Pasting in the
-  dashboard stays the route. Do not spend another session re-deriving this — if it
-  is ever made to work, read the two lines below first, because a push applying
-  migrations is not a free upgrade.
-  - Before it could work, `supabase_migrations.schema_migrations` has to be
-    backfilled by hand with the versions of the nine applied migrations. Empty, a
-    runner replays `0001`–`0003` against tables that already exist.
-  - And the two Supabase-era files, `20261004133000_profiles_rls.sql` and
-    `20261004150000_create_profile_on_signup.sql`, would have to be renumbered.
-    The CLI compares migration versions as *strings*, so `0010` sorts before
-    `20261004150000` and every later migration is then rejected as out-of-order,
-    with no flag to override it on the hosted runner.
-- **Thirteen more tables live in this project, and no migration file describes
-  them.** `admins`, `users`, `commission_categories`, `commission_images`,
-  `commission_orders`, `commission_order_references`, `consignment_categories`,
-  `consignment_items`, `consignment_images`, `consignment_orders`,
-  `consignment_order_items`, `consignors` and `email_notifications` were built in
-  Supabase for Phase 3, by Alfreza, ahead of this repository's own files. All
-  ArunoStore and both of us can change every one of them. What is missing is the
-  migration: none of them appears in `supabase/migrations/`, because they were made
-  directly in the dashboard. So nothing in this repository can bring them back,
-  and git cannot say why one of them changed — a rebuild from these files alone
-  would produce a shop with only our four tables in it. **P1 writes them down**,
-  and Phase 2 should wait for it. Three things to settle in the same conversation:
-  - `commission_orders` and `commission_categories` cover ground `commissions` and
-    `services` also cover. Two live tables for one job, so pick one before 2.3
-    builds a page over the wrong one.
-  - Their money columns are `numeric` (`total_price`, `price`), which breaks the
-    whole-rupiah rule if they are ever read or written by us.
-  - `admins.store_role` allows `art_commission | consignment | super_admin`, the
-    three-role model Phase 1 deleted in `381ced3`. The app's roles are `buyer` and
-    `staff` on `profiles` and nothing else. Do not branch on `store_role`.
+- **Every migration applied by hand.** All nine as of Phase 2 tables: `0001`–`0006`,
+  `0009`, plus Supabase's own two. Check the database, not this file.
+- **Sign-up escalation: closed by 1.16.** Role field gone, role hardcoded.
+- **Verrel's login exists** and is `staff`. Both sellers reach `/staff`.
+- **Test accounts in live DB.** `wagakami@gmail.com` (TESTO), `alamak@gmail.com`.
+  Delete or keep `alamak` as standing buyer for guard tests.
+- **Nothing applies migrations for us.** `git push` ships SQL text only. One
+  Supabase project, one repo, two developers — apply once, tell the other person.
+- **GitHub integration connected but does nothing.** No `supabase/config.toml`,
+  no migration deployed by push. Before it could work: backfill
+  `supabase_migrations.schema_migrations` by hand, and renumber the two
+  Supabase-era files (`0010` sorts before `20261004150000` as strings).
+- **Thirteen more tables, no migration file — now captured by P1.** `admins`,
+  `users`, `commission_categories`, `commission_images`, `commission_orders`,
+  `commission_order_references`, `consignment_categories`, `consignment_items`,
+  `consignment_images`, `consignment_orders`, `consignment_order_items`,
+  `consignors`, `email_notifications`. Overlap: `commission_orders` and
+  `commission_categories` cover ground `commissions` and `services` also cover.
+  Pick one before 2.3. Money columns are `numeric` — breaks whole-rupiah rule.
+  `admins.store_role` allows three-role model Phase 1 deleted. Do not branch on it.
 - **Confirming a commission order fails.** `handle_commission_order_confirmed()`
-  updates `public.commissions` setting `used_slots` and testing `max_slots`, and
-  sets `status = 'closed'`. Our `commissions` from 0005 has neither column, and
-  `request_status` holds only `requested | quoted`, so the value is not legal
-  either. It is an AFTER UPDATE trigger, so the exception rolls the statement
-  back. Blocked on the 2.3 overlap decision — the fix is either columns on our
-  table or a different function, and neither is ours to pick alone.
-- **Commission orders cannot be inserted.** `notify_commission_order()` reads its
-  recipient with `where store_role = 'art_commission' limit 1`, and that column
-  defaults to `'consignment'`. No art_commission admin means a null address, and
-  `email_notifications.recipient_email` is `not null`, so the notification insert
-  raises and takes the order insert with it. Needs an admin set to
-  `art_commission` by hand, or the lookup changed.
-- **Every admin policy hangs off one row of `admins`.** All thirteen
-  `Admin kelola …` policies resolve admin-ness by reading `public.admins`, and
-  that read is under RLS, where admins' only select policy is `auth.uid() = id`.
-  It works because that policy permits exactly the caller's own row. Tighten or
-  drop it and all thirteen go false simultaneously: no error, just empty tables
-  everywhere. Same failure class as 0003, invisible from any single policy.
-- **`consignment_items.stock` can go negative.** No `check (stock >= 0)`, and
-  `handle_consignment_order_confirmed()` decrements it on confirmation.
-- **A confirmed consignment item never goes back.** `status` only ever moves to
-  `'terjual'`, never to `'terseda'`, so a restocked item stays marked sold.
+  updates `public.commissions` setting `used_slots`/`max_slots` (neither exists on
+  our table), sets `status = 'closed'` (not in `request_status`). AFTER UPDATE
+  trigger rolls back. Blocked on 2.3 overlap decision.
+- **Commission orders cannot be inserted.** `notify_commission_order()` reads
+  recipient with `where store_role = 'art_commission' limit 1`. Column defaults to
+  `'consignment'`. Null address → `email_notifications.recipient_email` not null
+  → insert raises, takes order insert with it. Needs admin set to `art_commission`
+  by hand, or lookup changed.
+- **Every admin policy hangs off one row of `admins`.** All thirteen `Admin
+  kelola …` policies resolve admin-ness by reading `public.admins` under RLS,
+  where admins' only select policy is `auth.uid() = id`. Tighten or drop it and
+  all thirteen go false simultaneously — no error, just empty tables.
+- **`consignment_items.stock` can go negative.** No `check (stock >= 0)`,
+  `handle_consignment_order_confirmed()` decrements on confirmation.
+- **Confirmed consignment item never goes back.** `status` only moves to
+  `'terjual'`, never to `'tersedia'`.
 - **`admins` update policy has no `with_check`,** so Postgres reuses the `using`
-  clause and an admin can update every column of their own row, `store_role`
-  included.
-- **Lighthouse against the live site.** 1.12 and 1.13 changed the shape of every
-  response, but nothing has measured the win yet. Do it after the next deploy.
-- **Region mismatch.** Unknown whether Supabase and the Vercel functions sit in
-  the same region. Measure before assuming; move whichever side is cheap to
-  move.
-- **No index on any foreign key, status or `created_at`,** in the captured tables
-  or in ours. A staff queue ordered newest first, or a buyer's own list, is a
-  sequential scan until one is added. Add them when a query needs one.
+  clause — admin can update every column of own row, `store_role` included.
+- **Lighthouse against the live site.** 1.12 and 1.13 changed every response shape,
+  nothing measured the win yet. Do after next deploy.
+- **Region mismatch.** Unknown whether Supabase and Vercel functions sit in same
+  region. Measure before assuming.
+- **No index on any FK, status or `created_at`.** Staff queue ordered newest first
+  is a sequential scan until one is added.
 
 ---
 
 ## Task notes
 
-Everything that used to sit under a task, kept per task number.
-
-**0.2** Hand-built, not `create-next-app`. Tailwind v4 added early by choice — no
-config file, theme lives in `globals.css`.
-
-**0.3** Tokens `cream` / `plum` / `ink`. Fonts self-hosted via `next/font/google`
-as CSS variables, so the theme can reference them.
-
-**0.5** The project already lived under the partner's org; no second one was made.
-Noted the new-format `sb_publishable_` key, not the secret key. Verified with
-`/auth/v1/settings`, 200.
-
-**0.6** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
-`.env.example` carries the two names, no values.
-
-**0.7** Both env vars set as Production and Preview. The key is not provable in
-any JS chunk until `src/` reads it. Navbar 404s on `/commissions` and `/titipan`;
-those land in Phases 2 and 3.
-
-**0.8** Deleted `index.html`, `login.html`, `register.html`, `css/style.css`,
-`js/script.js`. `assets/` stays — raw media staging.
-
-**1.4** The route is `/auth/sign-up`, not `/register`. The role select arrived here
-and offered all three roles; task 1.16 removes `staff` from it.
-
-**1.7** Written for `/dashboard`, which task 1.14 then removed. The guard itself
-lives on and now covers `/account`: same shape, same place, `proxy.ts`. Confirmed
-by hand — `/account` answers 307 to `/login` signed out.
-
-**1.8** Verified by hand, all three cases: signed out on `/staff` gets 307 to
-`/login`; signed in as Alfreza the staff page renders; signed in as a buyer it
-bounces to the storefront. `proxy.ts` grew `STAFF_ROUTES` and `isStaff()`, which
-reads the caller's own `profiles` row. Eleven tests in `proxy.test.ts` cover buyer
-to `/`, staff through, missing row blocked, unknown role blocked, nested paths
-guarded, `/staffing` left alone. Four of them were watched failing with the role
-check removed before it was put back.
-
-`app/staff/page.tsx` is a bare shell on purpose: a guard on a 404 proves nothing,
-since blocked and allowed would look identical. 2.8 fills it in.
-
-Fails closed on a missing row deliberately. Every row read null while 0003 was
-unapplied, and a fail-open guard would have handed `/staff` to the public the
-moment it had data behind it.
-
-**The bug was never in this task.** `/account` said "Belum diisi" and `/staff`
-bounced everyone because `0003_profiles_select_policy.sql` had never actually been
-applied — RLS was on with zero policies, so every read of `profiles` was denied.
-Applying it fixed both symptoms at once. Three wrong diagnoses got there first:
-a stale router cache, then mismatched profile ids, then a disabled Email provider.
-None of them were it. `select * from pg_policies where tablename = 'profiles'` was
-the query worth running first.
-
-**1.10** Alfreza only. `tomomiogawa764@gmail.com` is `staff`, applied by hand and
-confirmed by signing in and loading `/staff`. Verrel was not promoted here because he
-had no login yet, which is what 1.18 then fixed.
-
-**1.18** Done by hand, no commit. Verrel signed up through `/auth/sign-up`, which
-hardcodes `buyer` as intended, then the role was set with the same `update` as
-1.10. Both sellers can now reach `/staff`. The whole sign-up-then-promote path is
-now exercised once end to end, which is the first time this phase had two real staff
-accounts to check the guard against.
-
-**1.9** Now `/account`, not `/dashboard`. Reads the `profiles` row through
-`getProfile()` in `lib/auth.ts` and shows the role in words, never as the stored
-value, because the buyer is the one reading it and the column is not English. The
-rows sit behind a `<Suspense>` boundary so the route still prerenders, same rule as
-1.12; without it `next build` fails on uncached data.
-
-**1.10** Not a code task, and deliberately no commit. One `update` in the
-Supabase SQL editor after 0009:
-
-```sql
-update public.profiles set role = 'staff' where email = 'alfreza@…';
-```
-
-Check the address first with `select id, email, full_name, role from
-public.profiles order by created_at;` — do not guess at it. Then sign in and open
-`/staff`. Tick by hand and write `manual` in place of a hash. Verrel is 1.18.
-
-**1.11** The footer linked `/register`, which never gets built, so it 404ed. Now
-points at `/auth/sign-up`. A test checks every nav and footer link resolves,
-verified by breaking the link and watching it fail. Also dropped the empty
-`supabase/client.ts` and lint ignores for files deleted in 0.8.
-
-**1.12** The navbar read the user while rendering, so every page waited on a round
-trip to Supabase Auth — including `/login` and `/auth/sign-up`, which never needed
-to know. That read moved into `getClaims()` in `lib/auth.ts` behind a
-`<Suspense>` boundary, deduped with React `cache()`. `proxy.ts` refreshes the
-session per request. Keeps 1.7 and 1.8 in reach.
-
-**1.13** `cacheComponents: true`. Build output went from all routes `ƒ` dynamic to
-`◐` partial prerender, `/login` and `/auth/sign-up` included. Only the auth
-controls are filled in per request. Depends on 1.12.
-
-**1.14**
-
-What: signing in no longer lands on a separate dashboard. The home page is the
-storefront, login returns to it, and the one signed-in page is `/account`. Header
-rebuilt after cottonink.co.id — pink announcement bar, hamburger, centred
-wordmark, account/search/bag icons.
-Why: a buyer signs in mid-shop and wants to keep shopping; a dashboard with
-nothing on it was a dead end. Cottonink's account area is `/account`.
-Tech: deleted `app/dashboard/` and `components/dashboard/`, header moved to
-`components/Navbar.tsx` with `Panels.tsx` holding one-open-at-a-time state,
-`login/actions.ts` redirects to `/`. Migration `0003` was required and is still
-unapplied — RLS was on `profiles` with no policy at all, so no signed-in user
-could read their own row. `profiles.role` is `text` while the `user_role` enum
-from 1.2 goes unused; left alone then, and cleaned up by task 1.15.
-
-**1.15** `0009_staff_role_only.sql`, a new migration rather than an edit to the
-already-committed `0003`. Three statements, and the order is forced: the check
-constraint rejects an `artist` row, so the `update` has to empty them before it can
-be added. Written to be safe to paste twice — the constraint is dropped if it
-exists first, because nothing tracks which migrations have been applied.
-
-Applied and confirmed. `to_regtype('public.user_role')` now returns null, so the
-enum is gone and the constraint is live.
-
-**1.17** `details.tsx` drops the `artist` entries from `ROLE_LABEL` and
-`ROLE_NOTE`, and the one staff note now speaks for both halves, since Verrel
-quotes commissions and Alfreza ships titipan. The test loses its artist case and
-gains one asserting no `Artist` label exists, so re-adding the role to the map would
-fail. A row still holding `artist` falls back to the raw string on screen rather
-than rendering blank, which is the honest reading of a value the app does not have.
-
-**1.16** The role field is gone from the form, not merely narrowed. `page.tsx`
-loses the `<select>` and its label outright; `actions.ts` stops reading `role` from
-the FormData and hardcodes `role: "buyer"` into `signUp()`'s metadata. Ignoring the
-posted value beats validating it: there is no code path left that could ever set a
-role from client input, so the hole cannot reopen by adding a field back.
-
-`actions.test.ts` is new and is why this could not regress unnoticed — nothing
-tested `signUp()` before. Six cases: a buyer signup, a forged `staff`, a forged
-`artist`, an assertion that the posted role never reaches Supabase, a mismatched
-password that must not call Supabase, and a surfaced Supabase error. The forged
-cases were verified by reintroducing the old `role` from FormData and watching all
-three fail, then reverting.
-
-Staff are the two of us and are promoted by hand in Supabase. There is no signup
-path to staff, by design, and no invite path either.
-
-
-
-**2.4** Needs `images.remotePatterns` in `next.config.ts` first, or every image
-404s through the optimiser. Storage needs its own RLS policies in a migration, and
-only `staff` may write.
-
-**2.1** `0004_services.sql`. Four columns the roadmap named and two it implied:
-`name` and `description` for 2.3's list, `starting_price` and `duration_days` for
-the same page, `active` for hiding an offer without deleting it, plus
-`created_at`. Duration is whole days as an integer rather than a sentence, so
-2.3 can sort and format it instead of parsing prose.
-
-**No write policy, on purpose.** No task asks staff to edit the catalogue from
-the app — 6.1 seeds it — so the rows come from the SQL editor, which runs as
-postgres and ignores RLS. An insert policy would be a second way in to a
-catalogue nobody has asked to edit. Add one when a task asks for it.
-
-**The select policy is `to anon, authenticated` because 2.3 is a public page.**
-Limited to `authenticated` it would render an empty shop to every signed-out
-visitor, which is the storefront's normal state. It filters on `active` only, with
-no staff exception: 2.3 is one list, and two behaviours would mean two lists.
-
-**2.2** `0005_commissions.sql`, deliberately the same shape as 0006's
-titipan_requests: three policies, the staff one pinned to `p.id = auth.uid()` for
-the reason 0006's is, and no update policy at all until 2.10 brings its own.
-
-**`service_id` is `not null` with `on delete restrict`.** A commission is always
-for one of the things on offer, and the reference must not be able to disappear:
-deleting a service row would otherwise break a finished drawing and its quote.
-That is what `active` on services is for. The day commissions exist for things
-not in the catalogue, this becomes nullable — one migration, not a rewrite.
-
-**`reference_links` is a `text[]`, not a second table.** The links are written
-and read whole with the rest of the form at 2.6 and never queried on their own,
-so a join table would exist only to be read once. No URL shape check either: the
-link is a hint for the artist, not something the app fetches.
-
-**`delivery_image` is plain text.** A Storage bucket and its policies are 2.4's
-job for the gallery and 2.13's for the finished drawing. The buyer is meant to see
-that drawing because it lands on their own row, which the buyer's own select
-policy already allows — not because anyone was handed the bucket.
-
-**The enum was left alone, again.** `status` uses `request_status` as 0002 has
-it: 2.7 writes `requested`, 2.10 writes `quoted`. `accepted` and `declined` come
-with 2.12 in a migration of their own. Same call, same reason as 0006.
-
-**Both tables are applied and verified.** `services` and `commissions` exist with
-the committed columns, RLS is on for both, and all four policies are live — one on
-`services`, three on `commissions`. Pasteable-twice is what made that a paste
-rather than a gamble: `create table if not exists` plus `drop policy if exists`
-means a second run cannot collide with anything. `0004` had to go before `0005`,
-which references it.
-
-**P1** Six files, `0010`–`0015`, and I wrote them rather than Alfreza, because
-the thirteen tables had no creation SQL anywhere to transcribe — only a live
-database to read. Reconstruction gives structure and never intent, so every file
-opens with CAPTURED, NOT AUTHORED. That warning is the point: a captured
-constraint records what exists, not what someone decided, and the next reader
-would otherwise assume every odd default was deliberate.
-
-**Six files, not five.** Functions and triggers could not go with their tables, so
-they are last and paste last — a trigger cannot be created before the function it
-calls exists. `update_updated_at()` alone serves four of the thirteen tables, and
-defining it once beats copying it into four files that would drift.
-
-**The dashboard's schema export is not authoritative, and that cost a round.**
-It omitted four foreign keys that do exist — `commission_order_references.order_id`,
-`consignment_images.item_id`, both columns of `consignment_order_items` — and it
-showed not one `on delete` action, so eight foreign keys were wrong rather than
-missing. Capture from `pg_constraint`. Half a rewrite came from trusting the
-export over the catalog.
-
-**Trigger creation is the one thing that cannot be written as `if not exists`.**
-Neither `create trigger` nor `create event trigger` accepts it, so every one is
-preceded by a `drop ... if exists`. That is also why the event trigger matters:
-`ensure_rls` is what put RLS on all seventeen tables, and it is invisible to a
-`pg_trigger` query because event triggers live in `pg_event_trigger`.
-
-**Only `ensure_rls` was captured from the seven event triggers.** The other six —
-`pgrst_ddl_watch`, `issue_pg_net_access` and the rest — belong to the Supabase
-platform. Writing platform machinery into a project migration is how a rebuild
-ends up worse than the thing it replaced.
-
-**P1 is not ticked until the paste is verified.** The files are written; nothing
-has run them. Paste all six, then confirm 17 tables, 37 policies and RLS true on
-all 17. A count that moves means stop.
-
-**The first paste came out at 39, not 37.** `consignment_images` had two policies
-spelled `imaget_images`, so `0012`'s literal drops missed and its creates doubled
-them. No access changed — the pairs were byte-identical — but it is why `0016`
-exists and why `0012` no longer matches names literally. Worth recording because
-the same trap will fire on any hand-written policy name that is not byte-exact,
-and nothing about the result looks like an error.
-
-**The overlap is the part that cannot be mechanical.** `commission_orders` and
-`commission_categories` do the same work as `commissions` and `services`. P1
-records both; choosing one is a separate decision, and 2.3 waits on it because a
-public page built over the wrong table is a page to rewrite.
-
-**3.1** One migration: the table, RLS switched on, and three policies. Every
-column is named by a later task — 3.3 gives size, colour, quantity and budget,
-3.6 gives the three quote numbers, 3.11 gives courier and tracking — so the table
-has nothing in it that no task asked for.
-
-**No `total` column.** 3.6 says the total is computed automatically, and a stored
-sum sits next to the three parts it came from. The day staff edit a part without
-it, the two disagree and the buyer is charged the wrong figure. `quoteTotal()` in
-`src/lib/quote.ts` is the only place a total comes from.
-
-**The enum was left alone, which is the point.** `status` uses `request_status`
-from 0002 as it stands. 3.4 writes `requested` and 3.7 writes `quoted`, and those
-are the only two values either task needs. `accepted` and `declined` arrive with
-2.12; `purchased`, `shipped` and `arrived` arrive at 3.10 in a migration of their
-own. Widening it here would have been guessing at 3.10's wording.
-
-**The staff policy is pinned to `p.id = auth.uid()` and must stay that way.** RLS
-applies inside a policy's subquery, and 0003 gives each signed-in user a select
-policy on `profiles` covering exactly one row — their own. A bare `where
-p.role = 'staff'` reads every profile, 0003 denies it, and both sellers get an
-empty queue with nothing in the logs to show for it. Same fail-closed reasoning
-as `isStaff()` in `proxy.ts`.
-
-**No update or delete policy.** 3.7 is the first write to a row staff do not own
-and brings its own migration. Until then nobody can edit anything, which is the
-right state for a table no form has reached yet.
-
-**Written to be pasteable twice** — `if not exists` on the table, `drop policy if
-exists` before each one — because nothing records which migrations have been
-run. Same reason 0009 is written that way.
-
-**What this task has not proved:** that a buyer can actually insert. The
-dashboard runs as `postgres`, which ignores RLS, so the shape smoke test proves
-the column names and defaults and nothing about the policies. Real proof arrives
-with the form at 3.4.
-
-**3.2** `src/app/titipan/page.tsx`, plus `SERVICE_FEE` in that same file and
-`quoteTotal()` in `src/lib/quote.ts`. The Titipan link in the hamburger, the
-footer and the storefront all pointed at nothing until now; all three reach this
-page.
-
-**Reads no session at all.** That is what lets the route prerender, and it is why
-there is no `<Suspense>` boundary either — the boundary only exists because of the
-read. Confirmed by hand: 21 requests, zero to Supabase, console empty. Note the
-build prints `/titipan` as `◐`, the same as `/` and `/staff`; that hole is the
-`AuthSlot` boundary in the layout, not this page.
-
-**The fee is one constant.** `SERVICE_FEE = 25000` lives in the page and nowhere
-else, marked `ponytail:` with the ceiling named. The page test hardcodes
-`Rp 25.000` on purpose, so changing the fee breaks a test and forces a decision
-about the "per barang" wording next to it rather than slipping through.
-
-**`quoteTotal()` is in `src/lib/quote.ts`, not in the page.** Two callers need the
-same sum: this page's worked example, and the staff quote box at 3.6. Its test is
-what keeps "round each part, then add" honest — rounding the sum instead leaves
-the total a rupiah away from the three figures the buyer is shown.
-
-**`PENDING` had to come off the list in the same commit.** `Footer.test.tsx`
-already asserted the pending list holds no page that exists, so the test fails the
-moment `src/app/titipan/page.tsx` appears. Watched it fail by putting `/titipan`
-back, then watched it pass. The page's own links point at `/auth/sign-up` and
-`/login` rather than at a form that 3.3 has not built — both exist, so 3.2 ships
-no dead link.
-
-**Checked by hand:** `/titipan` answers 200 signed out with no console error, and
-every href on the page answers 200. `/commissions` still answers 404, which is
-correct — it is declared pending until Phase 2.
-
-**Two things for Alfreza to confirm,** neither of which is settled by the code:
-the figure of `Rp 25.000` per item, and the wording of "Sebelum kamu mengirim" —
-that section is policy, not decoration.
-
-**6.5** The demo script and screenshots are still 6.3 and 6.4.
+**0.2** Hand-built, not `create-next-app`. Tailwind v4, no config file, theme in `globals.css`.
+
+**0.3** Tokens `cream` / `plum` / `ink`. Fonts self-hosted via `next/font/google` as CSS variables.
+
+**0.5** Project lived under partner's org. Noted `sb_publishable_` key format. Verified `/auth/v1/settings`, 200.
+
+**0.6** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. `.env.example` has names, no values.
+
+**0.7** Both env vars set as Production and Preview. Navbar 404s on `/commissions` and `/titipan` — Phases 2 and 3.
+
+**0.8** Deleted `index.html`, `login.html`, `register.html`, `css/style.css`, `js/script.js`. `assets/` stays.
+
+**1.4** Route is `/auth/sign-up`, not `/register`. Role select offered all three roles; 1.16 removes `staff`.
+
+**1.7** Guard covers `/account` (not `/dashboard`, removed in 1.14). Same shape, `proxy.ts`. Confirmed: 307 to `/login` signed out.
+
+**1.8** Verified by hand: signed out → 307, Alfreza → renders, buyer → bounces. `proxy.ts` has `STAFF_ROUTES` and `isStaff()`. 11 tests in `proxy.test.ts`. Fails closed on missing row — fail-open would hand `/staff` to public.
+
+Bug was never in this task: `0003` never applied, RLS on with zero policies. Three wrong diagnoses before `select * from pg_policies where tablename = 'profiles'` found it.
+
+**1.10** Alfreza only. `tomomiogawa764@gmail.com` → `staff`, by hand. Verrel had no login yet (1.18).
+
+**1.18** By hand, no commit. Verrel signed up (hardcoded `buyer`), then promoted. Both sellers reach `/staff`.
+
+**1.9** `/account` reads `profiles` via `getProfile()` in `lib/auth.ts`. Role shown in words. `<Suspense>` boundary for prerender.
+
+**1.10** Manual. `update public.profiles set role = 'staff' where email = 'alfreza@…'`. Check address first.
+
+**1.15** `0009_staff_role_only.sql`. Order forced: update empties `artist` rows before check constraint added. Paste-twice safe. `to_regtype('public.user_role')` now null — enum gone.
+
+**1.17** `details.tsx` drops `artist` from `ROLE_LABEL`/`ROLE_NOTE`. Test asserts no `Artist` label. Unknown role falls back to raw string.
+
+**1.16** Role field gone from form. `actions.ts` hardcodes `role: "buyer"`. `actions.test.ts`: 6 cases — buyer, forged staff, forged artist, posted role never reaches Supabase, mismatched password, surfaced error. Forged cases verified by reintroducing old code and watching tests fail.
+
+**2.4** Needs `images.remotePatterns` in `next.config.ts`. Storage RLS policies in migration, `staff` only writes.
+
+**2.1** `0004_services.sql`. Columns: `name`, `description`, `starting_price`, `duration_days`, `active`, `created_at`. Duration is integer days. No write policy — 6.1 seeds via SQL editor. Select policy `to anon, authenticated`, filters on `active` only.
+
+**2.2** `0005_commissions.sql`. Same shape as 0006. Three policies, staff pinned to `p.id = auth.uid()`. No update policy until 2.10. `service_id` not null, `on delete restrict`. `reference_links` is `text[]`. `delivery_image` is plain text. `status` uses `request_status` as-is.
+
+Both applied and verified. `0004` before `0005` (FK dependency). Paste-twice safe.
+
+**P1** Six files `0010`–`0015`, written by Verrel (no creation SQL existed — only live DB). Every file opens with CAPTURED, NOT AUTHORED. Functions and triggers in 0015 (paste last — trigger needs function to exist). `update_updated_at()` serves four tables.
+
+Dashboard schema export not authoritative — omitted four FKs, showed no `on delete` actions. Capture from `pg_constraint`. Trigger creation has no `if not exists` — each preceded by `drop ... if exists`. `ensure_rls` event trigger puts RLS on all 17 tables; lives in `pg_event_trigger`, invisible to `pg_trigger` queries. Only `ensure_rls` captured from 7 event triggers — other 6 are Supabase platform.
+
+P1 not ticked until paste verified: 17 tables, 37 policies, RLS true on all 17. First paste came out 39 not 37 — `consignment_images` had misspelled `imaget_images` policies. `0016` repairs live DB. `0012` drops via `pg_policy` lookup.
+
+Overlap: `commission_orders`/`commission_categories` do same work as `commissions`/`services`. P1 records both; choosing one is separate decision. 2.3 waits on it.
+
+**3.1** `0006_titipan_requests.sql`. Table + RLS + 3 policies. Every column named by later tasks. No `total` column — `quoteTotal()` in `src/lib/quote.ts` is only source. `status` uses `request_status` as-is. Staff policy pinned to `p.id = auth.uid()` — bare `where p.role = 'staff'` reads every profile, 0003 denies it, empty queue. No update/delete policy until 3.7. Paste-twice safe.
+
+Not proved: buyer can actually insert. Dashboard runs as `postgres` (ignores RLS). Real proof arrives with form at 3.4.
+
+**3.2** `src/app/titipan/page.tsx` + `SERVICE_FEE = 25000` + `quoteTotal()` in `src/lib/quote.ts`. Reads no session — prerenders, no `<Suspense>`. Build shows `◐` (hole is `AuthSlot` boundary in layout). Fee marked `ponytail:`. Page test hardcodes `Rp 25.000`. `PENDING` removed from footer test same commit. Links point at `/auth/sign-up` and `/login` (both exist). Verified: 200 signed out, no console error, all hrefs 200. `/commissions` still 404 (pending Phase 2).
+
+**6.5** Demo script and screenshots are 6.3 and 6.4.
