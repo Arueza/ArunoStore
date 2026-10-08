@@ -19,9 +19,12 @@ time, not a style preference.
   Supabase's own `20261004133000_profiles_rls.sql`. Use the `000N_name.sql` form
   from here. `0003` is taken by `0003_profiles_select_policy.sql`. **`0004` and
   `0005` went to Phase 2** (the services catalogue and the commissions table),
-  **`0006` is taken by task 3.1**, and `0007` and `0008` belong to Phase 4.
-  Anything further Phase 2 needs — 2.10's staff update policy, 2.13's delivery
-  image, 2.4's Storage — starts at `0010`.
+  **`0006` is taken by task 3.1**, and **`0007`–`0011` are reserved for P1**, which
+  captures the dashboard tables — Alfreza takes all five, since they are his.
+  **Phase 4 moves to `0012` and `0013`**, and anything further Phase 2 needs —
+  2.11's staff update policy, 2.14's delivery image, 2.5's Storage — starts at
+  `0014`. Both of us write into this one project, so a number is claimed by
+  committing it, not by intending it.
 - **RLS on with no policy denies every row, silently.** This was `0003`'s state
   for days: `getProfile()` returned null and `/account` said "Belum diisi" while
   nothing anywhere reported a permission error. It is applied now, but the trap is
@@ -118,14 +121,21 @@ changed.
 - [x] **1.17** Account page shows two roles, no artist label *(`381ced3`)*
 - [x] **1.18** Create Verrel's login and set the role to `staff` — manual *(manual)*
 
+## Before Phase 2 — one prerequisite
+
+Not a phase. A gate, because Phase 2 would otherwise build on schema that exists
+only in the live database and in nobody's git history.
+
+- [ ] **P1** Migration files `0007`–`0011`, Alfreza: the thirteen tables built in the dashboard get written down
+
 ## Phase 2 — Commissions (Verrel's half)
 
 The artist quotes a price for custom work, buyer accepts and pays.
 
 - [x] **2.1** Migration `0004_services.sql`: what is offered, starting price, duration, active flag *(`47d19c4`)*
 - [x] **2.2** Migration `0005_commissions.sql`: buyer, service, brief, reference links, quote, status, delivery image *(`8b56975`)*
-- [ ] **2.3** Public page listing the services
-- [ ] **2.4** Artwork gallery from Supabase Storage, upload only for `artist`
+- [ ] **2.3** Public page listing the services — blocked by P1 until the schema it might read is on record
+- [ ] **2.4** Artwork gallery from Supabase Storage, upload only for `staff`
 - [ ] **2.5** Artwork gallery page
 - [ ] **2.6** Request form: pick a service, write the brief, add reference links
 - [ ] **2.7** Save the form as a row with status `requested`
@@ -161,8 +171,8 @@ nothing to pay for.
 
 - [ ] **4.1** Create the Xendit account, switch to test mode
 - [ ] **4.2** Put the test secret key in `.env.local` and Vercel
-- [ ] **4.3** Migration `0007_payments.sql`: order, amount, status, Xendit ids
-- [ ] **4.4** Migration `0008_order_statuses.sql`
+- [ ] **4.3** Migration `0012_payments.sql`: order, amount, status, Xendit ids
+- [ ] **4.4** Migration `0013_order_statuses.sql`
 - [ ] **4.5** Server code that creates an invoice for an accepted quote
 - [ ] **4.6** Checkout page that shows the amount and opens the payment
 - [ ] **4.7** Webhook that marks the payment paid
@@ -244,9 +254,11 @@ Never cut: payment, login, or the quote step. They are the assignment.
   `consignment_order_items`, `consignors` and `email_notifications` were built in
   Supabase for Phase 3, by Alfreza, ahead of this repository's own files. All
   ArunoStore and both of us can change every one of them. What is missing is the
-  migration: none of them appears in `supabase/migrations/`, so a rebuild from
-  these files alone would not bring them back, and git cannot say why one of them
-  changed. Three things to settle before Phase 2 reads anything:
+  migration: none of them appears in `supabase/migrations/`, because they were made
+  directly in the dashboard. So nothing in this repository can bring them back,
+  and git cannot say why one of them changed — a rebuild from these files alone
+  would produce a shop with only our four tables in it. **P1 writes them down**,
+  and Phase 2 should wait for it. Three things to settle in the same conversation:
   - `commission_orders` and `commission_categories` cover ground `commissions` and
     `services` also cover. Two live tables for one job, so pick one before 2.3
     builds a page over the wrong one.
@@ -458,6 +470,22 @@ the committed columns, RLS is on for both, and all four policies are live — on
 rather than a gamble: `create table if not exists` plus `drop policy if exists`
 means a second run cannot collide with anything. `0004` had to go before `0005`,
 which references it.
+
+**P1** Alfreza's own work, so he writes it: the thirteen dashboard tables need
+migration files `0007`–`0011`, taken all five so there is no argument about
+where to start. They are live and correct today — the risk is not that they are
+wrong, it is that they exist in exactly one place. A Supabase project rebuild, a
+new machine, or a fresh teammate would produce a shop missing `admins`, `users`
+and every `consignment_*` table, with nothing in this repository to rebuild from.
+
+**Write them as the tables are now, not as they should have been.** A dump that
+also "fixes" the `numeric` money columns or the `store_role` trio turns a
+capture into a redesign, and the redesign is a decision neither of us has made.
+
+**The overlap is the part that cannot be mechanical.** `commission_orders` and
+`commission_categories` do the same work as `commissions` and `services`. P1
+records both; choosing one is a separate decision, and 2.3 waits on it because a
+public page built over the wrong table is a page to rewrite.
 
 **3.1** One migration: the table, RLS switched on, and three policies. Every
 column is named by a later task — 3.3 gives size, colour, quantity and budget,
