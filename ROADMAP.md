@@ -20,11 +20,11 @@ time, not a style preference.
   from here. `0003` is taken by `0003_profiles_select_policy.sql`. **`0004` and
   `0005` went to Phase 2** (the services catalogue and the commissions table),
   **`0006` is taken by task 3.1**, `0007` and `0008` are reserved for Phase 4, and
-  **`0010`–`0014` are reserved for P1**, which captures the dashboard tables —
-  Alfreza takes all five, since they are his. `0009` is taken and `0010` is the
+  `0010`–`0014` are reserved for P1**, which captures the dashboard tables, and
+  **`0015` is its functions and triggers file**. `0009` is taken and `0010` is the
   next free number, so the gap is deliberate: gaps are harmless, every migration
   is independent. Anything further Phase 2 needs — 2.11's staff update policy,
-  2.14's delivery image, 2.5's Storage — starts at `0015`. Both of us write into
+  2.14's delivery image, 2.5's Storage — starts at `0016`. Both of us write into
   this one project, so a number is claimed by committing it, not by intending it.
 - **RLS on with no policy denies every row, silently.** This was `0003`'s state
   for days: `getProfile()` returned null and `/account` said "Belum diisi" while
@@ -61,6 +61,14 @@ time, not a style preference.
   `supabase db push`, so every migration is a manual dashboard step, and one has
   already been missed. Apply, then commit. A GitHub integration is connected but
   deploys nothing — see open items before trying to rely on it.
+- **Never read a table's shape from the dashboard's schema export.** It is not
+  authoritative. It omitted four foreign keys that exist —
+  `commission_order_references.order_id`, `consignment_images.item_id` and both
+  columns of `consignment_order_items` — and showed no `on delete` action on any
+  of the eight it did list, so eight keys were wrong rather than missing. It also
+  claims no trigger moves `updated_at`, and a trigger does on five tables. Read
+  `pg_constraint` and `pg_trigger`, and note that event triggers live in
+  `pg_event_trigger`, so a `pg_trigger` query misses `ensure_rls` entirely.
 - **Paste migrations one statement at a time.** `0003` was pasted in a batch with
   others and aborted silently, leaving `pg_policies` empty while the later
   statements in the same paste appeared to succeed. Verify each one:
@@ -268,11 +276,40 @@ Never cut: payment, login, or the quote step. They are the assignment.
   - `admins.store_role` allows `art_commission | consignment | super_admin`, the
     three-role model Phase 1 deleted in `381ced3`. The app's roles are `buyer` and
     `staff` on `profiles` and nothing else. Do not branch on `store_role`.
+- **Confirming a commission order fails.** `handle_commission_order_confirmed()`
+  updates `public.commissions` setting `used_slots` and testing `max_slots`, and
+  sets `status = 'closed'`. Our `commissions` from 0005 has neither column, and
+  `request_status` holds only `requested | quoted`, so the value is not legal
+  either. It is an AFTER UPDATE trigger, so the exception rolls the statement
+  back. Blocked on the 2.3 overlap decision — the fix is either columns on our
+  table or a different function, and neither is ours to pick alone.
+- **Commission orders cannot be inserted.** `notify_commission_order()` reads its
+  recipient with `where store_role = 'art_commission' limit 1`, and that column
+  defaults to `'consignment'`. No art_commission admin means a null address, and
+  `email_notifications.recipient_email` is `not null`, so the notification insert
+  raises and takes the order insert with it. Needs an admin set to
+  `art_commission` by hand, or the lookup changed.
+- **Every admin policy hangs off one row of `admins`.** All thirteen
+  `Admin kelola …` policies resolve admin-ness by reading `public.admins`, and
+  that read is under RLS, where admins' only select policy is `auth.uid() = id`.
+  It works because that policy permits exactly the caller's own row. Tighten or
+  drop it and all thirteen go false simultaneously: no error, just empty tables
+  everywhere. Same failure class as 0003, invisible from any single policy.
+- **`consignment_items.stock` can go negative.** No `check (stock >= 0)`, and
+  `handle_consignment_order_confirmed()` decrements it on confirmation.
+- **A confirmed consignment item never goes back.** `status` only ever moves to
+  `'terjual'`, never to `'terseda'`, so a restocked item stays marked sold.
+- **`admins` update policy has no `with_check`,** so Postgres reuses the `using`
+  clause and an admin can update every column of their own row, `store_role`
+  included.
 - **Lighthouse against the live site.** 1.12 and 1.13 changed the shape of every
   response, but nothing has measured the win yet. Do it after the next deploy.
 - **Region mismatch.** Unknown whether Supabase and the Vercel functions sit in
   the same region. Measure before assuming; move whichever side is cheap to
   move.
+- **No index on any foreign key, status or `created_at`,** in the captured tables
+  or in ours. A staff queue ordered newest first, or a buyer's own list, is a
+  sequential scan until one is added. Add them when a query needs one.
 
 ---
 
@@ -472,19 +509,39 @@ rather than a gamble: `create table if not exists` plus `drop policy if exists`
 means a second run cannot collide with anything. `0004` had to go before `0005`,
 which references it.
 
-**P1** Alfreza's own work, so he writes it: the thirteen dashboard tables need
-migration files `0010`–`0014`, taken all five so there is no argument about
-where to start. `0009` is already taken and `0010` is the next free number, so
-the range starts one higher than the plan first said; the gap is deliberate and
-harmless, because every migration is independent. They are live and correct
-today — the risk is not that they are wrong, it is that they exist in exactly
-one place. A Supabase project rebuild, a
-new machine, or a fresh teammate would produce a shop missing `admins`, `users`
-and every `consignment_*` table, with nothing in this repository to rebuild from.
+**P1** Six files, `0010`–`0015`, and I wrote them rather than Alfreza, because
+the thirteen tables had no creation SQL anywhere to transcribe — only a live
+database to read. Reconstruction gives structure and never intent, so every file
+opens with CAPTURED, NOT AUTHORED. That warning is the point: a captured
+constraint records what exists, not what someone decided, and the next reader
+would otherwise assume every odd default was deliberate.
 
-**Write them as the tables are now, not as they should have been.** A dump that
-also "fixes" the `numeric` money columns or the `store_role` trio turns a
-capture into a redesign, and the redesign is a decision neither of us has made.
+**Six files, not five.** Functions and triggers could not go with their tables, so
+they are last and paste last — a trigger cannot be created before the function it
+calls exists. `update_updated_at()` alone serves four of the thirteen tables, and
+defining it once beats copying it into four files that would drift.
+
+**The dashboard's schema export is not authoritative, and that cost a round.**
+It omitted four foreign keys that do exist — `commission_order_references.order_id`,
+`consignment_images.item_id`, both columns of `consignment_order_items` — and it
+showed not one `on delete` action, so eight foreign keys were wrong rather than
+missing. Capture from `pg_constraint`. Half a rewrite came from trusting the
+export over the catalog.
+
+**Trigger creation is the one thing that cannot be written as `if not exists`.**
+Neither `create trigger` nor `create event trigger` accepts it, so every one is
+preceded by a `drop ... if exists`. That is also why the event trigger matters:
+`ensure_rls` is what put RLS on all seventeen tables, and it is invisible to a
+`pg_trigger` query because event triggers live in `pg_event_trigger`.
+
+**Only `ensure_rls` was captured from the seven event triggers.** The other six —
+`pgrst_ddl_watch`, `issue_pg_net_access` and the rest — belong to the Supabase
+platform. Writing platform machinery into a project migration is how a rebuild
+ends up worse than the thing it replaced.
+
+**P1 is not ticked until the paste is verified.** The files are written; nothing
+has run them. Paste all six, then confirm 17 tables, 37 policies and RLS true on
+all 17. A count that moves means stop.
 
 **The overlap is the part that cannot be mechanical.** `commission_orders` and
 `commission_categories` do the same work as `commissions` and `services`. P1
