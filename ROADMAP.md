@@ -17,10 +17,11 @@ time, not a style preference.
 
 - **Migration numbers.** Two naming schemes are on disk: `0001_profiles.sql` and
   Supabase's own `20261004133000_profiles_rls.sql`. Use the `000N_name.sql` form
-  from here. `0003` is taken by `0003_profiles_select_policy.sql`, so the next
-  free number is `0004`. **`0006` is taken by task 3.1**, and `0007` and `0008`
-  belong to Phase 4. `0004` and `0005` are Phase 2's. Anything extra Phase 2
-  needs — the staff select policy for 2.8, Storage for 2.4 — starts at `0010`.
+  from here. `0003` is taken by `0003_profiles_select_policy.sql`. **`0004` and
+  `0005` went to Phase 2** (the services catalogue and the commissions table),
+  **`0006` is taken by task 3.1**, and `0007` and `0008` belong to Phase 4.
+  Anything further Phase 2 needs — 2.10's staff update policy, 2.13's delivery
+  image, 2.4's Storage — starts at `0010`.
 - **`0003_profiles_select_policy.sql` is written but never applied.** Until it
   runs in Supabase, `getProfile()` returns null and `/account` says "Belum diisi".
 - **There are two roles: `buyer` and `staff`.** Artist is not a role. Verrel and
@@ -117,8 +118,8 @@ changed.
 
 The artist quotes a price for custom work, buyer accepts and pays.
 
-- [ ] **2.1** Migration `0004_services.sql`: what is offered, starting price, duration, active flag
-- [ ] **2.2** Migration `0005_commissions.sql`: buyer, service, brief, reference links, quote, status, delivery image
+- [x] **2.1** Migration `0004_services.sql`: what is offered, starting price, duration, active flag *(`47d19c4`)*
+- [x] **2.2** Migration `0005_commissions.sql`: buyer, service, brief, reference links, quote, status, delivery image *(`8b56975`)*
 - [ ] **2.3** Public page listing the services
 - [ ] **2.4** Artwork gallery from Supabase Storage, upload only for `artist`
 - [ ] **2.5** Artwork gallery page
@@ -199,8 +200,12 @@ Never cut: payment, login, or the quote step. They are the assignment.
 
 ## Known open items, not yet tasks
 
-- **All five migrations are now applied.** `0003` had been written but never run
-  for days, which is why `/account` showed "Belum diisi" and `/staff` bounced
+- **`0004`, `0005` and `0006` are written but not applied.** Phase 2's first two
+  migrations and Phase 3's one are all still text in this repository, and nothing
+  will run them. Paste them in the Supabase SQL editor before starting 2.3, which
+  reads the services table, and apply `0005` after `0004` — it references it.
+- **All five older migrations are now applied.** `0003` had been written but never
+  run for days, which is why `/account` showed "Belum diisi" and `/staff` bounced
   everyone. `0009` went in at the same time. Nothing records which migrations have
   been run, so this can happen again without warning.
 - **`0006_titipan_requests.sql` is written but not applied.** Task 3.1 added it,
@@ -378,6 +383,49 @@ path to staff, by design, and no invite path either.
 **2.4** Needs `images.remotePatterns` in `next.config.ts` first, or every image
 404s through the optimiser. Storage needs its own RLS policies in a migration, and
 only `staff` may write.
+
+**2.1** `0004_services.sql`. Four columns the roadmap named and two it implied:
+`name` and `description` for 2.3's list, `starting_price` and `duration_days` for
+the same page, `active` for hiding an offer without deleting it, plus
+`created_at`. Duration is whole days as an integer rather than a sentence, so
+2.3 can sort and format it instead of parsing prose.
+
+**No write policy, on purpose.** No task asks staff to edit the catalogue from
+the app — 6.1 seeds it — so the rows come from the SQL editor, which runs as
+postgres and ignores RLS. An insert policy would be a second way in to a
+catalogue nobody has asked to edit. Add one when a task asks for it.
+
+**The select policy is `to anon, authenticated` because 2.3 is a public page.**
+Limited to `authenticated` it would render an empty shop to every signed-out
+visitor, which is the storefront's normal state. It filters on `active` only, with
+no staff exception: 2.3 is one list, and two behaviours would mean two lists.
+
+**2.2** `0005_commissions.sql`, deliberately the same shape as 0006's
+titipan_requests: three policies, the staff one pinned to `p.id = auth.uid()` for
+the reason 0006's is, and no update policy at all until 2.10 brings its own.
+
+**`service_id` is `not null` with `on delete restrict`.** A commission is always
+for one of the things on offer, and the reference must not be able to disappear:
+deleting a service row would otherwise break a finished drawing and its quote.
+That is what `active` on services is for. The day commissions exist for things
+not in the catalogue, this becomes nullable — one migration, not a rewrite.
+
+**`reference_links` is a `text[]`, not a second table.** The links are written
+and read whole with the rest of the form at 2.6 and never queried on their own,
+so a join table would exist only to be read once. No URL shape check either: the
+link is a hint for the artist, not something the app fetches.
+
+**`delivery_image` is plain text.** A Storage bucket and its policies are 2.4's
+job for the gallery and 2.13's for the finished drawing. The buyer is meant to see
+that drawing because it lands on their own row, which the buyer's own select
+policy already allows — not because anyone was handed the bucket.
+
+**The enum was left alone, again.** `status` uses `request_status` as 0002 has
+it: 2.7 writes `requested`, 2.10 writes `quoted`. `accepted` and `declined` come
+with 2.12 in a migration of their own. Same call, same reason as 0006.
+
+**Neither table has been applied.** Both are text in git and nothing here runs
+them. Paste `0004` first — `0005` references it.
 
 **3.1** One migration: the table, RLS switched on, and three policies. Every
 column is named by a later task — 3.3 gives size, colour, quantity and budget,
