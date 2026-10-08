@@ -7,7 +7,7 @@ import path from "node:path";
  * the same list. Once a page exists the second test fails until the entry comes
  * off this list, and then the first test holds it to the real file.
  */
-export const PENDING = ["/commissions"];
+export const PENDING: string[] = [];
 
 export const pageFile = (href: string) =>
   path.resolve("src", "app", href === "/" ? "" : href.slice(1), "page.tsx");

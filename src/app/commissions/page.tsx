@@ -1,0 +1,103 @@
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { formatRupiah } from "@/lib/format";
+
+export const metadata: Metadata = {
+  title: "Commissions — Aruno Store",
+};
+
+type Service = {
+  id: string;
+  name: string;
+  description: string | null;
+  starting_price: number;
+  duration_days: number | null;
+};
+
+async function ServicesList() {
+  const supabase = await createClient();
+  const { data: services } = await supabase
+    .from("services")
+    .select("id, name, description, starting_price, duration_days")
+    .eq("active", true)
+    .order("created_at");
+
+  return (
+    <div className="mt-5 divide-y divide-[#eeeae5] border-y border-[#eeeae5]">
+      {(services ?? []).map((service: Service) => (
+        <div key={service.id} className="py-6">
+          <h3 className="font-display text-lg font-semibold text-ink">
+            {service.name}
+          </h3>
+          {service.description && (
+            <p className="mt-2 text-sm leading-relaxed text-[#6c6870]">
+              {service.description}
+            </p>
+          )}
+          <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+            <div className="flex gap-2">
+              <dt className="text-[#6c6870]">Mulai dari</dt>
+              <dd className="font-medium text-ink">
+                {formatRupiah(service.starting_price)}
+              </dd>
+            </div>
+            {service.duration_days && (
+              <div className="flex gap-2">
+                <dt className="text-[#6c6870]">Pengerjaan</dt>
+                <dd className="font-medium text-ink">
+                  {service.duration_days} hari
+                </dd>
+              </div>
+            )}
+          </dl>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function CommissionsPage() {
+  return (
+    <main className="mx-auto w-full max-w-3xl px-5 py-14 sm:px-[6%] sm:py-20">
+      <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
+        Commissions
+      </h1>
+
+      <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#6c6870] sm:text-base">
+        Minta lukisan khusus. Pilih layanan, ceritakan idemu, dan artist akan
+        mengirim kutipan harga dan waktu pengerjaan.
+      </p>
+
+      <section aria-labelledby="layanan" className="mt-14">
+        <h2
+          id="layanan"
+          className="font-display text-xl font-semibold text-ink"
+        >
+          Layanan
+        </h2>
+
+        <Suspense>
+          <ServicesList />
+        </Suspense>
+      </section>
+
+      <div className="mt-14 border-t border-[#eeeae5] pt-8">
+        <Link
+          href="/auth/sign-up"
+          className="inline-block bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+        >
+          Mulai commission
+        </Link>
+
+        <p className="mt-4 text-xs text-[#6c6870]">
+          Sudah punya akun?{" "}
+          <Link href="/login" className="font-semibold text-plum hover:underline">
+            Masuk
+          </Link>
+        </p>
+      </div>
+    </main>
+  );
+}
