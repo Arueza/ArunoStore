@@ -19,12 +19,13 @@ time, not a style preference.
   Supabase's own `20261004133000_profiles_rls.sql`. Use the `000N_name.sql` form
   from here. `0003` is taken by `0003_profiles_select_policy.sql`. **`0004` and
   `0005` went to Phase 2** (the services catalogue and the commissions table),
-  **`0006` is taken by task 3.1**, and **`0007`–`0011` are reserved for P1**, which
-  captures the dashboard tables — Alfreza takes all five, since they are his.
-  **Phase 4 moves to `0012` and `0013`**, and anything further Phase 2 needs —
-  2.11's staff update policy, 2.14's delivery image, 2.5's Storage — starts at
-  `0014`. Both of us write into this one project, so a number is claimed by
-  committing it, not by intending it.
+  **`0006` is taken by task 3.1**, `0007` and `0008` are reserved for Phase 4, and
+  **`0010`–`0014` are reserved for P1**, which captures the dashboard tables —
+  Alfreza takes all five, since they are his. `0009` is taken and `0010` is the
+  next free number, so the gap is deliberate: gaps are harmless, every migration
+  is independent. Anything further Phase 2 needs — 2.11's staff update policy,
+  2.14's delivery image, 2.5's Storage — starts at `0015`. Both of us write into
+  this one project, so a number is claimed by committing it, not by intending it.
 - **RLS on with no policy denies every row, silently.** This was `0003`'s state
   for days: `getProfile()` returned null and `/account` said "Belum diisi" while
   nothing anywhere reported a permission error. It is applied now, but the trap is
@@ -126,7 +127,7 @@ changed.
 Not a phase. A gate, because Phase 2 would otherwise build on schema that exists
 only in the live database and in nobody's git history.
 
-- [ ] **P1** Migration files `0007`–`0011`, Alfreza: the thirteen tables built in the dashboard get written down
+- [ ] **P1** Migration files `0010`–`0014`, Alfreza: the thirteen tables built in the dashboard get written down
 
 ## Phase 2 — Commissions (Verrel's half)
 
@@ -171,8 +172,8 @@ nothing to pay for.
 
 - [ ] **4.1** Create the Xendit account, switch to test mode
 - [ ] **4.2** Put the test secret key in `.env.local` and Vercel
-- [ ] **4.3** Migration `0012_payments.sql`: order, amount, status, Xendit ids
-- [ ] **4.4** Migration `0013_order_statuses.sql`
+- [ ] **4.3** Migration `0007_payments.sql`: order, amount, status, Xendit ids
+- [ ] **4.4** Migration `0008_order_statuses.sql`
 - [ ] **4.5** Server code that creates an invoice for an accepted quote
 - [ ] **4.6** Checkout page that shows the amount and opens the payment
 - [ ] **4.7** Webhook that marks the payment paid
@@ -472,9 +473,12 @@ means a second run cannot collide with anything. `0004` had to go before `0005`,
 which references it.
 
 **P1** Alfreza's own work, so he writes it: the thirteen dashboard tables need
-migration files `0007`–`0011`, taken all five so there is no argument about
-where to start. They are live and correct today — the risk is not that they are
-wrong, it is that they exist in exactly one place. A Supabase project rebuild, a
+migration files `0010`–`0014`, taken all five so there is no argument about
+where to start. `0009` is already taken and `0010` is the next free number, so
+the range starts one higher than the plan first said; the gap is deliberate and
+harmless, because every migration is independent. They are live and correct
+today — the risk is not that they are wrong, it is that they exist in exactly
+one place. A Supabase project rebuild, a
 new machine, or a fresh teammate would produce a shop missing `admins`, `users`
 and every `consignment_*` table, with nothing in this repository to rebuild from.
 
