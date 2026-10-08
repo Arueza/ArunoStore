@@ -22,8 +22,11 @@ time, not a style preference.
   **`0006` is taken by task 3.1**, and `0007` and `0008` belong to Phase 4.
   Anything further Phase 2 needs — 2.10's staff update policy, 2.13's delivery
   image, 2.4's Storage — starts at `0010`.
-- **`0003_profiles_select_policy.sql` is written but never applied.** Until it
-  runs in Supabase, `getProfile()` returns null and `/account` says "Belum diisi".
+- **RLS on with no policy denies every row, silently.** This was `0003`'s state
+  for days: `getProfile()` returned null and `/account` said "Belum diisi" while
+  nothing anywhere reported a permission error. It is applied now, but the trap is
+  the shape, not the file — a policy on a table whose RLS is *off* is inert and
+  grants every row to everyone. Check both, never one.
 - **There are two roles: `buyer` and `staff`.** Artist is not a role. Verrel and
   Alfreza are the sole sellers, both `staff`, and what they sell differs, not
   what they can reach. Never branch UI or guards on `artist`.
@@ -31,9 +34,9 @@ time, not a style preference.
   form; `signUp()` hardcodes `role: "buyer"` and never reads a role from the
   FormData, so a forged field is ignored rather than validated. Promotion is a
   manual update in Supabase. Do not add a role picker back.
-- **`profiles.role` is `text`, and nothing enforces its domain.** Migration `0002`
-  created a `user_role` enum that is dead code. Migration `0009` drops it and adds
-  a `check` constraint for `buyer | staff`.
+- **`profiles.role` is `text`, enforced by a `check`.** Migration `0002` created a
+  `user_role` enum that was dead code; `0009` dropped it and constrains the column
+  to `buyer | staff`. Both applied.
 - **Next 16 renamed `middleware.ts` to `src/proxy.ts`.** The signed-in guard is
   the `SIGNED_IN_ROUTES` array in `src/proxy.ts`. `/staff` is not in it yet.
 - **`cacheComponents: true` is on.** Any read of the session behind a page needs a
@@ -52,7 +55,8 @@ time, not a style preference.
 - **A migration in git is not an applied migration.** `git push` moves SQL text;
   it never runs it. CI has no Supabase credentials and never calls
   `supabase db push`, so every migration is a manual dashboard step, and one has
-  already been missed. Apply, then commit. See open items.
+  already been missed. Apply, then commit. A GitHub integration is connected but
+  deploys nothing — see open items before trying to rely on it.
 - **Paste migrations one statement at a time.** `0003` was pasted in a batch with
   others and aborted silently, leaving `pg_policies` empty while the later
   statements in the same paste appeared to succeed. Verify each one:
@@ -200,18 +204,11 @@ Never cut: payment, login, or the quote step. They are the assignment.
 
 ## Known open items, not yet tasks
 
-- **`0004`, `0005` and `0006` are written but not applied.** Phase 2's first two
-  migrations and Phase 3's one are all still text in this repository, and nothing
-  will run them. Paste them in the Supabase SQL editor before starting 2.3, which
-  reads the services table, and apply `0005` after `0004` — it references it.
-- **All five older migrations are now applied.** `0003` had been written but never
-  run for days, which is why `/account` showed "Belum diisi" and `/staff` bounced
-  everyone. `0009` went in at the same time. Nothing records which migrations have
-  been run, so this can happen again without warning.
-- **`0006_titipan_requests.sql` is written but not applied.** Task 3.1 added it,
-  and applying it is a manual dashboard step nobody has done yet. Nothing reads
-  the table until task 3.4, so this costs nothing today — but paste it before
-  starting 3.4, or that task fails against a table that is not there.
+- **Every migration in this repository has been applied by hand.** All nine, as of
+  the Phase 2 tables going in: `0001`, `0002`, `0003`, `0004`, `0005`, `0006`,
+  `0009`, and Supabase's own two. Nothing records that, so check the database
+  rather than trusting this line or a green build. `0003` sat unapplied for days and
+  cost 1.8 three wrong diagnoses before anyone looked at `pg_policies`.
 - **Sign-up escalation: closed by 1.16.** It used to offer `staff` and only checked
   the value was in its own list. The field is gone and the role is hardcoded now, so
   task 1.8 can rely on `profiles.role` meaning something.
@@ -224,9 +221,37 @@ Never cut: payment, login, or the quote step. They are the assignment.
 - **Nothing applies migrations for us.** `git push` ships SQL text only; CI runs
   build, lint and test, and has no Supabase credentials, so there is no
   `supabase db push` anywhere. Every migration is a manual step in the Supabase
-  dashboard, which is why `0003` is still unapplied. Both of us share one project,
-  so apply it once — but tell the other person, because their local code has to
-  expect the new schema.
+  dashboard. Both of us share one project, so apply it once — but tell the other
+  person, because their local code has to expect the new schema.
+- **The GitHub integration is connected but does nothing.** Checked and left off:
+  the Integrations page shows only Data API and Vault, and `supabase/` has no
+  `config.toml`, so no migration was ever deployed by a push. Pasting in the
+  dashboard stays the route. Do not spend another session re-deriving this — if it
+  is ever made to work, read the two lines below first, because a push applying
+  migrations is not a free upgrade.
+  - Before it could work, `supabase_migrations.schema_migrations` has to be
+    backfilled by hand with the versions of the nine applied migrations. Empty, a
+    runner replays `0001`–`0003` against tables that already exist.
+  - And the two Supabase-era files, `20261004133000_profiles_rls.sql` and
+    `20261004150000_create_profile_on_signup.sql`, would have to be renumbered.
+    The CLI compares migration versions as *strings*, so `0010` sorts before
+    `20261004150000` and every later migration is then rejected as out-of-order,
+    with no flag to override it on the hosted runner.
+- **Alfreza built Phase 3's tables ahead of us, and they overlap ours.** `admins`,
+  `users`, `commission_categories`, `commission_images`, `commission_orders`,
+  `commission_order_references`, `consignment_categories`, `consignment_items`,
+  `consignment_images`, `consignment_orders`, `consignment_order_items`,
+  `consignors` and `email_notifications` all exist and none of them is in this
+  repository's migrations. Not dead weight to clean up — his work. Three things to
+  settle before Phase 2 reads anything:
+  - `commission_orders` and `commission_categories` cover ground `commissions` and
+    `services` also cover. Two live tables for one job, so pick one before 2.3
+    builds a page over the wrong one.
+  - His money columns are `numeric` (`total_price`, `price`), which breaks the
+    whole-rupiah rule if they are ever read or written by us.
+  - `admins.store_role` allows `art_commission | consignment | super_admin`, the
+    three-role model Phase 1 deleted in `381ced3`. Ours is `profiles` with `buyer`
+    and `staff` and nothing else. Do not branch on `store_role`.
 - **Lighthouse against the live site.** 1.12 and 1.13 changed the shape of every
   response, but nothing has measured the win yet. Do it after the next deploy.
 - **Region mismatch.** Unknown whether Supabase and the Vercel functions sit in
@@ -424,8 +449,12 @@ policy already allows — not because anyone was handed the bucket.
 it: 2.7 writes `requested`, 2.10 writes `quoted`. `accepted` and `declined` come
 with 2.12 in a migration of their own. Same call, same reason as 0006.
 
-**Neither table has been applied.** Both are text in git and nothing here runs
-them. Paste `0004` first — `0005` references it.
+**Both tables are applied and verified.** `services` and `commissions` exist with
+the committed columns, RLS is on for both, and all four policies are live — one on
+`services`, three on `commissions`. Pasteable-twice is what made that a paste
+rather than a gamble: `create table if not exists` plus `drop policy if exists`
+means a second run cannot collide with anything. `0004` had to go before `0005`,
+which references it.
 
 **3.1** One migration: the table, RLS switched on, and three policies. Every
 column is named by a later task — 3.3 gives size, colour, quantity and budget,

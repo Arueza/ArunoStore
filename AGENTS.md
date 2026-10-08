@@ -62,6 +62,20 @@ One migration per change, named descriptively: `0007_titipan_requests.sql`,
 not `add stuff.sql`. Two people working at once is the main cause of merge
 conflicts here.
 
+Every migration is pasted into the Supabase SQL editor by hand. No push applies
+one, and CI never will. Write each one re-runnable anyway — `create table if not
+exists`, `drop policy if exists` before each policy — and paste the query that
+proves it landed in the same message, so the next person does not inherit a
+migration nobody ran. `0003` sat unapplied for days and every read of `profiles`
+was silently denied while nothing reported a permission error.
+
+One Supabase project, two people's tables. `admins`, `users`, `consignment_*`,
+`commission_categories`, `commission_images`, `commission_orders`,
+`commission_order_references`, `consignors` and `email_notifications` are
+Alfreza's work on Phase 3, not ours and not ours to drop. Ours is `profiles`,
+`services`, `commissions`, `titipan_requests`. Read `ROADMAP.md` before touching
+either side — the two sets overlap and one decision is still open.
+
 ## Commit messages
 
 30 to 50 words total. This shape:
