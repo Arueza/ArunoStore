@@ -155,7 +155,7 @@ The artist quotes a price for custom work, buyer accepts and pays.
 
 - [x] **2.1** Migration `0004_services.sql`: what is offered, starting price, duration, active flag *(`47d19c4`)*
 - [x] **2.2** Migration `0005_commissions.sql`: buyer, service, brief, reference links, quote, status, delivery image *(`8b56975`)*
-- [ ] **2.3** Public page listing the services — blocked by P1 until the schema it might read is on record
+- [x] **2.3** Public page listing the services *(`2117010`)*
 - [ ] **2.4** Artwork gallery from Supabase Storage, upload only for `staff`
 - [ ] **2.5** Artwork gallery page
 - [ ] **2.6** Request form: pick a service, write the brief, add reference links
