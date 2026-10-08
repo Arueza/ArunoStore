@@ -20,11 +20,11 @@ time, not a style preference.
   from here. `0003` is taken by `0003_profiles_select_policy.sql`. **`0004` and
   `0005` went to Phase 2** (the services catalogue and the commissions table),
   **`0006` is taken by task 3.1**, `0007` and `0008` are reserved for Phase 4, and
-  `0010`–`0014` are reserved for P1**, which captures the dashboard tables, and
-  **`0015` is its functions and triggers file**. `0009` is taken and `0010` is the
-  next free number, so the gap is deliberate: gaps are harmless, every migration
+  `0010`–`0015` are reserved for P1**, which captures the dashboard tables, and
+  **`0016` repairs two policies P1 created wrongly.** `0009` is taken and `0010` is
+  the next free number, so the gap is deliberate: gaps are harmless, every migration
   is independent. Anything further Phase 2 needs — 2.11's staff update policy,
-  2.14's delivery image, 2.5's Storage — starts at `0016`. Both of us write into
+  2.14's delivery image, 2.5's Storage — starts at `0017`. Both of us write into
   this one project, so a number is claimed by committing it, not by intending it.
 - **RLS on with no policy denies every row, silently.** This was `0003`'s state
   for days: `getProfile()` returned null and `/account` said "Belum diisi" while
@@ -61,6 +61,18 @@ time, not a style preference.
   `supabase db push`, so every migration is a manual dashboard step, and one has
   already been missed. Apply, then commit. A GitHub integration is connected but
   deploys nothing — see open items before trying to rely on it.
+- **A `drop policy if exists "name"` can silently do nothing.** Two policies on
+  `consignment_images` were created misspelled, `… consignment imaget_images`, so
+  the drops in `0012` matched nothing and the creates added a second copy beside
+  the typo. Nothing was ever widened — the pairs were byte-identical in `qual` and
+  `with_check`, and permissive policies OR — but a paste-twice guarantee that
+  silently does nothing is not a guarantee. **Read names as hex before trusting a
+  dump**: `encode(convert_to(polname,'utf8'),'hex')` shows what the JSON will not.
+  `0016` repairs the database; `0012` now drops through `pg_policy` instead.
+- **A `drop` then a `create` on a policy is a name-equality test.** Net zero when
+  the name matches, one extra when it does not. That is how the single misspelled
+  table was isolated without checking all twenty-nine by hand — the other twenty-
+  seven names matched exactly, so the one that moved is the one that was wrong.
 - **Never read a table's shape from the dashboard's schema export.** It is not
   authoritative. It omitted four foreign keys that exist —
   `commission_order_references.order_id`, `consignment_images.item_id` and both
@@ -542,6 +554,13 @@ ends up worse than the thing it replaced.
 **P1 is not ticked until the paste is verified.** The files are written; nothing
 has run them. Paste all six, then confirm 17 tables, 37 policies and RLS true on
 all 17. A count that moves means stop.
+
+**The first paste came out at 39, not 37.** `consignment_images` had two policies
+spelled `imaget_images`, so `0012`'s literal drops missed and its creates doubled
+them. No access changed — the pairs were byte-identical — but it is why `0016`
+exists and why `0012` no longer matches names literally. Worth recording because
+the same trap will fire on any hand-written policy name that is not byte-exact,
+and nothing about the result looks like an error.
 
 **The overlap is the part that cannot be mechanical.** `commission_orders` and
 `commission_categories` do the same work as `commissions` and `services`. P1

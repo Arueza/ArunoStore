@@ -134,14 +134,38 @@ create policy "Public baca consignment_items"
   to public
   using (true);
 
-drop policy if exists "Admin kelola consignment images" on public.consignment_images;
+-- The two policies below are dropped by looking names up in pg_policy rather than
+-- by matching a literal, because these two were originally created misspelled with
+-- `imaget_images`. A `drop policy if exists "… images"` matched nothing, the create
+-- then added a second policy beside the typo, and the table ended up with four
+-- instead of two. No access changed — the pairs were byte-identical in qual and
+-- with_check — but it broke the paste-twice rule this file depends on.
+--
+-- 0016 repairs the live database. This is what stops it happening again, and it
+-- works whatever the name happens to be. Scoped to the two prefixes that were
+-- misspelled; every other policy here uses a plain `drop ... if exists`.
+
+do $$
+declare
+  stale text;
+begin
+  for stale in
+    select polname
+      from pg_policy
+     where polrelid = 'public.consignment_images'::regclass
+       and (polname like 'Admin kelola consignment image%'
+         or polname like 'Public baca consignment image%')
+  loop
+    execute format('drop policy if exists %I on public.consignment_images', stale);
+  end loop;
+end $$;
+
 create policy "Admin kelola consignment images"
   on public.consignment_images
   for all
   to public
   using (exists (select 1 from admins where admins.id = auth.uid()));
 
-drop policy if exists "Public baca consignment images" on public.consignment_images;
 create policy "Public baca consignment images"
   on public.consignment_images
   for select
