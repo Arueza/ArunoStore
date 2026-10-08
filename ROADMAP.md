@@ -18,7 +18,9 @@ time, not a style preference.
 - **Migration numbers.** Two naming schemes are on disk: `0001_profiles.sql` and
   Supabase's own `20261004133000_profiles_rls.sql`. Use the `000N_name.sql` form
   from here. `0003` is taken by `0003_profiles_select_policy.sql`, so the next
-  free number is `0004`.
+  free number is `0004`. **`0006` is taken by task 3.1**, and `0007` and `0008`
+  belong to Phase 4. `0004` and `0005` are Phase 2's. Anything extra Phase 2
+  needs — the staff select policy for 2.8, Storage for 2.4 — starts at `0010`.
 - **`0003_profiles_select_policy.sql` is written but never applied.** Until it
   runs in Supabase, `getProfile()` returns null and `/account` says "Belum diisi".
 - **There are two roles: `buyer` and `staff`.** Artist is not a role. Verrel and
@@ -134,7 +136,7 @@ The artist quotes a price for custom work, buyer accepts and pays.
 
 Buyer sends a Japanese product link, staff quotes price + shipping + fee.
 
-- [ ] **3.1** Migration `0006_titipan_requests.sql`: link, size, colour, budget, quote split, tracking
+- [x] **3.1** Migration `0006_titipan_requests.sql`: link, size, colour, budget, quote split, tracking
 - [ ] **3.2** Explain the service on the page: what a titipan is, what it costs
 - [ ] **3.3** Request form: product link, size, colour, quantity, budget
 - [ ] **3.4** Save the form as a row with status `requested`
@@ -201,6 +203,10 @@ Never cut: payment, login, or the quote step. They are the assignment.
   for days, which is why `/account` showed "Belum diisi" and `/staff` bounced
   everyone. `0009` went in at the same time. Nothing records which migrations have
   been run, so this can happen again without warning.
+- **`0006_titipan_requests.sql` is written but not applied.** Task 3.1 added it,
+  and applying it is a manual dashboard step nobody has done yet. Nothing reads
+  the table until task 3.4, so this costs nothing today — but paste it before
+  starting 3.4, or that task fails against a table that is not there.
 - **Sign-up escalation: closed by 1.16.** It used to offer `staff` and only checked
   the value was in its own list. The field is gone and the role is hardcoded now, so
   task 1.8 can rely on `profiles.role` meaning something.
@@ -372,5 +378,41 @@ path to staff, by design, and no invite path either.
 **2.4** Needs `images.remotePatterns` in `next.config.ts` first, or every image
 404s through the optimiser. Storage needs its own RLS policies in a migration, and
 only `staff` may write.
+
+**3.1** One migration: the table, RLS switched on, and three policies. Every
+column is named by a later task — 3.3 gives size, colour, quantity and budget,
+3.6 gives the three quote numbers, 3.11 gives courier and tracking — so the table
+has nothing in it that no task asked for.
+
+**No `total` column.** 3.6 says the total is computed automatically, and a stored
+sum sits next to the three parts it came from. The day staff edit a part without
+it, the two disagree and the buyer is charged the wrong figure. `quoteTotal()` in
+`src/lib/quote.ts` is the only place a total comes from.
+
+**The enum was left alone, which is the point.** `status` uses `request_status`
+from 0002 as it stands. 3.4 writes `requested` and 3.7 writes `quoted`, and those
+are the only two values either task needs. `accepted` and `declined` arrive with
+2.12; `purchased`, `shipped` and `arrived` arrive at 3.10 in a migration of their
+own. Widening it here would have been guessing at 3.10's wording.
+
+**The staff policy is pinned to `p.id = auth.uid()` and must stay that way.** RLS
+applies inside a policy's subquery, and 0003 gives each signed-in user a select
+policy on `profiles` covering exactly one row — their own. A bare `where
+p.role = 'staff'` reads every profile, 0003 denies it, and both sellers get an
+empty queue with nothing in the logs to show for it. Same fail-closed reasoning
+as `isStaff()` in `proxy.ts`.
+
+**No update or delete policy.** 3.7 is the first write to a row staff do not own
+and brings its own migration. Until then nobody can edit anything, which is the
+right state for a table no form has reached yet.
+
+**Written to be pasteable twice** — `if not exists` on the table, `drop policy if
+exists` before each one — because nothing records which migrations have been
+run. Same reason 0009 is written that way.
+
+**What this task has not proved:** that a buyer can actually insert. The
+dashboard runs as `postgres`, which ignores RLS, so the shape smoke test proves
+the column names and defaults and nothing about the policies. Real proof arrives
+with the form at 3.4.
 
 **6.5** The demo script and screenshots are still 6.3 and 6.4.
