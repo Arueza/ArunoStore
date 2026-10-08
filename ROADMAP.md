@@ -102,7 +102,7 @@ walk into), **1.15 before 1.17** (data flipped before labels changed).
 Not a phase. A gate, because Phase 2 would otherwise build on schema that exists
 only in the live database and in nobody's git history.
 
-- [x] **P1** Migration files `0010`–`0014`: the thirteen tables built in the dashboard get written down *(HASH_PLACEHOLDER)*
+- [x] **P1** Migration files `0010`–`0014`: the thirteen tables built in the dashboard get written down *(`5b80bc5`)*
 
 ## Phase 2 — Commissions (Verrel's half)
 
