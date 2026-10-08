@@ -69,12 +69,16 @@ proves it landed in the same message, so the next person does not inherit a
 migration nobody ran. `0003` sat unapplied for days and every read of `profiles`
 was silently denied while nothing reported a permission error.
 
-One Supabase project, two people's tables. `admins`, `users`, `consignment_*`,
+One Supabase project, one repository, two developers. Everything in it is
+ArunoStore and both of us can change all of it, so no table here is off limits.
+The line actually worth knowing is which tables a migration file describes.
+`profiles`, `services`, `commissions` and `titipan_requests` each have one in
+`supabase/migrations/`. `admins`, `users`, `consignment_*`,
 `commission_categories`, `commission_images`, `commission_orders`,
-`commission_order_references`, `consignors` and `email_notifications` are
-Alfreza's work on Phase 3, not ours and not ours to drop. Ours is `profiles`,
-`services`, `commissions`, `titipan_requests`. Read `ROADMAP.md` before touching
-either side — the two sets overlap and one decision is still open.
+`commission_order_references`, `consignors` and `email_notifications` were built
+for Phase 3 and have none — rebuilding from these migrations alone would not
+bring that second set back, and git cannot say why one of them changed.
+`ROADMAP.md` records the one overlap that still needs settling.
 
 ## Commit messages
 

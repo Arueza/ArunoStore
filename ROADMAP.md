@@ -237,21 +237,24 @@ Never cut: payment, login, or the quote step. They are the assignment.
     The CLI compares migration versions as *strings*, so `0010` sorts before
     `20261004150000` and every later migration is then rejected as out-of-order,
     with no flag to override it on the hosted runner.
-- **Alfreza built Phase 3's tables ahead of us, and they overlap ours.** `admins`,
-  `users`, `commission_categories`, `commission_images`, `commission_orders`,
-  `commission_order_references`, `consignment_categories`, `consignment_items`,
-  `consignment_images`, `consignment_orders`, `consignment_order_items`,
-  `consignors` and `email_notifications` all exist and none of them is in this
-  repository's migrations. Not dead weight to clean up — his work. Three things to
-  settle before Phase 2 reads anything:
+- **Thirteen more tables live in this project, and no migration file describes
+  them.** `admins`, `users`, `commission_categories`, `commission_images`,
+  `commission_orders`, `commission_order_references`, `consignment_categories`,
+  `consignment_items`, `consignment_images`, `consignment_orders`,
+  `consignment_order_items`, `consignors` and `email_notifications` were built in
+  Supabase for Phase 3, by Alfreza, ahead of this repository's own files. All
+  ArunoStore and both of us can change every one of them. What is missing is the
+  migration: none of them appears in `supabase/migrations/`, so a rebuild from
+  these files alone would not bring them back, and git cannot say why one of them
+  changed. Three things to settle before Phase 2 reads anything:
   - `commission_orders` and `commission_categories` cover ground `commissions` and
     `services` also cover. Two live tables for one job, so pick one before 2.3
     builds a page over the wrong one.
-  - His money columns are `numeric` (`total_price`, `price`), which breaks the
+  - Their money columns are `numeric` (`total_price`, `price`), which breaks the
     whole-rupiah rule if they are ever read or written by us.
   - `admins.store_role` allows `art_commission | consignment | super_admin`, the
-    three-role model Phase 1 deleted in `381ced3`. Ours is `profiles` with `buyer`
-    and `staff` and nothing else. Do not branch on `store_role`.
+    three-role model Phase 1 deleted in `381ced3`. The app's roles are `buyer` and
+    `staff` on `profiles` and nothing else. Do not branch on `store_role`.
 - **Lighthouse against the live site.** 1.12 and 1.13 changed the shape of every
   response, but nothing has measured the win yet. Do it after the next deploy.
 - **Region mismatch.** Unknown whether Supabase and the Vercel functions sit in
