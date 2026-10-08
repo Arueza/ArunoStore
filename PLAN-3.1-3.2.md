@@ -201,9 +201,11 @@ in the path.
 **No session read.** That is what lets the route prerender whole under
 `cacheComponents: true`. Do not add a `getClaims()` call, and do not add a
 `<Suspense>` boundary — the boundary is only needed because of the read, and
-there is no read. The build output for `/titipan` must show no dynamic hole, and
-`npm run dev` must serve it without a Supabase call in the terminal. A session
-read here would undo 1.12 and 1.13 on one page.
+there is no read. The build prints `/titipan` as `◐`, the same as `/` and
+`/staff`: that hole is the `AuthSlot` boundary in the layout, present on every
+route, and not this page's doing. What matters is that `/titipan` matches them
+rather than standing out, and that `npm run dev` serves it without a Supabase
+call in the terminal. A session read here would undo 1.12 and 1.13 on one page.
 
 Content, in Indonesian, matching the tone of `/account` and `/staff`:
 
@@ -359,6 +361,16 @@ the detail, and never a file name in the summary line.
 | Fee number guessed | Wrong price on a live page | Confirm with Alfreza before committing |
 | Friend takes `0006` | Two files, one number | Tell him now; `0006` is claimed |
 | Status values widened early | Enum diverges from the roadmap | Add nothing; `requested` and `quoted` already exist |
+
+Two traps hit while writing this, worth keeping:
+
+- **`git checkout` undid uncommitted work.** The `PENDING` line was edited but not
+  yet committed, then a mutation test put `/titipan` back and `git checkout --
+  src/components/pendingPages.ts` restored the *committed* version — both entries
+  back, and `Footer.test.tsx` failed for a reason that had nothing to do with the
+  mutation. Re-apply the edit, or mutate a copy instead of the working tree.
+- **`/commissions` answering 404 is correct**, not a regression. It is declared
+  pending until Phase 2, and the pending list is exactly what makes that honest.
 
 ---
 

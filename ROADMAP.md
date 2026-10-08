@@ -137,7 +137,7 @@ The artist quotes a price for custom work, buyer accepts and pays.
 Buyer sends a Japanese product link, staff quotes price + shipping + fee.
 
 - [x] **3.1** Migration `0006_titipan_requests.sql`: link, size, colour, budget, quote split, tracking *(`ef5dbc6`)*
-- [ ] **3.2** Explain the service on the page: what a titipan is, what it costs
+- [x] **3.2** Explain the service on the page: what a titipan is, what it costs
 - [ ] **3.3** Request form: product link, size, colour, quantity, budget
 - [ ] **3.4** Save the form as a row with status `requested`
 - [ ] **3.5** Staff queue of all requests, newest first
@@ -414,5 +414,41 @@ run. Same reason 0009 is written that way.
 dashboard runs as `postgres`, which ignores RLS, so the shape smoke test proves
 the column names and defaults and nothing about the policies. Real proof arrives
 with the form at 3.4.
+
+**3.2** `src/app/titipan/page.tsx`, plus `SERVICE_FEE` in that same file and
+`quoteTotal()` in `src/lib/quote.ts`. The Titipan link in the hamburger, the
+footer and the storefront all pointed at nothing until now; all three reach this
+page.
+
+**Reads no session at all.** That is what lets the route prerender, and it is why
+there is no `<Suspense>` boundary either — the boundary only exists because of the
+read. Confirmed by hand: 21 requests, zero to Supabase, console empty. Note the
+build prints `/titipan` as `◐`, the same as `/` and `/staff`; that hole is the
+`AuthSlot` boundary in the layout, not this page.
+
+**The fee is one constant.** `SERVICE_FEE = 25000` lives in the page and nowhere
+else, marked `ponytail:` with the ceiling named. The page test hardcodes
+`Rp 25.000` on purpose, so changing the fee breaks a test and forces a decision
+about the "per barang" wording next to it rather than slipping through.
+
+**`quoteTotal()` is in `src/lib/quote.ts`, not in the page.** Two callers need the
+same sum: this page's worked example, and the staff quote box at 3.6. Its test is
+what keeps "round each part, then add" honest — rounding the sum instead leaves
+the total a rupiah away from the three figures the buyer is shown.
+
+**`PENDING` had to come off the list in the same commit.** `Footer.test.tsx`
+already asserted the pending list holds no page that exists, so the test fails the
+moment `src/app/titipan/page.tsx` appears. Watched it fail by putting `/titipan`
+back, then watched it pass. The page's own links point at `/auth/sign-up` and
+`/login` rather than at a form that 3.3 has not built — both exist, so 3.2 ships
+no dead link.
+
+**Checked by hand:** `/titipan` answers 200 signed out with no console error, and
+every href on the page answers 200. `/commissions` still answers 404, which is
+correct — it is declared pending until Phase 2.
+
+**Two things for Alfreza to confirm,** neither of which is settled by the code:
+the figure of `Rp 25.000` per item, and the wording of "Sebelum kamu mengirim" —
+that section is policy, not decoration.
 
 **6.5** The demo script and screenshots are still 6.3 and 6.4.
