@@ -67,8 +67,13 @@ export async function proxy(request: NextRequest) {
 
 // Sign-in only. /account holds the visitor's own name and role, so it must never
 // render for a signed-out visitor. /commissions/request needs a session to write
-// a row at all, so a signed-out visitor there is a dead end.
-const SIGNED_IN_ROUTES = ["/account", "/commissions/request"];
+// a row at all, so a signed-out visitor there is a dead end. /commissions/mine
+// reads other people's commissions, and one signed out has none.
+const SIGNED_IN_ROUTES = [
+  "/account",
+  "/commissions/request",
+  "/commissions/mine",
+];
 
 // Also needs the role. There is no artist role as of roadmap 1.15: staff are the
 // two of us and cover both halves.
@@ -94,9 +99,10 @@ type Supabase = ReturnType<typeof createServerClient>;
  * Whether this user is staff, read from the profiles row.
  *
  * The 0003 select policy allows a signed-in user to read exactly their own row
- * (auth.uid() = id), which is all this needs. Staff reading other people's
- * profiles for /staff is task 2.8's problem and widens the policy in its own
- * migration.
+ * (auth.uid() = id), which is all this needs. Migration 0017 widened profiles so
+ * staff can read every row, but this deliberately keeps the narrower read: the
+ * guard is the last thing standing between a mis-set role and an open /staff, and
+ * it should not depend on a policy it shares a migration with.
  *
  * A missing row answers false rather than throwing: migration 0003 may not be
  * applied yet, and a guard that fails open here would open /staff to everyone.

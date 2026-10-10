@@ -187,6 +187,36 @@ describe("proxy", () => {
     });
   });
 
+  // Guards the buyer's list of their own requests. Signed out there is a dead
+  // end: there is nothing to list and nowhere to sign in from.
+  describe("/commissions/mine", () => {
+    test("sends a signed-out visitor to the login page", async () => {
+      const res = await proxy(request("/commissions/mine"));
+
+      expect(res.status).toBe(307);
+      expect(pathnameOf(res)).toBe("/login");
+    });
+
+    test("lets a signed-in buyer through", async () => {
+      signedInAs("u1", "buyer");
+
+      const res = await proxy(request("/commissions/mine"));
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get("location")).toBeNull();
+    });
+
+    // The buyer list does not need the staff check, only the session. If this
+    // ever reads profiles.role it must not send a buyer to the store.
+    test("does not apply the staff check", async () => {
+      signedInAs("u1", "buyer");
+
+      await proxy(request("/commissions/mine"));
+
+      expect(mocks.chain.select).not.toHaveBeenCalled();
+    });
+  });
+
   test("leaves public routes untouched", async () => {
     const res = await proxy(request("/"));
 

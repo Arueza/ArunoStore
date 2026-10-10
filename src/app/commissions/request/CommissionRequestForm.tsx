@@ -39,13 +39,14 @@ export default function CommissionRequestForm({
           Permintaan terkirim
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-[#6c6870]">
-          {state.message} Kamu bisa melihat daftar requestmu di halaman akun.
+          {state.message} Kamu bisa memantau statusnya di halaman commissions
+          kamu.
         </p>
         <Link
-          href="/commissions"
+          href="/commissions/mine"
           className="mt-5 inline-block text-sm font-semibold text-plum hover:underline"
         >
-          Kembali ke layanan
+          Lihat commissions kamu
         </Link>
       </div>
     );
