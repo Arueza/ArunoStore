@@ -169,7 +169,7 @@ empty state is what renders today (0 rows); task 6.1 seeds the first items.
 No migration: the table, its public-read policies and its category join were all
 live already.
 
-- [x] **5.5** `/shop` catalog page — grid of `consignment_items` with price, thumbnail, condition, category
+- [x] **5.5** `/shop` catalog page — grid of `consignment_items` with price, thumbnail, condition, category *(`282d434`)*
 
 ## Phase 6 — Submission
 
