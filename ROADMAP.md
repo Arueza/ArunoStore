@@ -201,6 +201,31 @@ Never cut: payment, login, or the quote step. They are the assignment.
   no migration deployed by push. Before it could work: backfill
   `supabase_migrations.schema_migrations` by hand, and renumber the two
   Supabase-era files (`0010` sorts before `20261004150000` as strings).
+- **`consignment_*` is a misnomer. Do not merge the two catalogs.** The site is
+  two services: **Art Commission** (Verrel) and **Proxy Shopping** (Alfreza).
+  `consignment_*` holds proxy-shopping goods, not consigned merchandise.
+  Each service keeps its own tables —
+
+  | Service | Catalog | Requests | Flow |
+  |---|---|---|---|
+  | Art Commission | `services`, `artworks` | `commissions` | quote first |
+  | Proxy Shopping | `consignment_items` | `titipan_requests` | quote first |
+
+  What they share is everything around the tables: `profiles`, one `buyer` /
+  `staff` role, payments in Phase 4, one navbar, one cart. That is the whole of
+  the unification — the tables stay separate because `condition`, `stock` and
+  `consignor_id` mean nothing for an art piece, and `duration_days` means
+  nothing for a boxed good.
+
+- **Renaming `consignment_*` to `shop_*`: deferred, not rejected.** Feasible —
+  six tables, thirteen policies, two functions, five triggers, plus the
+  `'consignment'` value in `admins.store_role` and `email_notifications`.
+  Zero TypeScript references today, so no code blocks it. Do it inside the
+  Phase 4 payment migration, which already opens these tables. Until then,
+  read them under a TypeScript name that matches the site instead:
+  `ShopItem`, not `ConsignmentItem`. Users never see a table name; renaming
+  now buys clarity in SQL at the cost of a migration nobody asked for.
+
 - **Thirteen more tables, no migration file — now captured by P1.** `admins`,
   `users`, `commission_categories`, `commission_images`, `commission_orders`,
   `commission_order_references`, `consignment_categories`, `consignment_items`,
@@ -298,3 +323,14 @@ Not proved: buyer can actually insert. Dashboard runs as `postgres` (ignores RLS
 **3.2** `src/app/titipan/page.tsx` + `SERVICE_FEE = 25000` + `quoteTotal()` in `src/lib/quote.ts`. Reads no session — prerenders, no `<Suspense>`. Build shows `◐` (hole is `AuthSlot` boundary in layout). Fee marked `ponytail:`. Page test hardcodes `Rp 25.000`. `PENDING` removed from footer test same commit. Links point at `/auth/sign-up` and `/login` (both exist). Verified: 200 signed out, no console error, all hrefs 200. `/commissions` still 404 (pending Phase 2).
 
 **6.5** Demo script and screenshots are 6.3 and 6.4.
+
+**Future, catalog page** The storefront has no catalog of ready-made goods —
+only `/commissions` (request custom work) and `/artworks` (a portfolio with no
+prices). When that task comes, `consignment_items` is already a working
+product table: name, description, price, stock, condition, status, category,
+thumbnail, with public-read policies. Read it from `createPublicClient()`
+behind `'use cache'`, the way `/artworks` does, and it prerenders with no
+session and no `<Suspense>`. No new table, no migration. `price` is `numeric`
+against the whole-rupiah rule; `formatRupiah` rounds at display, which is
+enough until Phase 4 touches the column anyway. Name the type `ShopItem`.
+Add the route to `MenuDrawer` and the footer.

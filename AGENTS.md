@@ -76,9 +76,15 @@ The line actually worth knowing is which tables a migration file describes.
 `supabase/migrations/`. `admins`, `users`, `consignment_*`,
 `commission_categories`, `commission_images`, `commission_orders`,
 `commission_order_references`, `consignors` and `email_notifications` were built
-for Phase 3 and have none — rebuilding from these migrations alone would not
-bring that second set back, and git cannot say why one of them changed.
-`ROADMAP.md` records the one overlap that still needs settling.
+in the dashboard for Phase 3 and P1 reconstructed them — they are captured, not
+authored, so read their headers before changing them.
+
+Two services, one site: **Art Commission** (Verrel) and **Proxy Shopping**
+(Alfreza). They share `profiles`, one `buyer` / `staff` role, payments, and one
+navbar. They do not share catalog tables — `services` and `artworks` on one
+side, `consignment_items` on the other. `consignment_*` is a misnomer for proxy
+shopping; the rename to `shop_*` waits for the Phase 4 migration that already
+opens those tables. Read them as `ShopItem` in TypeScript meanwhile.
 
 ## Commit messages
 
