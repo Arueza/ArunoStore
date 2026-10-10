@@ -5,7 +5,7 @@ const SERVICES = [
     href: "/commissions",
     name: "Commission",
     blurb:
-      "Minta lukisan khusus. Ceritakan idemu, artist yang menentukan harga dan waktu.",
+      "Kirim ide dan referensi anda, kami akan memberikan kutipan harga dan waktu pengerjaan.",
   },
   {
     href: "/titipan",

@@ -4,15 +4,15 @@ import { getClaims, getProfile } from "@/lib/auth";
 // the one reading this and the column value is not English. There is no artist
 // role: staff cover both halves, so the note has to speak for either one.
 const ROLE_LABEL: Record<string, string> = {
-  buyer: "Pembeli",
-  staff: "Staf",
+  buyer: "Buyer",
+  staff: "Staff",
 };
 
 const ROLE_NOTE: Record<string, string> = {
   buyer:
-    "Kamu memesan commission atau titipan, lalu membayar setelah kutipan diterima.",
+    "Anda memesan commission atau titipan, lalu membayar setelah kutipan diterima.",
   staff:
-    "Kamu mengecek permintaan, memberikan kutipan, lalu mengunggah hasil commission atau mengirim barang titipan.",
+    "Anda mengecek permintaan, memberikan kutipan, lalu mengunggah hasil commission atau mengirim barang titipan.",
 };
 
 /**

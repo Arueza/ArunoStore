@@ -66,7 +66,7 @@ export default function CommissionsPage() {
       </h1>
 
       <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#6c6870] sm:text-base">
-        Minta lukisan khusus. Pilih layanan, ceritakan idemu, dan artist akan
+        Pilih komisi, ceritakan idemu, dan Nobu akan
         mengirim kutipan harga dan waktu pengerjaan.
       </p>
 
