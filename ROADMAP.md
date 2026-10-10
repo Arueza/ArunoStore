@@ -19,8 +19,12 @@ time, not a style preference.
   Supabase's own `20261004133000_profiles_rls.sql`. Use `000N_name.sql`.
   `0003` taken. `0004`–`0005` Phase 2. `0006` task 3.1. `0007`–`0008` Phase 4.
   `0010`–`0015` P1 (dashboard tables). `0016` repairs two policies P1 created
-  wrongly. `0009` taken, `0010` next free — gap deliberate. Phase 2 leftovers
-  (2.11 staff update policy, 2.14 delivery image, 2.5 Storage) start at `0017`.
+  wrongly. `0009` taken, `0010` next free — gap deliberate. Phase 2 leftovers:
+  `0017` 2.5 Storage, `0018` staff update policy, `0019` staff reads profiles.
+  `0020` next free — 2.14 delivery image. **Check the number is free before
+  writing one:** 0017 was issued twice (2.4 Storage, then 2.8 staff reads) and
+  only git noticed. The SQL editor never sees a filename, so a duplicate number
+  applies cleanly and then disagrees with the repository.
 - **RLS on with no policy denies every row, silently.** `0003` sat unapplied for
   days — `getProfile()` returned null, `/account` said "Belum diisi", no error.
   A policy on a table whose RLS is *off* is inert. Check both.
@@ -108,12 +112,15 @@ only in the live database and in nobody's git history.
 
 The artist quotes a price for custom work, buyer accepts and pays.
 
-**2.8–2.11 are written and committed but NOT done. Two migrations are waiting to
-be pasted by hand, and until they are the feature cannot work:** `0017` lets staff
+**2.8–2.11 are written and committed but NOT done. Two migrations were waiting to
+be pasted by hand, and until they are the feature cannot work:** `0019` lets staff
 read other people's profiles (without it every row in the queue reads "Pembeli
 tanpa profil") and `0018` lets staff update a commission at all (without it the
-quote box fails on a row-level security error). Nothing else blocks them. Paste
-both, run the verification queries at the foot of each file, then tick the boxes.
+quote box fails on a row-level security error). Nothing else blocks them.
+**`0019` and `0018` have been applied to the live database.** Still open: nobody
+has loaded `/staff` signed in, so the queue has never rendered against a real row
+and the quote has never been saved. Run the verification queries at the foot of
+each file, sign in as staff, then tick the boxes.
 
 - [x] **2.1** Migration `0004_services.sql`: what is offered, starting price, duration, active flag *(`47d19c4`)*
 - [x] **2.2** Migration `0005_commissions.sql`: buyer, service, brief, reference links, quote, status, delivery image *(`8b56975`)*
@@ -207,11 +214,18 @@ Never cut: payment, login, or the quote step. They are the assignment.
 
 - **Every migration applied by hand.** All nine as of Phase 2 tables: `0001`–`0006`,
   `0009`, plus Supabase's own two. Check the database, not this file.
-- **`0017` and `0018` are written but not applied.** They block 2.8 through 2.11 and
-  nothing after. `0017` adds `is_staff()` and one select policy on `profiles`;
-  `0018` adds the update policy on `commissions` and revokes table-level UPDATE down
-  to three columns. Until both are pasted, the staff queue shows no buyer names and
-  the quote box cannot save.
+- **`0019` and `0018` are applied but unverified.** Pasted into the live database by
+  hand; the verification queries at the foot of each file have not been run, and
+  nothing signed in has rendered against it. `0019` adds `is_staff()` and one select
+  policy on `profiles`; `0018` adds the update policy on `commissions` and narrows
+  table-level UPDATE to three columns. The column grant is the one to check: six
+  columns instead of three means the revoke silently failed, the app works fine
+  either way, and any staff session can rewrite `buyer_id`.
+- **`0017` was issued twice.** 2.4 owns `0017_artwork_storage.sql`; the staff
+  profiles file was written as 0017 and has been renamed to `0019`. The SQL itself
+  was never wrong — the SQL editor does not read filenames — but the repository now
+  disagreed with the database about which number that migration had, and 0019 is
+  what git calls it.
 - **Sign-up escalation: closed by 1.16.** Role field gone, role hardcoded.
 - **Verrel's login exists** and is `staff`. Both sellers reach `/staff`.
 - **Test accounts in live DB.** `wagakami@gmail.com` (TESTO), `alamak@gmail.com`.
@@ -362,7 +376,7 @@ still 404, `/commissions` still 200 public. Not proved: anything signed in. No t
 account password is recorded anywhere in this repo, so the queue, the quote box and
 the buyer list have never rendered against real rows.
 
-`0017_staff_read_profiles.sql`. The policy everyone writes first does not work:
+`0019_staff_read_profiles.sql`. The policy everyone writes first does not work:
 
     using (exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'staff'))
 

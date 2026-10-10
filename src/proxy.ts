@@ -99,7 +99,7 @@ type Supabase = ReturnType<typeof createServerClient>;
  * Whether this user is staff, read from the profiles row.
  *
  * The 0003 select policy allows a signed-in user to read exactly their own row
- * (auth.uid() = id), which is all this needs. Migration 0017 widened profiles so
+ * (auth.uid() = id), which is all this needs. Migration 0019 widened profiles so
  * staff can read every row, but this deliberately keeps the narrower read: the
  * guard is the last thing standing between a mis-set role and an open /staff, and
  * it should not depend on a policy it shares a migration with.

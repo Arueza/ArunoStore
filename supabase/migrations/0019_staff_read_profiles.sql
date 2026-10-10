@@ -1,6 +1,12 @@
 -- Roadmap 2.8: the staff queue has to say who sent each request, and 0003 lets a
 -- signed-in user read exactly one profiles row — their own.
 --
+-- Numbered 0019, not 0017. Task 2.4 already took 0017 for the artworks bucket,
+-- and 0018 was taken by the update policy in the same phase. Two files with one
+-- number is harmless to the SQL editor, which never sees a filename, and
+-- confusing in git, which does. The SQL below was applied to the database as
+-- 0017 and nothing about it changed.
+--
 -- The obvious policy does not work:
 --
 --   on public.profiles for select
