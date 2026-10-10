@@ -85,17 +85,22 @@ export default function CommissionsPage() {
 
       <div className="mt-14 border-t border-[#eeeae5] pt-8">
         <Link
-          href="/auth/sign-up"
+          href="/commissions/request"
           className="inline-block bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
         >
           Mulai commission
         </Link>
 
         <p className="mt-4 text-xs text-[#6c6870]">
-          Sudah punya akun?{" "}
+          Belum punya akun?{" "}
+          <Link href="/auth/sign-up" className="font-semibold text-plum hover:underline">
+            Daftar
+          </Link>{" "}
+          atau{" "}
           <Link href="/login" className="font-semibold text-plum hover:underline">
-            Masuk
+            masuk
           </Link>
+          .
         </p>
       </div>
     </main>

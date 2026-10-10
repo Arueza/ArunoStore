@@ -157,6 +157,36 @@ describe("proxy", () => {
     });
   });
 
+  // Guards the form from task 2.6. Signed out there is a dead end either way,
+  // since the action needs a session, so the guard sends them somewhere that
+  // helps.
+  describe("/commissions/request", () => {
+    test("sends a signed-out visitor to the login page", async () => {
+      const res = await proxy(request("/commissions/request"));
+
+      expect(res.status).toBe(307);
+      expect(pathnameOf(res)).toBe("/login");
+    });
+
+    test("lets a signed-in buyer through", async () => {
+      signedInAs("u1", "buyer");
+
+      const res = await proxy(request("/commissions/request"));
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get("location")).toBeNull();
+    });
+
+    // A prefix match on "/commissions" would swallow the public services page the
+    // form is reached from.
+    test("leaves the public services page alone", async () => {
+      const res = await proxy(request("/commissions"));
+
+      expect(res.status).toBe(200);
+      expect(mocks.getUser).not.toHaveBeenCalled();
+    });
+  });
+
   test("leaves public routes untouched", async () => {
     const res = await proxy(request("/"));
 

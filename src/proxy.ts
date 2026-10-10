@@ -66,8 +66,9 @@ export async function proxy(request: NextRequest) {
 }
 
 // Sign-in only. /account holds the visitor's own name and role, so it must never
-// render for a signed-out visitor.
-const SIGNED_IN_ROUTES = ["/account"];
+// render for a signed-out visitor. /commissions/request needs a session to write
+// a row at all, so a signed-out visitor there is a dead end.
+const SIGNED_IN_ROUTES = ["/account", "/commissions/request"];
 
 // Also needs the role. There is no artist role as of roadmap 1.15: staff are the
 // two of us and cover both halves.
