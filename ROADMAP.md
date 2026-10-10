@@ -111,7 +111,7 @@ The artist quotes a price for custom work, buyer accepts and pays.
 - [x] **2.1** Migration `0004_services.sql`: what is offered, starting price, duration, active flag *(`47d19c4`)*
 - [x] **2.2** Migration `0005_commissions.sql`: buyer, service, brief, reference links, quote, status, delivery image *(`8b56975`)*
 - [x] **2.3** Public page listing the services *(`2117010`)*
-- [ ] **2.4** Artwork gallery from Supabase Storage, upload only for `staff`
+- [x] **2.4** Artwork gallery from Supabase Storage, upload only for `staff` *(`56b79cf`)*
 - [ ] **2.5** Artwork gallery page
 - [ ] **2.6** Request form: pick a service, write the brief, add reference links
 - [ ] **2.7** Save the form as a row with status `requested`
@@ -273,7 +273,7 @@ Bug was never in this task: `0003` never applied, RLS on with zero policies. Thr
 
 **1.16** Role field gone from form. `actions.ts` hardcodes `role: "buyer"`. `actions.test.ts`: 6 cases — buyer, forged staff, forged artist, posted role never reaches Supabase, mismatched password, surfaced error. Forged cases verified by reintroducing old code and watching tests fail.
 
-**2.4** Needs `images.remotePatterns` in `next.config.ts`. Storage RLS policies in migration, `staff` only writes.
+**2.4** `0017_artwork_storage.sql`: public `artworks` bucket + `artworks` table (title, storage_path). RLS: public read, staff write (pinned to `p.id = auth.uid()`). `next.config.ts` has `images.remotePatterns` for the Supabase storage CDN. Browser client at `src/lib/supabase/browser.ts` (`createBrowserSupabase`). Staff gallery at `/staff/artworks` — upload form + grid with delete. `ArtworkGallery` wrapped in `<Suspense>` (cacheComponents). No metadata table beyond title — sorting is backlog.
 
 **2.1** `0004_services.sql`. Columns: `name`, `description`, `starting_price`, `duration_days`, `active`, `created_at`. Duration is integer days. No write policy — 6.1 seeds via SQL editor. Select policy `to anon, authenticated`, filters on `active` only.
 
