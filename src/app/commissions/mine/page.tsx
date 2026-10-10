@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getClaims } from "@/lib/auth";
 import { formatDate, formatRupiah } from "@/lib/format";
 import { statusLabel } from "@/lib/commissionStatus";
+import { respondToQuote } from "./actions";
 
 export const metadata: Metadata = {
   title: "Commissions Saya — Aruno Store",
@@ -37,7 +38,7 @@ async function MyCommissions() {
 
   const { data: commissions } = await supabase
     .from("commissions")
-    .select("id, service_id, brief, status, quote_price, created_at")
+    .select("id, service_id, brief, status, quote_price, quote_note, created_at")
     .eq("buyer_id", claims.sub)
     .order("created_at", { ascending: false });
 
@@ -90,12 +91,48 @@ async function MyCommissions() {
           {/* The quote only exists once staff has sent one. Showing a price before
               then would imply a price was agreed. */}
           {row.quote_price !== null && (
-            <p className="mt-3 text-sm">
-              <span className="text-[#6c6870]">Kutipan: </span>
-              <span className="font-medium text-ink">
-                {formatRupiah(row.quote_price)}
-              </span>
-            </p>
+            <div className="mt-3">
+              <p className="text-sm">
+                <span className="text-[#6c6870]">Kutipan: </span>
+                <span className="font-medium text-ink">
+                  {formatRupiah(row.quote_price)}
+                </span>
+              </p>
+              {row.quote_note && (
+                <p className="mt-1 text-sm leading-relaxed text-[#6c6870]">
+                  {row.quote_note}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Accept or decline a quote. Two plain forms posting to the same
+              server action — no client component, no state. A decline is final
+              and an accept is irreversible from this page, so the buttons only
+              appear while the row is still quoted. */}
+          {row.status === "quoted" && (
+            <div className="mt-4 flex gap-3">
+              <form action={respondToQuote}>
+                <input type="hidden" name="id" value={row.id} />
+                <input type="hidden" name="decision" value="accept" />
+                <button
+                  type="submit"
+                  className="bg-plum px-5 py-2 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+                >
+                  Terima
+                </button>
+              </form>
+              <form action={respondToQuote}>
+                <input type="hidden" name="id" value={row.id} />
+                <input type="hidden" name="decision" value="decline" />
+                <button
+                  type="submit"
+                  className="border border-[#e2ddd7] px-5 py-2 text-xs uppercase tracking-[0.18em] text-ink transition-colors hover:border-plum"
+                >
+                  Tolak
+                </button>
+              </form>
+            </div>
           )}
         </li>
       ))}
@@ -103,7 +140,11 @@ async function MyCommissions() {
   );
 }
 
-export default function MyCommissionsPage() {
+export default function MyCommissionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ saved?: string; error?: string }>;
+}) {
   return (
     <main className="mx-auto w-full max-w-3xl px-5 py-14 sm:px-[6%] sm:py-20">
       <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
@@ -113,6 +154,10 @@ export default function MyCommissionsPage() {
       <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#6c6870] sm:text-base">
         Permintaan yang kamu kirim, dan statusnya sekarang.
       </p>
+
+      <Suspense>
+        <SaveNotice searchParams={searchParams} />
+      </Suspense>
 
       <Suspense>
         <MyCommissions />
@@ -127,5 +172,31 @@ export default function MyCommissionsPage() {
         </Link>
       </div>
     </main>
+  );
+}
+
+/**
+ * What the server said about the last accept or decline.
+ *
+ * The action redirects with ?saved=1 or ?error=…, so the query string is the
+ * whole of the feedback. Its own Suspense boundary because reading searchParams
+ * is a request read: under cacheComponents that is a build error outside one.
+ */
+async function SaveNotice({
+  searchParams,
+}: {
+  searchParams: Promise<{ saved?: string; error?: string }>;
+}) {
+  const { saved, error } = await searchParams;
+
+  return (
+    <p role="status" className="mt-4 min-h-5 text-sm text-[#6c6870]">
+      {error && <span className="font-medium text-plum">{error}</span>}
+      {!error && saved === "1" && (
+        <span className="font-medium text-ink">
+          Keputusan tersimpan.
+        </span>
+      )}
+    </p>
   );
 }
