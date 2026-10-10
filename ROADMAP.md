@@ -67,7 +67,7 @@ The artist quotes a price for custom work, buyer accepts and pays.
 - [x] **2.10** Saving the quote sets status `quoted` *(`c34914b`)*
 - [x] **2.11** Buyer's "my commissions" list with current status *(`c34914b`)*
 - [x] **2.12** Accept or decline a quote from the buyer side *(`1daf1a7`)*
-- [ ] **2.13** Upload the finished drawing, visible to that buyer only
+- [x] **2.13** Upload the finished drawing, visible to that buyer only *(`86e56e1`)*
 - [ ] **2.14** Status labels in plain language, not `in_progress`
 
 Prerequisites: 2.12 widens `request_status` in its own migration; 2.13 adds a
