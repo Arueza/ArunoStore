@@ -38,7 +38,7 @@ async function MyCommissions() {
 
   const { data: commissions } = await supabase
     .from("commissions")
-    .select("id, service_id, brief, status, quote_price, quote_note, created_at")
+    .select("id, service_id, brief, status, quote_price, quote_note, delivery_image, created_at")
     .eq("buyer_id", claims.sub)
     .order("created_at", { ascending: false });
 
@@ -55,6 +55,30 @@ async function MyCommissions() {
   const serviceNames = new Map(
     (services ?? []).map((service) => [service.id, service.name]),
   );
+
+  // Generate signed URLs for delivery images in one pass. The bucket is
+  // private, so each image needs its own time-limited URL. Only rows that
+  // actually have a delivery_image produce a request.
+  const deliveryPaths = rows
+    .map((row) => row.delivery_image)
+    .filter((path): path is string => path !== null);
+
+  const deliveryUrls = new Map<string, string>();
+
+  if (deliveryPaths.length > 0) {
+    const results = await Promise.all(
+      deliveryPaths.map((path) =>
+        supabase.storage
+          .from("commission-deliveries")
+          .createSignedUrl(path, 3600)
+          .then(({ data }) => [path, data?.signedUrl ?? ""] as const),
+      ),
+    );
+
+    for (const [path, url] of results) {
+      if (url) deliveryUrls.set(path, url);
+    }
+  }
 
   if (rows.length === 0) {
     return (
@@ -133,6 +157,18 @@ async function MyCommissions() {
                 </button>
               </form>
             </div>
+          )}
+
+          {/* The finished drawing, visible to this buyer only. The signed URL
+              expires; the bucket is private, and only this buyer's RLS-gated
+              read reached the path that produced it. */}
+          {row.delivery_image && deliveryUrls.has(row.delivery_image) && (
+            // eslint-disable-next-line @next/next/no-img-element -- signed URLs expire; next/image caches past expiry.
+            <img
+              src={deliveryUrls.get(row.delivery_image)!}
+              alt="Hasil gambar"
+              className="mt-4 w-full border border-[#eeeae5]"
+            />
           )}
         </li>
       ))}

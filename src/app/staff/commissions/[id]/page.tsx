@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatDate, formatRupiah } from "@/lib/format";
 import { statusLabel } from "@/lib/commissionStatus";
 import { saveQuote } from "./actions";
+import DeliveryUpload from "./DeliveryUpload";
 
 export const metadata: Metadata = {
   title: "Permintaan — Ruang Staf",
@@ -25,6 +26,7 @@ type Commission = {
   status: string;
   quote_price: number | null;
   quote_note: string | null;
+  delivery_image: string | null;
   created_at: string;
 };
 
@@ -44,7 +46,7 @@ async function RequestDetail({ params }: { params: Promise<{ id: string }> }) {
 
   const { data: commission } = await supabase
     .from("commissions")
-    .select("id, buyer_id, service_id, brief, reference_links, status, quote_price, quote_note, created_at")
+    .select("id, buyer_id, service_id, brief, reference_links, status, quote_price, quote_note, delivery_image, created_at")
     .eq("id", id)
     .maybeSingle<Commission>();
 
@@ -145,13 +147,59 @@ async function RequestDetail({ params }: { params: Promise<{ id: string }> }) {
         )}
       </div>
 
-      <QuoteBox
-        id={commission.id}
-        status={commission.status}
-        quotePrice={commission.quote_price}
-        quoteNote={commission.quote_note}
-      />
+      <div className="space-y-6">
+        <QuoteBox
+          id={commission.id}
+          status={commission.status}
+          quotePrice={commission.quote_price}
+          quoteNote={commission.quote_note}
+        />
+
+        {/* The delivery upload appears once the buyer has accepted the quote.
+            The drawing starts after the price is agreed, not before. */}
+        {commission.status === "accepted" && (
+          <DeliveryUpload
+            commissionId={commission.id}
+            existingPath={commission.delivery_image}
+          />
+        )}
+
+        {/* If a delivery image exists, show it so staff can see what was sent.
+            The signed URL is private; only staff (who can read every commission)
+            reaches this page. */}
+        {commission.delivery_image && (
+          <DeliveryImage path={commission.delivery_image} />
+        )}
+      </div>
     </div>
+  );
+}
+
+/**
+ * Renders a delivery image from the private bucket via a signed URL.
+ *
+ * The bucket is not public, so the URL must be signed. The server client
+ * carries the staff session, which 0021's "Authenticated read delivery
+ * images" policy lets through.
+ */
+async function DeliveryImage({ path }: { path: string }) {
+  const supabase = await createClient();
+
+  const { data } = await supabase.storage
+    .from("commission-deliveries")
+    .createSignedUrl(path, 300);
+
+  if (!data?.signedUrl) {
+    return null;
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- signed URLs expire; next/image caches past expiry.
+    <img
+      src={data.signedUrl}
+      alt="Gambar hasil"
+      className="w-full border border-[#eeeae5]"
+    />
   );
 }
 

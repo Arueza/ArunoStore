@@ -104,3 +104,84 @@ export async function saveQuote(formData: FormData): Promise<void> {
 
   redirect(`/staff/commissions/${id}?saved=1`);
 }
+
+/**
+ * Saves the storage path of a finished drawing on a commission.
+ *
+ * Roadmap 2.13. The upload itself happens client-side — the browser Supabase
+ * client puts the file in the 'commission-deliveries' bucket, which only staff
+ * can write to (0021's storage policy). This action receives the path that
+ * upload returned and writes it to the commissions row.
+ *
+ * The path comes from the upload result, not from user input — but it is still
+ * a string in a FormData, so it is checked for shape: not empty, no path
+ * traversal. The bucket is private and the path uses crypto.randomUUID(), so
+ * the only way to get a real path is to have uploaded the file.
+ *
+ * Same staff check as saveQuote: a buyer calling this action is sent to the
+ * store. The column grant from 0021 lets staff write delivery_image; 0018's
+ * buyer update policy does not grant it, and even if it did, the buyer has no
+ * path to write.
+ */
+export async function saveDeliveryImage(formData: FormData): Promise<void> {
+  const id = formData.get("id");
+  const path = formData.get("path");
+
+  if (typeof id !== "string" || !UUID.test(id)) {
+    redirect("/staff?error=Permintaan tidak valid.");
+  }
+
+  if (typeof path !== "string" || !path.trim() || path.includes("..")) {
+    redirect(`/staff/commissions/${id}?error=Path gambar tidak valid.`);
+  }
+
+  const trimmedPath = path.trim();
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profile?.role !== "staff") {
+    redirect("/");
+  }
+
+  // Clean up the old image if one exists, so a replacement does not leave an
+  // orphan in the bucket. The path column holds the previous path; if the
+  // upload is replacing it, the old file is unreachable after this.
+  const { data: existing } = await supabase
+    .from("commissions")
+    .select("delivery_image")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (existing?.delivery_image && existing.delivery_image !== trimmedPath) {
+    await supabase.storage
+      .from("commission-deliveries")
+      .remove([existing.delivery_image]);
+  }
+
+  const { error } = await supabase
+    .from("commissions")
+    .update({ delivery_image: trimmedPath })
+    .eq("id", id);
+
+  if (error) {
+    redirect(
+      `/staff/commissions/${id}?error=${encodeURIComponent(error.message)}`,
+    );
+  }
+
+  redirect(`/staff/commissions/${id}?saved=1`);
+}

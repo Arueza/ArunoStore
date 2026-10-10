@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   update: vi.fn(),
   maybeSingle: vi.fn(),
+  remove: vi.fn(),
   updateError: null as { message: string } | null,
 }));
 
@@ -24,7 +25,9 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
     auth: { getUser: mocks.getUser },
     from: vi.fn((table: string) => ({
-      // The staff check reads profiles with .select().eq().maybeSingle().
+      // The staff check reads profiles; saveDeliveryImage also reads
+      // commissions for the existing delivery_image. Both go through
+      // .select().eq().maybeSingle(), so the same mock serves both.
       select: () => ({ eq: () => ({ maybeSingle: mocks.maybeSingle }) }),
       update: (values: unknown) => ({
         eq: (_column: string, value: string) => {
@@ -35,10 +38,15 @@ vi.mock("@/lib/supabase/server", () => ({
       // unused, keeps the shape honest if the action ever grows
       _table: table,
     })),
+    storage: {
+      from: () => ({
+        remove: mocks.remove,
+      }),
+    },
   })),
 }));
 
-import { saveQuote } from "./actions";
+import { saveDeliveryImage, saveQuote } from "./actions";
 
 const ID = "3f7c1e6a-9b2d-4e5f-8a1b-2c3d4e5f6a7b";
 
@@ -77,9 +85,11 @@ describe("saveQuote", () => {
     mocks.getUser.mockReset();
     mocks.update.mockReset();
     mocks.maybeSingle.mockReset();
+    mocks.remove.mockReset();
     mocks.updateError = null;
     mocks.getUser.mockResolvedValue({ data: { user: { id: "staff-1" } } });
     mocks.maybeSingle.mockResolvedValue({ data: { role: "staff" } });
+    mocks.remove.mockResolvedValue({ error: null });
   });
 
   // The whole point of 2.10: saving a quote is what makes it a quote.
@@ -193,5 +203,127 @@ describe("saveQuote", () => {
     await run(formData());
 
     expect(mocks.update.mock.calls[0]![0]).toMatchObject({ id: ID });
+  });
+});
+
+describe("saveDeliveryImage", () => {
+  beforeEach(() => {
+    mocks.getUser.mockReset();
+    mocks.update.mockReset();
+    mocks.maybeSingle.mockReset();
+    mocks.remove.mockReset();
+    mocks.updateError = null;
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "staff-1" } } });
+    // saveDeliveryImage calls maybeSingle twice: once for the profiles role
+    // check, once for the existing delivery_image read. The role check comes
+    // first, the delivery_image read second.
+    mocks.maybeSingle
+      .mockResolvedValueOnce({ data: { role: "staff" } })
+      .mockResolvedValue({ data: { delivery_image: null } });
+    mocks.remove.mockResolvedValue({ error: null });
+  });
+
+  function deliveryFormData(overrides: Record<string, string> = {}) {
+    const data = new FormData();
+    for (const [key, value] of Object.entries({
+      id: ID,
+      path: "abc-123/result.png",
+      ...overrides,
+    })) {
+      data.append(key, value);
+    }
+    return data;
+  }
+
+  async function runDelivery(data: FormData) {
+    try {
+      await saveDeliveryImage(data);
+      return null;
+    } catch (error) {
+      if (error instanceof Redirect) return error.to;
+      throw error;
+    }
+  }
+
+  const deliveryWritten = () =>
+    (mocks.update.mock.calls[0]![0] as { values: Record<string, unknown> })
+      .values;
+
+  test("writes the storage path to the delivery_image column", async () => {
+    const to = await runDelivery(deliveryFormData());
+
+    expect(deliveryWritten()).toEqual({ delivery_image: "abc-123/result.png" });
+    expect(to).toBe(`/staff/commissions/${ID}?saved=1`);
+  });
+
+  test("refuses an id that is not a uuid, before touching Supabase", async () => {
+    const to = await runDelivery(deliveryFormData({ id: "../../login" }));
+
+    expect(to).toContain("error=");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  test("refuses an empty path", async () => {
+    const to = await runDelivery(deliveryFormData({ path: "   " }));
+
+    expect(to).toContain("error=");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  test("refuses a path with directory traversal", async () => {
+    const to = await runDelivery(deliveryFormData({ path: "../etc/passwd" }));
+
+    expect(to).toContain("error=");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  test("sends a buyer back to the store and writes nothing", async () => {
+    mocks.maybeSingle.mockReset();
+    mocks.maybeSingle
+      .mockResolvedValueOnce({ data: { role: "buyer" } as never })
+      .mockResolvedValue({ data: { delivery_image: null } });
+
+    const to = await runDelivery(deliveryFormData());
+
+    expect(to).toBe("/");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  test("sends an expired session to the login page", async () => {
+    mocks.getUser.mockResolvedValueOnce({ data: { user: null } } as never);
+
+    const to = await runDelivery(deliveryFormData());
+
+    expect(to).toBe("/login");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  test("removes the old image when replacing with a new one", async () => {
+    mocks.maybeSingle.mockReset();
+    mocks.maybeSingle
+      .mockResolvedValueOnce({ data: { role: "staff" } })
+      .mockResolvedValueOnce({ data: { delivery_image: "old/path.png" } });
+
+    await runDelivery(deliveryFormData({ path: "new/path.png" }));
+
+    expect(mocks.remove).toHaveBeenCalledWith(["old/path.png"]);
+  });
+
+  test("does not remove anything when no previous image exists", async () => {
+    mocks.maybeSingle
+      .mockResolvedValueOnce({ data: { role: "staff" } })
+      .mockResolvedValueOnce({ data: { delivery_image: null } });
+
+    await runDelivery(deliveryFormData());
+
+    expect(mocks.remove).not.toHaveBeenCalled();
+  });
+
+  test("surfaces the error when Supabase refuses the update", async () => {
+    mocks.updateError = { message: "new row violates row-level security policy" };
+
+    const to = await runDelivery(deliveryFormData());
+
+    expect(decodeURIComponent(to!)).toContain("row-level security");
   });
 });
