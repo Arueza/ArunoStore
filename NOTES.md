@@ -102,6 +102,11 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
   bucket is private (0021); the server generates a signed URL after the RLS-gated
   commission read confirms the buyer owns the row. `next/image` would cache past
   expiry, so both pages use `<img>` with an eslint-disable.
+- **Display webp, keep originals.** Gallery and shop render through `next/image`,
+  which serves webp/avif per browser; delivery `<img>` stays plain until an
+  optimized derivative exists. Never resize the stored original — a full-size view
+  or download reads the original path, so a downscaled display copy must not
+  replace it.
 - **`formatDate()` in `src/lib/format.ts` is pinned to UTC by the `timeZone`
   option, and a test caught it missing.** Without it `2026-10-09T23:30:00Z`
   renders as the 10th here and the 9th on any UTC server. Switch to
