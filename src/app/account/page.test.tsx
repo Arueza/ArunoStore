@@ -54,7 +54,7 @@ describe("AccountDetails", () => {
 
     render(await AccountDetails());
 
-    expect(screen.getByText("Pembeli")).toBeInTheDocument();
+    expect(screen.getByText("Buyer")).toBeInTheDocument();
     expect(screen.queryByText("buyer")).not.toBeInTheDocument();
   });
 
@@ -64,7 +64,7 @@ describe("AccountDetails", () => {
 
     render(await AccountDetails());
 
-    expect(screen.getByText("Staf")).toBeInTheDocument();
+    expect(screen.getByText("Staff")).toBeInTheDocument();
     // One note covers both halves now that artist is not a role.
     expect(screen.getByText(/commission/i)).toBeInTheDocument();
     expect(screen.getByText(/titipan/i)).toBeInTheDocument();
