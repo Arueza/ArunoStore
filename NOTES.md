@@ -5,7 +5,7 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
 
 ## Migrations
 
-- **Number with `000N_name.sql`.** `0001`–`0019` are taken (`0009` a deliberate gap, `0016` repairs P1's policies, `0017` artwork storage, `0018` staff update policy, `0019` staff reads profiles); `0020` next free. Supabase's own files (`20261004133000_…`) share the directory, not the count.
+- **Number with `000N_name.sql`.** `0001`–`0021` are taken (`0009` a deliberate gap, `0016` repairs P1's policies, `0017` artwork storage, `0018` staff update policy, `0019` staff reads profiles, `0020` buyer accepts/declines, `0021` delivery image bucket); `0022` next free. Supabase's own files (`20261004133000_…`) share the directory, not the count.
 - **Check the number is free before writing one.** `0017` was issued twice (2.4 storage, then 2.8 staff reads, renamed `0019`) and only git noticed: the SQL editor never sees a filename, so a duplicate applies cleanly then disagrees with the repo.
 - **Paste one statement at a time.** `0003` went in as a batch and aborted
   silently. Verify after: `select policyname, qual from pg_policies where
@@ -35,7 +35,7 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
   `commissions` from `authenticated`, then re-grants exactly `quote_price,
   quote_note, status`. Without it a staff session holding the anon key could
   rewrite `buyer_id` and hand one buyer's request to another account.
-- **Verify the grant landed.** The `information_schema.column_privileges` query at the foot of `0018` catches a revoke that silently did nothing: three columns is correct, six means the revoke failed and nothing else will say so. `delivery_image` is absent on purpose — 2.13 needs a bucket policy too.
+- **Verify the grant landed.** The `information_schema.column_privileges` query at the foot of `0018` catches a revoke that silently did nothing: three columns was correct before 0021, four after it. `delivery_image` was added by `0021`.
 - **Read the reused clause before relying on it.** No `with check` means
   Postgres reuses `using`. On `0018` that is exactly what is wanted; on
   `admins` it is too weak and an admin can update their own `store_role`.
@@ -89,14 +89,19 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
 ## Data and money
 
 - **`saveQuote` refuses any price that is not `^\d+$`.** `parseInt("15000.50")` is 15000 and the column's `check (quote_price >= 0)` never sees the dropped decimals. `status` is set by the action, not the form, so a forged field cannot un-quote a request staff already priced. Price `0` is a real answer and is accepted; blank is not. Blank `quote_note` stores `null`, not `""`.
-- **`request_status` holds only `requested | quoted`.** Widen it in its own
-  migration, one phase at a time. 2.12 and 3.9 wait on that.
+- **`request_status` holds `requested | quoted | accepted | declined`.** 0020
+  widened it; a decline is final, an accept is irreversible from the buyer side.
+  3.9 and 4.x may add more. Widen in its own migration, one phase at a time.
 - **There is no `total` column.** `quoteTotal()` in `src/lib/quote.ts` is the
   only source (`SERVICE_FEE = 25000`, marked `ponytail:`).
 - **`statusLabel()` in `src/lib/commissionStatus.ts` is shared** by the staff
-  queue and the buyer list so the two halves cannot call one state two ways. An
-  unknown value falls through to itself — visible but wrong beats a blank cell
-  that reads as a bug.
+  queue, the buyer list, and the staff detail page so the three cannot call one
+  state two ways. An unknown value falls through to itself — visible but wrong
+  beats a blank cell that reads as a bug.
+- **Delivery images use signed URLs, not public ones.** The `commission-deliveries`
+  bucket is private (0021); the server generates a signed URL after the RLS-gated
+  commission read confirms the buyer owns the row. `next/image` would cache past
+  expiry, so both pages use `<img>` with an eslint-disable.
 - **`formatDate()` in `src/lib/format.ts` is pinned to UTC by the `timeZone`
   option, and a test caught it missing.** Without it `2026-10-09T23:30:00Z`
   renders as the 10th here and the 9th on any UTC server. Switch to
