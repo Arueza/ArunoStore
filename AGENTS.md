@@ -36,6 +36,14 @@ Report when the session's tasks are done.
 Never claim something works without running the loop yourself. Tick a box only
 after the loop passes.
 
+## The two markdown files
+
+`ROADMAP.md` is capped at 200 lines, `NOTES.md` at 150, and `ROADMAP.test.ts`
+fails `npm test` past either — so the caps are the loop's business, not a
+preference. The roadmap holds one line per task and nothing else; anything
+explanatory goes to `NOTES.md`, one trap per line, no padding. Adding a line
+somewhere means taking one out somewhere: the caps do not move.
+
 `assets/` is a staging folder for raw media — logos, images — kept before they
 are imported properly into `src/`. It stands on its own. Nothing reads it; do
 not delete it as cleanup.
