@@ -1,0 +1,129 @@
+# Aruno Store — notes
+
+Too heavy for `ROADMAP.md`: traps, unfixed defects, decisions that still bind.
+One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
+
+## Migrations
+
+- **Number with `000N_name.sql`.** `0001`–`0019` are taken (`0009` a deliberate gap, `0016` repairs P1's policies, `0017` artwork storage, `0018` staff update policy, `0019` staff reads profiles); `0020` next free. Supabase's own files (`20261004133000_…`) share the directory, not the count.
+- **Check the number is free before writing one.** `0017` was issued twice (2.4 storage, then 2.8 staff reads, renamed `0019`) and only git noticed: the SQL editor never sees a filename, so a duplicate applies cleanly then disagrees with the repo.
+- **Paste one statement at a time.** `0003` went in as a batch and aborted
+  silently. Verify after: `select policyname, qual from pg_policies where
+  tablename = 'profiles';`
+- **`drop policy if exists "name"` can silently do nothing.** Read names as hex
+  first: `encode(convert_to(polname,'utf8'),'hex')`.
+- **Never read table shape from the dashboard schema export.** It omitted four
+  FKs and every `on delete`. Use `pg_constraint` / `pg_trigger`; event triggers
+  live in `pg_event_trigger`.
+- **The connected GitHub↔Supabase integration does nothing.** No
+  `supabase/config.toml`. To make it work: backfill
+  `supabase_migrations.schema_migrations` by hand and renumber the two
+  Supabase-era files (`0010` sorts before `20261004150000` as strings).
+- **P1's files are captured, not authored** (`0010`–`0015`; no creation SQL ever existed). Functions and triggers live in `0015` — paste it last, the trigger needs the function — each preceded by `drop ... if exists` because triggers have no `if not exists`. `update_updated_at()` serves four tables. `ensure_rls`, an event trigger, puts RLS on all seventeen tables and is invisible to `pg_trigger` queries.
+
+## RLS and policies
+
+- **RLS on with no policy denies every row, silently.** `0003` sat unapplied for
+  days — `getProfile()` returned null, `/account` said "Belum diisi", no error
+  anywhere. A policy on a table whose RLS is *off* is inert. Check both.
+- **A policy may never name its own table.** `exists (select 1 from profiles p
+  where …)` written on `profiles` re-evaluates itself: `infinite recursion
+  detected in policy for relation "profiles"`. `0005` uses the identical
+  subquery safely because its policy sits on `commissions`. Fix: `is_staff()`.
+- **`is_staff()` is load-bearing as written.** SECURITY DEFINER (inner read runs as owner, skips RLS); `language plpgsql`, because a `language sql` body is inlined by the planner and the recursion returns; and it reads `auth.uid()` itself, because an argument would let a buyer ask "is this uid staff" about anyone, get `true`, and read every profile.
+- **Columns are not rows, so RLS cannot express them.** `0018` revokes UPDATE on
+  `commissions` from `authenticated`, then re-grants exactly `quote_price,
+  quote_note, status`. Without it a staff session holding the anon key could
+  rewrite `buyer_id` and hand one buyer's request to another account.
+- **Verify the grant landed.** The `information_schema.column_privileges` query at the foot of `0018` catches a revoke that silently did nothing: three columns is correct, six means the revoke failed and nothing else will say so. `delivery_image` is absent on purpose — 2.13 needs a bucket policy too.
+- **Read the reused clause before relying on it.** No `with check` means
+  Postgres reuses `using`. On `0018` that is exactly what is wanted; on
+  `admins` it is too weak and an admin can update their own `store_role`.
+- **Every admin policy hangs off one row of `admins`,** whose only select policy
+  is `auth.uid() = id`. Tighten or drop it and all thirteen go false at once —
+  no error, just empty tables.
+- **Staff policies pin to `p.id = auth.uid()`.** A bare `where p.role='staff'`
+  reads every profile, `0003` denies that read, and the queue renders empty
+  with no error to explain it.
+
+## Roles, auth, routes
+
+- **Two roles: `buyer` and `staff`.** Artist is not a role — `0002` created the
+  enum, `0009` dropped it. Verrel and Alfreza are both `staff`.
+- **Sign-up cannot grant `staff`.** `signUp()` hardcodes `role: "buyer"` and
+  never reads role from FormData; promotion is manual in Supabase (1.16).
+- **Render with `getClaims()`, never `getUser()`.** The first is wrapped in
+  React `cache()` and verifies locally; the second hits the Auth server, so it
+  is for Server Actions and Route Handlers only.
+- **Next 16 renamed `middleware.ts` to `src/proxy.ts`.** The guard is `SIGNED_IN_ROUTES` plus `STAFF_ROUTES` / `isStaff()`, and fails closed on a missing profile row — fail-open would hand `/staff` to the public. Public prefixes stay open deliberately: `/commissions/request` is in the array, `/commissions` is not.
+- **Signup route is `/auth/sign-up`,** not `/register`. Sign-up errors are
+  swallowed in three places (`login/actions.ts`, `auth/sign-up/actions.ts`,
+  `lib/auth.ts`) — log `error.message` in development.
+- **Supabase Auth's Email provider toggle stays on.** Turning it off breaks
+  sign-in for every account.
+- **Logins:** Verrel and Alfreza are `staff`. Test accounts in the live DB:
+  `wagakami@gmail.com` (TESTO) and `alamak@gmail.com` — keep `alamak` as the
+  standing buyer for guard tests. No password is recorded in this repo.
+
+## Build and rendering
+
+- **`cacheComponents: true` is on.** A session read behind a page needs
+  `<Suspense>` or `next build` fails on uncached data. `params` and
+  `searchParams` must be awaited *inside* the boundary's children, never in the
+  page body — and `searchParams` needs its own boundary, being a request read.
+- **Prerender by reading nothing session-shaped.** `/artworks`, `/titipan` and
+  `/shop` go through `createPublicClient()` (`src/lib/supabase/public.ts`,
+  cookie-less) behind `'use cache'`, so they build with no `<Suspense>`.
+- **Vitest cannot render a `'use cache'` component.** `renderToStaticMarkup`,
+  `renderToString` and `renderToPipeableStream` all fail — 2.5's only proof is
+  that build and lint pass.
+- **`0004_services.sql` has no write policy on purpose:** 6.1 seeds in the SQL
+  editor. Until then `services` has 0 rows, so the populated service dropdown
+  at 2.6 has never rendered in a browser, and the insert against `0005`'s
+  policy is unproven end to end — `actions.test.ts` asserts the row the action
+  builds, not that RLS accepted it.
+- **Nothing signed in has been seen against real rows.** 2.8–2.11 shipped as one
+  commit (`c34914b`), proved only signed-out (queue, quote box and buyer list
+  all 307 to `/login`) plus 104 tests. 6.2 is where that gets signed off.
+
+## Data and money
+
+- **`saveQuote` refuses any price that is not `^\d+$`.** `parseInt("15000.50")` is 15000 and the column's `check (quote_price >= 0)` never sees the dropped decimals. `status` is set by the action, not the form, so a forged field cannot un-quote a request staff already priced. Price `0` is a real answer and is accepted; blank is not. Blank `quote_note` stores `null`, not `""`.
+- **`request_status` holds only `requested | quoted`.** Widen it in its own
+  migration, one phase at a time. 2.12 and 3.9 wait on that.
+- **There is no `total` column.** `quoteTotal()` in `src/lib/quote.ts` is the
+  only source (`SERVICE_FEE = 25000`, marked `ponytail:`).
+- **`statusLabel()` in `src/lib/commissionStatus.ts` is shared** by the staff
+  queue and the buyer list so the two halves cannot call one state two ways. An
+  unknown value falls through to itself — visible but wrong beats a blank cell
+  that reads as a bug.
+- **`formatDate()` in `src/lib/format.ts` is pinned to UTC by the `timeZone`
+  option, and a test caught it missing.** Without it `2026-10-09T23:30:00Z`
+  renders as the 10th here and the 9th on any UTC server. Switch to
+  `Asia/Jakarta` if staff and a buyer ever disagree about which day.
+- **The `.eq("buyer_id", claims.sub)` on `/commissions/mine` deliberately
+  duplicates 0005's policy.** If that policy were dropped or misspelled, RLS
+  alone would hand one buyer every commission and nothing would look wrong;
+  with it the worst case is an empty list.
+- **The staff queue joins in JavaScript, not a PostgREST embed** — `commissions.buyer_id` references `auth.users`, not `profiles`, so there is no FK to follow. Save feedback is the query string (`?saved=1` / `?error=…`) set by the server redirect: no client component that could disagree.
+- **2.6 rejects reference links unless http/https.** `reference_links` is bare
+  `text[]` and staff will render it as an `href` in 2.9, so a stored
+  `javascript:` link would run then. Blank link rows are dropped, not an error.
+  Form tests use `fireEvent`, not `user-event`.
+
+## Known defects — not yet tasks
+
+- **`handle_commission_order_confirmed()` is broken.** It updates `commissions`
+  columns `used_slots` / `max_slots`, which do not exist, and sets
+  `status='closed'`, which is not in `request_status`; the AFTER UPDATE trigger
+  rolls the whole thing back. Blocked on the overlap decision.
+- **Commission orders cannot be inserted.** `notify_commission_order()` looks up `where store_role='art_commission' limit 1` and the column defaults to `'consignment'`; a null address then violates `email_notifications.recipient_email not null` and takes the order insert with it.
+- **Overlap: `commission_orders` / `commission_categories` do the work of `commissions` / `services`.** P1 captured both; choosing one is still undecided. Their money columns are `numeric`, against the whole-rupee rule, and `admins.store_role` still allows the three-role model Phase 1 deleted.
+- **`consignment_items.stock` can go negative** — no `check (stock >= 0)`, and
+  `handle_consignment_order_confirmed()` decrements it.
+- **A confirmed consignment item never returns to `'tersedia'`.**
+- **No index on any FK, status or `created_at`.** The staff queue's "newest
+  first" is a sequential scan until one exists.
+- **Nothing measured since 1.12 / 1.13.** No Lighthouse run against the live
+  site, and whether Supabase and Vercel functions share a region is unknown.
+  Measure both after the next deploy.
