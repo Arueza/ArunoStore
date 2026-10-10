@@ -6,6 +6,7 @@ const GROUPS = [
   {
     heading: "Explore",
     links: [
+      { href: "/shop", label: "Belanja" },
       { href: "/commissions", label: "Commissions" },
       { href: "/titipan", label: "Titipan" },
     ],

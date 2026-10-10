@@ -11,6 +11,7 @@ describe("Home", () => {
   test("offers both halves of the shop", () => {
     const shell = renderToStaticMarkup(<Home />);
 
+    expect(shell).toContain('href="/shop"');
     expect(shell).toContain('href="/commissions"');
     expect(shell).toContain('href="/titipan"');
   });
@@ -18,7 +19,7 @@ describe("Home", () => {
   // Same guarantee task 1.11 gave the footer. Both services are unbuilt until
   // Phase 2 and 3, so this only holds while they are declared pending.
   test("every link on the page has a page or is declared pending", () => {
-    for (const href of ["/", "/commissions", "/titipan"]) {
+    for (const href of ["/", "/shop", "/commissions", "/titipan"]) {
       expect(
         PENDING.includes(href) || pageExists(href),
         `${href} has no page`,

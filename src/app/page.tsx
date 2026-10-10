@@ -2,6 +2,12 @@ import Link from "next/link";
 
 const SERVICES = [
   {
+    href: "/shop",
+    name: "Belanja",
+    blurb:
+      "Barang siap kirim dari endorse kami — merchandise seni dan barang dari Jepang.",
+  },
+  {
     href: "/commissions",
     name: "Commission",
     blurb:

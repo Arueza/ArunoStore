@@ -8,6 +8,7 @@ import logo from "@/components/aruno-logo.png";
 const ID = "menu";
 
 const LINKS = [
+  { href: "/shop", label: "Belanja" },
   { href: "/commissions", label: "Commissions" },
   { href: "/titipan", label: "Titipan" },
 ];

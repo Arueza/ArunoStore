@@ -34,6 +34,7 @@ describe("Navbar", () => {
   test("the nav links are in the static shell", () => {
     const shell = renderToStaticMarkup(<Navbar />);
 
+    expect(shell).toContain('href="/shop"');
     expect(shell).toContain('href="/commissions"');
     expect(shell).toContain('href="/titipan"');
   });
@@ -43,7 +44,7 @@ describe("Navbar", () => {
   // dashboard chrome had three links that resolved to nothing and nothing
   // watching them.
   test("every nav target has a page or is declared pending", () => {
-    for (const href of ["/commissions", "/titipan"]) {
+    for (const href of ["/shop", "/commissions", "/titipan"]) {
       expect(
         PENDING.includes(href) || pageExists(href),
         `${href} has no page`,

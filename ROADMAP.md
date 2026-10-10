@@ -162,6 +162,15 @@ Do this after both halves can reach "buyer accepts a quote".
 - [ ] **5.3** Buyer leaves a rating after delivery
 - [ ] **5.4** Curated titipan catalogue: staff list popular items, buyer adds to basket directly
 
+**Built ahead of 5.4** The storefront had no page for ready-made goods at all —
+`/shop`, reading `consignment_items`, using the table that was already there.
+`pickThumb()` in `src/lib/shop.ts` is the only new logic, and it is tested. The
+empty state is what renders today (0 rows); task 6.1 seeds the first items.
+No migration: the table, its public-read policies and its category join were all
+live already.
+
+- [x] **5.5** `/shop` catalog page — grid of `consignment_items` with price, thumbnail, condition, category
+
 ## Phase 6 — Submission
 
 - [ ] **6.1** Seed data: a few services, artworks, sample requests
