@@ -2,12 +2,14 @@ import { describe, expect, test } from "vitest";
 import { statusLabel } from "@/lib/commissionStatus";
 
 describe("statusLabel", () => {
-  // Nobody sees a database word. request_status holds requested and quoted
-  // today, and the enum grows at 2.12, so this asserts the map covers the
-  // values that actually exist rather than pinning a fixed count.
-  test("names both statuses the enum holds today", () => {
+  // Nobody sees a database word. request_status holds requested, quoted,
+  // accepted and declined — the enum grew at 2.12 — so this asserts the map
+  // covers every value the column can hold.
+  test("names every status the enum holds", () => {
     expect(statusLabel("requested")).toBe("Menunggu kutipan");
     expect(statusLabel("quoted")).toBe("Sudah dikutip");
+    expect(statusLabel("accepted")).toBe("Diterima");
+    expect(statusLabel("declined")).toBe("Ditolak");
   });
 
   // Visible but wrong, rather than blank. After 2.12 widens the enum, a row can
