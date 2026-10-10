@@ -113,8 +113,8 @@ The artist quotes a price for custom work, buyer accepts and pays.
 - [x] **2.3** Public page listing the services *(`2117010`)*
 - [x] **2.4** Artwork gallery from Supabase Storage, upload only for `staff` *(`56b79cf`)*
 - [x] **2.5** Artwork gallery page *(`f816b38`)*
-- [ ] **2.6** Request form: pick a service, write the brief, add reference links
-- [ ] **2.7** Save the form as a row with status `requested`
+- [x] **2.6** Request form: pick a service, write the brief, add reference links *(`77f0601`)*
+- [x] **2.7** Save the form as a row with status `requested` *(`77f0601`)*
 - [ ] **2.8** Staff list of all requests, newest first
 - [ ] **2.9** Staff view of one request with a quote box: price and note
 - [ ] **2.10** Saving the quote sets status `quoted`
@@ -310,6 +310,37 @@ Bug was never in this task: `0003` never applied, RLS on with zero policies. Thr
 **2.4** `0017_artwork_storage.sql`: public `artworks` bucket + `artworks` table (title, storage_path). RLS: public read, staff write (pinned to `p.id = auth.uid()`). `next.config.ts` has `images.remotePatterns` for the Supabase storage CDN. Browser client at `src/lib/supabase/browser.ts` (`createBrowserSupabase`). Staff gallery at `/staff/artworks` — upload form + grid with delete. `ArtworkGallery` wrapped in `<Suspense>` (cacheComponents). No metadata table beyond title — sorting is backlog.
 
 **2.5** `src/app/artworks/page.tsx` — public gallery at `/artworks`. Uses `'use cache'` for full prerender (no `<Suspense>`, no session read). Reads `artworks` table via `createPublicClient()` (cookie-less Supabase client at `src/lib/supabase/public.ts`) so the page can prerender at build time. Grid layout matches staff gallery (2 cols mobile, 3 cols sm+). Newest first. No test file — vitest/jsdom cannot render `'use cache'` components; `renderToStaticMarkup`, `renderToString`, and `renderToPipeableStream` all fail. Build + lint pass.
+
+**2.6** `src/app/commissions/request/` — page.tsx (server, static frame) +
+CommissionRequestForm.tsx (client) + actions.ts. Service dropdown is a
+`request_status`-free plain select fed from active `services`; 2.3's listing is
+unchanged. Page reads no session, so it prerenders — the dropdown sits behind
+`<Suspense>` because `createClient()` touches cookies. `proxy.ts`
+`SIGNED_IN_ROUTES` gains `/commissions/request`, not `/commissions`, so the
+public listing stays open. CTA on `/commissions` now points at the form;
+signed-out visitors are caught by the guard, and the sub-line keeps both
+`/auth/sign-up` and `/login`.
+
+`buyer_id` comes from `getUser()` in the action, never the FormData, and
+`status` is hardcoded `requested` — same rule as the role field in 1.16, and
+`actions.test.ts` forges both and asserts neither arrives. Reference links are
+rejected unless http/https: `reference_links` is bare `text[]`, and staff will
+render these as hrefs in 2.9, so a stored `javascript:` link would run then.
+Dropping blanks is not an error — an untouched row of inputs must still submit.
+
+Form logic is tested, not guessed: 8 tests in CommissionRequestForm.test.tsx
+cover the dropdown, add/remove link and typing across inputs. `fireEvent`, not
+`user-event` — not a dependency, and AuthSlot.test.tsx sets that precedent.
+
+Not proved on the live DB: **the `services` table has 0 rows**, so the
+populated dropdown has never rendered in a browser. 0004 has no write policy by
+design, so seeding needs the SQL editor. The page shows an empty state instead
+of a dead dropdown until 6.1 seeds. The insert against 0005's policy is also
+unproven end to end for the same reason — `actions.test.ts` asserts the row the
+action builds, not that RLS accepted it.
+
+Commit `77f0601` covers 2.6 and 2.7 together: splitting them leaves a form that
+cannot submit.
 
 **2.1** `0004_services.sql`. Columns: `name`, `description`, `starting_price`, `duration_days`, `active`, `created_at`. Duration is integer days. No write policy — 6.1 seeds via SQL editor. Select policy `to anon, authenticated`, filters on `active` only.
 
