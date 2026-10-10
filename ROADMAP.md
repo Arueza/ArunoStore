@@ -108,6 +108,13 @@ only in the live database and in nobody's git history.
 
 The artist quotes a price for custom work, buyer accepts and pays.
 
+**2.8–2.11 are written and committed but NOT done. Two migrations are waiting to
+be pasted by hand, and until they are the feature cannot work:** `0017` lets staff
+read other people's profiles (without it every row in the queue reads "Pembeli
+tanpa profil") and `0018` lets staff update a commission at all (without it the
+quote box fails on a row-level security error). Nothing else blocks them. Paste
+both, run the verification queries at the foot of each file, then tick the boxes.
+
 - [x] **2.1** Migration `0004_services.sql`: what is offered, starting price, duration, active flag *(`47d19c4`)*
 - [x] **2.2** Migration `0005_commissions.sql`: buyer, service, brief, reference links, quote, status, delivery image *(`8b56975`)*
 - [x] **2.3** Public page listing the services *(`2117010`)*
@@ -200,6 +207,11 @@ Never cut: payment, login, or the quote step. They are the assignment.
 
 - **Every migration applied by hand.** All nine as of Phase 2 tables: `0001`–`0006`,
   `0009`, plus Supabase's own two. Check the database, not this file.
+- **`0017` and `0018` are written but not applied.** They block 2.8 through 2.11 and
+  nothing after. `0017` adds `is_staff()` and one select policy on `profiles`;
+  `0018` adds the update policy on `commissions` and revokes table-level UPDATE down
+  to three columns. Until both are pasted, the staff queue shows no buyer names and
+  the quote box cannot save.
 - **Sign-up escalation: closed by 1.16.** Role field gone, role hardcoded.
 - **Verrel's login exists** and is `staff`. Both sellers reach `/staff`.
 - **Test accounts in live DB.** `wagakami@gmail.com` (TESTO), `alamak@gmail.com`.
@@ -341,6 +353,114 @@ action builds, not that RLS accepted it.
 
 Commit `77f0601` covers 2.6 and 2.7 together: splitting them leaves a form that
 cannot submit.
+
+**2.8–2.11** One commit, `c34914b`. Two migrations, both unpasted, so the boxes are
+NOT ticked. Everything except the database is proved: 104 tests pass, lint clean,
+build green, and the guards confirmed by hand with curl — signed out, `/staff`,
+`/commissions/mine` and `/staff/commissions/[id]` all 307 to `/login`, `/staffing`
+still 404, `/commissions` still 200 public. Not proved: anything signed in. No test
+account password is recorded anywhere in this repo, so the queue, the quote box and
+the buyer list have never rendered against real rows.
+
+`0017_staff_read_profiles.sql`. The policy everyone writes first does not work:
+
+    using (exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'staff'))
+
+on `public.profiles`. That subquery reads the table the policy sits on, so RLS
+applies to it, which re-evaluates the policy, which reads the table again. Postgres
+stops it with `infinite recursion detected in policy for relation "profiles"`. 0005
+gets away with the identical subquery because its policy is on `commissions` and the
+subquery is on `profiles` — two tables, no loop. **A policy may never name its own
+table.** `is_staff()` is the documented fix: SECURITY DEFINER, so the inner read runs
+as the table owner and skips RLS.
+
+`is_staff()` is `language plpgsql`, not `sql`, and that is load-bearing. A `language
+sql` function gets inlined into the policy expression by the planner, which puts the
+inner query back under RLS and the recursion returns. It also reads `auth.uid()`
+itself rather than taking it as an argument — a parameter would let a buyer ask
+"is this uid staff" about somebody else, get `true`, and then satisfy the policy
+below and read every profile in the table.
+
+`0018_staff_update_commissions.sql`. Two questions, answered separately, because RLS
+is row-level and cannot express the second one:
+
+    which rows     — the update policy, using (public.is_staff())
+    which columns  — revoke update on commissions from authenticated,
+                     then grant update (quote_price, quote_note, status)
+
+Without the column grant, any staff session holding the anon key could rewrite
+`buyer_id` on any commission and hand one buyer's request to another account. The
+server action only writes three columns, but the action is not the only thing that
+can talk to the API. **Verify the column grant landed** — the
+`information_schema.column_privileges` query at the foot of the file is the only
+thing that catches a revoke that silently did nothing. Three columns is correct; six
+means the revoke failed and nothing else in the app will tell you.
+`delivery_image` is left out on purpose: that is 2.13, and it needs a bucket policy
+as well as the column.
+
+No `with check` on the update policy. Postgres reuses `using` when it is missing, and
+here that is `is_staff()` again, which is the condition actually wanted. This is the
+case the roadmap notes as a hazard on `admins` — there the reused clause happened to
+be too weak; here it happens to be exactly right. Read the reused clause before
+relying on it.
+
+`src/app/staff/page.tsx` — the queue, newest first. Joins `services` and `profiles`
+in JavaScript rather than asking for a PostgREST embed, because `commissions.buyer_id`
+references `auth.users` and not `profiles`, so there is no foreign key for PostgREST
+to follow and the join has to happen on this side anyway. One mechanism for both
+columns beats two. `.in()` is skipped rather than sent empty when there are no rows.
+
+`src/app/staff/commissions/[id]/page.tsx` — the request and its quote box. The box
+posts to a server action and the server redirects with `?saved=1` or `?error=…`, so
+the query string is the whole of the feedback. No client component and no second code
+path that could disagree about what was saved.
+
+`params` and `searchParams` are awaited inside the `<Suspense>` children, not in the
+page body. Under `cacheComponents` a request read outside a boundary is a build
+error — first attempt failed with "uncached or runtime data during prerendering".
+The page is sync and `await params` moved into `RequestDetail`, `await searchParams`
+into its own `SaveNotice`, which needs its own boundary because searchParams is a
+request read too.
+
+`saveQuote` refuses the price unless it is `^\d+$`. `parseInt("15000.50")` is 15000
+and the column's `check (quote_price >= 0)` never sees the half that got dropped, so
+the decimals would vanish silently instead of being refused. Same reasoning as 1.16's
+`role`: `status` is set by the action, so a forged field cannot un-quote a request
+staff already priced. The `id` is checked as a uuid because it goes into a redirect
+path as well as into the query. Staff role is checked before the write rather than
+left to RLS, so a buyer gets a redirect that says why instead of a Postgres error
+string they cannot act on.
+
+Price `0` is accepted and blank is not. A quote of Rp 0 is a real answer, so it has
+to be typed on purpose rather than left in a box nobody filled in. Blank `quote_note`
+stores `null`, not `""`.
+
+`/commissions/mine` repeats `.eq("buyer_id", claims.sub)` even though 0005's policy
+already restricts the query to one buyer. Deliberate duplication: if that policy were
+dropped or misspelled, RLS alone would hand one buyer every commission in the table
+and nothing would look wrong. With the `.eq()` the worst case is an empty list.
+`/commissions/mine` joins in `SIGNED_IN_ROUTES`, so a prefix match on `/commissions`
+would have swallowed the public services page — the existing 2.6 test on that exact
+mistake is still there.
+
+`statusLabel()` in `src/lib/commissionStatus.ts`, shared by the staff queue and the
+buyer list so the two halves cannot drift into calling one state two different
+things. An unknown value falls through to itself rather than to blank: visible but
+wrong beats an empty cell that reads as a rendering bug. 2.14 rewrites the wording
+once the enum grows.
+
+`formatDate()` in `src/lib/format.ts`, pinned to UTC with the time zone on the
+formatter. **A test caught this one being wrong.** Written with the comment claiming
+UTC and no `timeZone` option in the code, so `2026-10-09T23:30:00Z` rendered as the
+10th on this machine and as the 9th on any server behind UTC — "newest first" meaning
+two different things on the staff queue and the buyer's list. Switch to
+`Asia/Jakarta` if staff and a buyer ever disagree about which day a request came in.
+
+Reachable two ways, both new: an entry in `AccountDropdown` (which only renders
+signed in, so no signed-out link is created) and the form's success state at 2.6,
+which previously said "daftar requestmu di halaman akun" and linked back to
+`/commissions`. Nothing links it from the footer, because a signed-out visitor there
+would be redirected to login by a link on a page they can see.
 
 **2.1** `0004_services.sql`. Columns: `name`, `description`, `starting_price`, `duration_days`, `active`, `created_at`. Duration is integer days. No write policy — 6.1 seeds via SQL editor. Select policy `to anon, authenticated`, filters on `active` only.
 
