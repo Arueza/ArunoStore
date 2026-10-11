@@ -82,8 +82,8 @@ Buyer sends a Japanese product link, staff quotes price + shipping + fee.
 - [x] **3.3** Request form: product link, size, colour, quantity, budget *(`a9ba3ff`)*
 - [x] **3.4** Save the form as a row with status `requested` *(`a9ba3ff`)*
 - [x] **3.5** Staff queue of all requests, newest first *(`59a6baa`)*
-- [x] **3.6** Quote box: item price, shipping, service fee, total computed automatically, plus a note
-- [x] **3.7** Save the quote, status becomes `quoted`
+- [x] **3.6** Quote box: item price, shipping, service fee, total computed automatically, plus a note *(`1bc4c92`)*
+- [x] **3.7** Save the quote, status becomes `quoted` *(`1bc4c92`)*
 - [ ] **3.8** Buyer's "my titipan requests" list
 - [ ] **3.9** Accept or decline a quote
 - [ ] **3.10** Mark as purchased
