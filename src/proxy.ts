@@ -52,7 +52,7 @@ export async function proxy(request: NextRequest) {
     if (!user) {
       // Carries any refreshed cookie onto the redirect, otherwise a session that
       // had just been renewed would be dropped on the way to the login page.
-      return redirectTo(request, response, "/login");
+      return redirectTo(request, response, loginPathFor(request.nextUrl.pathname));
     }
 
     if (needsStaff(request.nextUrl.pathname) && !(await isStaff(supabase, user.id))) {
@@ -135,6 +135,29 @@ function redirectTo(
   }
 
   return redirect;
+}
+
+/**
+ * Where a signed-out visitor is sent, remembering where they were going.
+ *
+ * Without the next, a buyer who pressed "Mulai titipan" signs in and lands on
+ * the storefront with no idea why they are there — the destination was thrown
+ * away above, and the whole form was one click away. Only the titipan routes
+ * carry it back: they are the pair the proxy turns away most often, and adding
+ * it everywhere would mean a login link could park somebody anywhere at all.
+ *
+ * Only the pathname. The query string on these routes is always server feedback
+ * (?saved=1, ?error=…) from a press that did not happen, so carrying it across a
+ * login would greet the buyer with a "tersimpan" they never earned.
+ *
+ * The value is put on the query string URL-encoded because it is read back by
+ * the query parser; safeNextPath() on the login side is what decides whether it
+ * is honoured at all, and this is only the invitation.
+ */
+function loginPathFor(pathname: string) {
+  if (!/^\/titipan\/[A-Za-z0-9/_-]*$/.test(pathname)) return "/login";
+
+  return `/login?next=${encodeURIComponent(pathname)}`;
 }
 
 export const config = {

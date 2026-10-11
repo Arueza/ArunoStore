@@ -1,18 +1,29 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { useActionState } from "react";
-import { login, type LoginState } from "./actions";
+import { Suspense } from "react";
+import { safeNextPath } from "@/lib/nextPath";
 import logo from "@/components/aruno-logo.png";
+import LoginForm from "./LoginForm";
 
-const initialState: LoginState = {
-  message: "",
-};
-
-export default function LoginPage() {
-  const [state, formAction, pending] = useActionState(login, initialState);
-
+/**
+ * Sign in, and come back to whatever the buyer was trying to reach.
+ *
+ * The proxy sends a signed-out visitor to /login?next=/titipan/mine when they
+ * press "Lihat riwayat" on a public page, and to /login?next=/titipan/request
+ * when they press "Mulai titipan". Without it they land here, sign in, and end
+ * up on the storefront with no idea why — the destination was thrown away on the
+ * way out.
+ *
+ * ?next= is treated as untrusted throughout. This page checks it before
+ * rendering a hidden field for it, and the login action checks it again before
+ * redirecting to it, because a hidden field is whatever the browser says it is.
+ * Both ask safeNextPath(); neither trusts its own copy.
+ */
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-cream px-4">
       <div className="w-full max-w-sm">
@@ -30,49 +41,14 @@ export default function LoginPage() {
           Selamat datang kembali di Aruno Store.
         </p>
 
-        <form action={formAction} className="space-y-5">
-          <div>
-            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-ink">
-              Email
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              autoComplete="email"
-              className="w-full rounded border border-[#d6d0ca] bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-plum focus:ring-1 focus:ring-plum transition-colors"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-ink">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              className="w-full rounded border border-[#d6d0ca] bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-plum focus:ring-1 focus:ring-plum transition-colors"
-            />
-          </div>
-
-          {state.message && (
-            <p aria-live="polite" className="text-sm text-plum">
-              {state.message}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={pending}
-            className="w-full rounded bg-plum px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#8f4f67] disabled:opacity-50 transition-colors"
-          >
-            {pending ? "Memproses..." : "Masuk"}
-          </button>
-        </form>
+        {/* Reading searchParams is a request read, so under cacheComponents it
+            needs a boundary of its own and must not be awaited in this body.
+            The heading and the logo above stay in the static shell; only the form
+            streams in. The placeholder reserves the form's height so the page
+            does not jump under a typist who is already moving. */}
+        <Suspense fallback={<div aria-hidden="true" className="h-72" />}>
+          <LoginFormFromQuery searchParams={searchParams} />
+        </Suspense>
 
         <p className="mt-6 text-center text-sm text-[#6c6870]">
           Belum punya akun?{" "}
@@ -83,4 +59,22 @@ export default function LoginPage() {
       </div>
     </main>
   );
+}
+
+/**
+ * Awaits the query string, then hands the login form a destination that has
+ * already been checked.
+ *
+ * Separate from the page body because awaiting here, inside a boundary, is what
+ * lets /login prerender its shell at all — the same rule 1.12 and 1.13 rest on
+ * for the rest of the site.
+ */
+async function LoginFormFromQuery({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
+
+  return <LoginForm next={safeNextPath(next)} />;
 }

@@ -85,6 +85,7 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
   builds, not that RLS accepted it. 3.4 is in the same place: the titipan insert
   has never met a real database, and `titipan_requests` cannot be updated by
   anyone until `0022` is pasted into the SQL editor, which nothing here records.
+- **A query string value will appear in the HTML, and that is not your code rendering it.** Next echoes the whole URL into the RSC flight payload (`self.__next_f.push`), JSON-escaped, on any page that reads `searchParams`. So `?next=//evil.example` shows up in the source of a page that never renders it — check *where* before treating it as a hole.
 - **A glob or grep will not find `[id]`.** Brackets are a character class, so `src/**/*.{ts,tsx}` matches a file named `i` or `d` and silently skips every dynamic route. `git status` is what shows them; trust the diff, not the search.
 - **Nothing signed in has been seen against real rows.** 2.8–2.11 shipped as one
   commit (`c34914b`), proved only signed-out (queue, quote box and buyer list

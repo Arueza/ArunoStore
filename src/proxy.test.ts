@@ -44,6 +44,10 @@ const request = (pathname: string) =>
 const pathnameOf = (res: Response) =>
   new URL(res.headers.get("location")!).pathname;
 
+/** The query string the redirect carried, for asserting on a next parameter. */
+const queryOf = (res: Response) =>
+  new URL(res.headers.get("location")!).searchParams;
+
 /** Signed in as `userId`, whose profiles row holds `role`. */
 function signedInAs(userId: string, role: string | null) {
   mocks.getUser.mockResolvedValue({ data: { user: { id: userId } } });
@@ -292,6 +296,67 @@ describe("proxy", () => {
       const res = await proxy(request("/titipan"));
 
       expect(res.status).toBe(200);
+    });
+  });
+
+  // Where a signed-out buyer is sent, and what they are told to come back to.
+  // The proxy is the only place that knows where they were trying to go, so it
+  // is the only place that can carry it — and therefore the only place that can
+  // be asked to carry something hostile.
+  describe("the next parameter", () => {
+    // The feature: press "Mulai titipan", sign in, land on the form rather than
+    // on the storefront wondering what just happened.
+    test.each(["/titipan/request", "/titipan/mine"])(
+      "remembers %s on the way to the login page",
+      async (destination) => {
+        const res = await proxy(request(destination));
+
+        expect(pathnameOf(res)).toBe("/login");
+        expect(queryOf(res).get("next")).toBe(destination);
+      },
+    );
+
+    // Scope, deliberately narrow. A next on every guarded route would let a
+    // crafted link park a buyer at /staff or /account after signing in; only the
+    // titipan pair is honoured, which is the pair this was asked about.
+    test.each(["/account", "/commissions/mine", "/commissions/request", "/staff"])(
+      "does not carry %s, because only the titipan routes were asked for",
+      async (destination) => {
+        const res = await proxy(request(destination));
+
+        expect(pathnameOf(res)).toBe("/login");
+        expect(queryOf(res).get("next")).toBeNull();
+      },
+    );
+
+    // The query string is server feedback from a press that did not happen, so
+    // carrying it across a login would greet the buyer with a "tersimpan" they
+    // never earned.
+    test("leaves the query string behind", async () => {
+      const res = await proxy(request("/titipan/mine?saved=1"));
+
+      expect(queryOf(res).get("next")).toBe("/titipan/mine");
+    });
+
+    // Defence in depth, not the main check: the proxy matches a narrow pattern
+    // and then safeNextPath() checks again on the login side. Either one alone
+    // would do; both existing means a loosening of one is not an open redirect
+    // on its own.
+    test("carries nothing for a path that is not an in-app titipan route", async () => {
+      const res = await proxy(request("/titipan/../../staff"));
+
+      expect(queryOf(res).get("next")).toBeNull();
+    });
+
+    // A signed-in buyer has no destination to be returned to, and adding one
+    // would only ever be a redirect away from work in progress.
+    test("is absent when the buyer is already signed in", async () => {
+      signedInAs("u1", "buyer");
+
+      const res = await proxy(request("/titipan/request"));
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get("location")).toBeNull();
     });
   });
 
