@@ -140,23 +140,35 @@ create trigger "Titipan quote is shop only"
 
 -- ── How to prove the pinning actually holds ─────────────────────────────────
 --
--- The queries above check that the pieces exist. This one checks that they
--- behave, and it is the only test that catches a trigger written with the wrong
+-- The queries above check that the pieces exist. This checks that they behave,
+-- and it is the only thing that catches a trigger written with the wrong
 -- condition — a policy that is present and an update that should have been
 -- rewritten still both look fine in pg_catalog.
 --
--- Sign in to Supabase as a buyer who owns a request, then in the SQL editor:
+-- In the SQL editor, take any id:
+--
+--   select id, quote_item_price from public.titipan_requests limit 1;
 --
 --   update public.titipan_requests
 --      set quote_item_price = 7, status = 'accepted'
---    where id = '<one of your own request ids>';
---
--- Then read the row back:
+--    where id = '<that id>';
 --
 --   select quote_item_price, status from public.titipan_requests
 --    where id = '<the same id>';
 --
--- quote_item_price must come back unchanged and status must say 'accepted'. A
--- quote_item_price of 7 means the trigger is not firing — check that
--- 0019's is_staff() is present first, because a missing function makes this file
--- fail at the `create trigger` line and leave the trigger half-created.
+-- quote_item_price comes back as it was; status says 'accepted'.
+--
+-- Why that is a real test rather than a formality: the editor runs as the table
+-- owner, so RLS does not apply to it, and with no JWT on the connection
+-- auth.uid() is null — is_staff() is therefore false and the pinning branch is
+-- the one that runs. A quote_item_price of 7 means the trigger is not attached.
+-- Check that 0019's is_staff() exists if the create trigger line errored: a
+-- missing function fails there and leaves the trigger half-made.
+--
+-- Set status back to what it was afterwards. The quote figures were never
+-- changed; only status was.
+--
+-- What this does NOT prove: that a real buyer session can and cannot write. The
+-- owner bypasses every policy on the table, so the grant and the two update
+-- policies only mean anything for a session carrying somebody's JWT. Testing
+-- those needs the app signed in as each role, which is what 6.2 is for.
