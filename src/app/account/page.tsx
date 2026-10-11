@@ -29,6 +29,21 @@ export default function AccountPage() {
         <AccountDetails />
       </Suspense>
 
+      <div className="mt-8 flex flex-wrap gap-3">
+        <Link
+          href="/commissions/mine"
+          className="inline-block bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+        >
+          Lihat Komisi saya
+        </Link>
+        <Link
+          href="/titipan/mine"
+          className="inline-block border border-[#e2ddd7] px-6 py-3 text-xs uppercase tracking-[0.18em] text-ink transition-colors hover:border-plum"
+        >
+          Lihat Titipan saya
+        </Link>
+      </div>
+
       <Link
         href="/"
         className="mt-8 inline-block text-sm font-semibold text-plum hover:underline"
