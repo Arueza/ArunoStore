@@ -89,7 +89,7 @@ Buyer sends a Japanese product link, staff quotes price + shipping + fee.
 - [ ] **3.10** Mark as purchased
 - [ ] **3.11** Add courier and tracking number, status becomes `shipped`
 - [ ] **3.12** Buyer marks it arrived
-- [x] **3.13** Signing in from a guarded titipan page returns the buyer to it
+- [x] **3.13** Signing in from a guarded titipan page returns the buyer to it *(`5ea4d4d`)*
 
 Prerequisites: 3.7 needs `0022` pasted, the first update to a row staff do not
 own; it pins the quote columns so 3.9's buyer policy cannot reopen them. `0023`
