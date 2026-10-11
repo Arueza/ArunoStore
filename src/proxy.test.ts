@@ -217,6 +217,45 @@ describe("proxy", () => {
     });
   });
 
+  // Guards the form from task 3.3. The same reason as /commissions/request: the
+  // action needs a session to write a row, so signed out there is a dead end.
+  describe("/titipan/request", () => {
+    test("sends a signed-out visitor to the login page", async () => {
+      const res = await proxy(request("/titipan/request"));
+
+      expect(res.status).toBe(307);
+      expect(pathnameOf(res)).toBe("/login");
+    });
+
+    test("lets a signed-in buyer through", async () => {
+      signedInAs("u1", "buyer");
+
+      const res = await proxy(request("/titipan/request"));
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get("location")).toBeNull();
+    });
+
+    // The form reads nothing; only the action needs the session, so this route
+    // must not cost a profiles read.
+    test("does not read the profiles row", async () => {
+      signedInAs("u1", "buyer");
+
+      await proxy(request("/titipan/request"));
+
+      expect(mocks.chain.select).not.toHaveBeenCalled();
+    });
+
+    // A prefix match on "/titipan" would swallow the public page that explains
+    // the service and sends the visitor here.
+    test("leaves the public titipan page alone", async () => {
+      const res = await proxy(request("/titipan"));
+
+      expect(res.status).toBe(200);
+      expect(mocks.getUser).not.toHaveBeenCalled();
+    });
+  });
+
   test("leaves public routes untouched", async () => {
     const res = await proxy(request("/"));
 

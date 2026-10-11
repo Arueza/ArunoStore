@@ -58,9 +58,9 @@ describe("Titipan page", () => {
     }
   });
 
-  // Same guarantee tasks 1.11 and 1.14 gave the footer and the storefront. The
-  // form does not exist until 3.3, so the call to action points at sign-up and
-  // login rather than at a route that would 404.
+  // Same guarantee tasks 1.11 and 1.14 gave the footer and the storefront: the
+  // call to action has to point at a route that exists. 3.3 points it at
+  // /titipan/request; 3.8 is what adds /titipan/mine to the form's confirmation.
   test("every link on the page has a page or is declared pending", () => {
     const page = renderToStaticMarkup(<TitipanPage />);
     const hrefs = [...page.matchAll(/href="([^"]+)"/g)].map((match) => match[1]);

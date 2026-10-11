@@ -71,9 +71,11 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
   `<Suspense>` or `next build` fails on uncached data. `params` and
   `searchParams` must be awaited *inside* the boundary's children, never in the
   page body — and `searchParams` needs its own boundary, being a request read.
-- **Prerender by reading nothing session-shaped.** `/artworks`, `/titipan` and
-  `/shop` go through `createPublicClient()` (`src/lib/supabase/public.ts`,
-  cookie-less) behind `'use cache'`, so they build with no `<Suspense>`.
+- **Prerender by reading nothing session-shaped.** `/artworks`, `/titipan`,
+  `/titipan/request` and `/shop` read no cookie at all, so they build with no
+  `<Suspense>`; `/artworks` and `/shop` additionally go through
+  `createPublicClient()` (`src/lib/supabase/public.ts`, cookie-less) behind
+  `'use cache'`. The titipan pair reads nothing, so they need neither.
 - **Vitest cannot render a `'use cache'` component.** `renderToStaticMarkup`,
   `renderToString` and `renderToPipeableStream` all fail — 2.5's only proof is
   that build and lint pass.
@@ -81,7 +83,9 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
   editor. Until then `services` has 0 rows, so the populated service dropdown
   at 2.6 has never rendered in a browser, and the insert against `0005`'s
   policy is unproven end to end — `actions.test.ts` asserts the row the action
-  builds, not that RLS accepted it.
+  builds, not that RLS accepted it. 3.4 is in the same place: the titipan insert
+  has never met a real database, and `titipan_requests` cannot be updated by
+  anyone until 0022 lands, which is the correct state for now.
 - **Nothing signed in has been seen against real rows.** 2.8–2.11 shipped as one
   commit (`c34914b`), proved only signed-out (queue, quote box and buyer list
   all 307 to `/login`) plus 104 tests. 6.2 is where that gets signed off.
@@ -116,10 +120,15 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
   alone would hand one buyer every commission and nothing would look wrong;
   with it the worst case is an empty list.
 - **The staff queue joins in JavaScript, not a PostgREST embed** — `commissions.buyer_id` references `auth.users`, not `profiles`, so there is no FK to follow. Save feedback is the query string (`?saved=1` / `?error=…`) set by the server redirect: no client component that could disagree.
-- **2.6 rejects reference links unless http/https.** `reference_links` is bare
-  `text[]` and staff will render it as an `href` in 2.9, so a stored
-  `javascript:` link would run then. Blank link rows are dropped, not an error.
-  Form tests use `fireEvent`, not `user-event`.
+- **2.6 and 3.3 both refuse anything but http/https, through one function.**
+  `isHttpUrl()` in `src/lib/url.ts` — not two copies of a security rule. Both
+  columns are rendered as an `href` by staff (0005's `reference_links`, 0006's
+  `product_link`), so a stored `javascript:` link runs in a staff session. Blank
+  link rows are dropped, not an error.
+- **Form tests need `fireEvent.submit(form)`, not a click on the button.**
+  React 19 runs a form action off the submit event and jsdom's button click
+  never dispatches one, so the action is simply never called. `fireEvent`, not
+  `user-event`, for the same reason the rest of the form tests say.
 
 ## Known defects — not yet tasks
 

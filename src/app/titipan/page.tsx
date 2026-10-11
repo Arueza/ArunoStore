@@ -68,8 +68,9 @@ const RULES = [
  * round trip in front of the page and undo 1.12 and 1.13 on one route. So there is
  * no <Suspense> boundary either — the boundary exists only because of the read.
  *
- * The form arrives at 3.3 and the buttons below point at sign-up and login, which
- * both exist, so nothing here is a dead link in the meantime.
+ * The call to action points at the form, which arrived at 3.3. Signed out, the
+ * proxy sends the visitor to the login page rather than to a form they cannot
+ * submit, which is the same deal as the commission form at 2.6.
  */
 export default function TitipanPage() {
   return (
@@ -148,21 +149,30 @@ export default function TitipanPage() {
         </ul>
       </section>
 
-      {/* Both destinations exist and are already held by the nav link tests, so
-          this ships no dead link before the form lands at 3.3. */}
+      {/* /titipan/request exists as of 3.3 and is guarded, so a signed-out
+          visitor lands on the login page instead of a form they cannot submit.
+          Both destinations below are held by the nav link tests. */}
       <div className="mt-14 border-t border-[#eeeae5] pt-8">
         <Link
-          href="/auth/sign-up"
+          href="/titipan/request"
           className="inline-block bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
         >
           Mulai titipan
         </Link>
 
         <p className="mt-4 text-xs text-[#6c6870]">
-          Sudah punya akun?{" "}
+          Belum punya akun?{" "}
+          <Link
+            href="/auth/sign-up"
+            className="font-semibold text-plum hover:underline"
+          >
+            Daftar
+          </Link>{" "}
+          dulu, atau{" "}
           <Link href="/login" className="font-semibold text-plum hover:underline">
-            Masuk
+            masuk
           </Link>
+          .
         </p>
       </div>
     </main>

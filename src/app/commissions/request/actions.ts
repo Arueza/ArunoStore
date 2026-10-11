@@ -1,26 +1,19 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { isHttpUrl } from "@/lib/url";
 
 export type RequestState = {
   message: string;
   sent: boolean;
 };
 
-/**
- * Only http and https. `reference_links` is plain text[] with no constraint on
- * it, and a staff view will render these as hrefs — a stored `javascript:` link
- * would run when staff opened the request. Rejected here rather than at render
- * time, because once the row exists the bad value is already in the database.
- */
-function isHttpUrl(value: string) {
-  try {
-    const { protocol } = new URL(value);
-    return protocol === "http:" || protocol === "https:";
-  } catch {
-    return false;
-  }
-}
+// isHttpUrl moved to src/lib/url.ts at 3.3. Only http and https are stored,
+// because `reference_links` is plain text[] with no constraint on it and a staff
+// view renders these as hrefs — a stored `javascript:` link would run when staff
+// opened the request. Refused at submit time, because once the row exists the bad
+// value is already in the database and every reader inherits it. Titipan's
+// product_link answers the same question, so it answers it with the same code.
 
 export async function submitRequest(
   _previousState: RequestState,
