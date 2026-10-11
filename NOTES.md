@@ -119,16 +119,17 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
   duplicates 0005's policy.** If that policy were dropped or misspelled, RLS
   alone would hand one buyer every commission and nothing would look wrong;
   with it the worst case is an empty list.
-- **The staff queue joins in JavaScript, not a PostgREST embed** — `commissions.buyer_id` references `auth.users`, not `profiles`, so there is no FK to follow. Save feedback is the query string (`?saved=1` / `?error=…`) set by the server redirect: no client component that could disagree.
+- **Both staff queues join in JavaScript, not in a PostgREST embed** — `commissions.buyer_id` and `titipan_requests.buyer_id` both reference `auth.users`, not `profiles`, so there is no FK to follow. Save feedback is the query string (`?saved=1` / `?error=…`) set by the server redirect: no client component that could disagree.
 - **2.6 and 3.3 both refuse anything but http/https, through one function.**
   `isHttpUrl()` in `src/lib/url.ts` — not two copies of a security rule. Both
   columns are rendered as an `href` by staff (0005's `reference_links`, 0006's
   `product_link`), so a stored `javascript:` link runs in a staff session. Blank
   link rows are dropped, not an error.
-- **Form tests need `fireEvent.submit(form)`, not a click on the button.**
-  React 19 runs a form action off the submit event and jsdom's button click
-  never dispatches one, so the action is simply never called. `fireEvent`, not
-  `user-event`, for the same reason the rest of the form tests say.
+- **Form tests: `fireEvent`, never `user-event`, and `fireEvent.submit(form)`.**
+  React 19 runs a form action off the submit event and jsdom's button click never
+  dispatches one, so the action is silently never called. `toHaveTextContent`
+  also normalises U+00A0 to a plain space, so a pattern carrying ICU's
+  non-breaking space after `Rp` never matches — assert on `.textContent`.
 
 ## Known defects — not yet tasks
 

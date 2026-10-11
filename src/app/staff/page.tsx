@@ -125,6 +125,11 @@ export default function StaffPage() {
       </p>
 
       <nav aria-label="Menu staf" className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+        {/* The two queues are separate pages from 3.5. Both halves share one role
+            and one guard, not one list. */}
+        <Link href="/staff/titipan" className="font-semibold text-plum hover:underline">
+          Permintaan titipan
+        </Link>
         <Link href="/staff/artworks" className="font-semibold text-plum hover:underline">
           Galeri karya
         </Link>
