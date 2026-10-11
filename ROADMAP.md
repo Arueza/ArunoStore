@@ -79,8 +79,8 @@ Buyer sends a Japanese product link, staff quotes price + shipping + fee.
 
 - [x] **3.1** Migration `0006_titipan_requests.sql`: link, size, colour, budget, quote split, tracking *(`ef5dbc6`)*
 - [x] **3.2** Explain the service on the page: what a titipan is, what it costs *(`d3dd976`)*
-- [ ] **3.3** Request form: product link, size, colour, quantity, budget
-- [ ] **3.4** Save the form as a row with status `requested`
+- [x] **3.3** Request form: product link, size, colour, quantity, budget *(`a9ba3ff`)*
+- [x] **3.4** Save the form as a row with status `requested` *(`a9ba3ff`)*
 - [ ] **3.5** Staff queue of all requests, newest first
 - [ ] **3.6** Quote box: item price, shipping, service fee, total computed automatically, plus a note
 - [ ] **3.7** Save the quote, status becomes `quoted`
