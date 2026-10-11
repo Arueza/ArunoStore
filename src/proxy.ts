@@ -70,12 +70,14 @@ export async function proxy(request: NextRequest) {
 // a row at all, so a signed-out visitor there is a dead end. /commissions/mine
 // reads other people's commissions, and one signed out has none. The titipan pair
 // is the same two reasons under different names: the form writes a row, the list
-// reads that buyer's rows.
+// reads that buyer's rows. Matching is on the whole segment or a path below it,
+// which is why the public /titipan is not caught by the /titipan/mine entry.
 const SIGNED_IN_ROUTES = [
   "/account",
   "/commissions/request",
   "/commissions/mine",
   "/titipan/request",
+  "/titipan/mine",
 ];
 
 // Also needs the role. There is no artist role as of roadmap 1.15: staff are the

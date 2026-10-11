@@ -115,10 +115,7 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
   option, and a test caught it missing.** Without it `2026-10-09T23:30:00Z`
   renders as the 10th here and the 9th on any UTC server. Switch to
   `Asia/Jakarta` if staff and a buyer ever disagree about which day.
-- **The `.eq("buyer_id", claims.sub)` on `/commissions/mine` deliberately
-  duplicates 0005's policy.** If that policy were dropped or misspelled, RLS
-  alone would hand one buyer every commission and nothing would look wrong;
-  with it the worst case is an empty list.
+- **The `.eq("buyer_id", claims.sub)` on `/commissions/mine` and `/titipan/mine` deliberately duplicates 0005's and 0006's policies.** If either policy were dropped or misspelled, RLS alone would hand one buyer every request in the table and nothing would look wrong; with it the worst case is an empty list.
 - **Both staff queues join in JavaScript, not in a PostgREST embed** — `commissions.buyer_id` and `titipan_requests.buyer_id` both reference `auth.users`, not `profiles`, so there is no FK to follow. Save feedback is the query string (`?saved=1` / `?error=…`) set by the server redirect: no client component that could disagree.
 - **2.6 and 3.3 both refuse anything but http/https, through one function.**
   `isHttpUrl()` in `src/lib/url.ts` — not two copies of a security rule. Both

@@ -149,9 +149,10 @@ export default function TitipanPage() {
         </ul>
       </section>
 
-      {/* /titipan/request exists as of 3.3 and is guarded, so a signed-out
-          visitor lands on the login page instead of a form they cannot submit.
-          Both destinations below are held by the nav link tests. */}
+      {/* /titipan/request exists as of 3.3 and /titipan/mine as of 3.8, and
+          both are guarded, so a signed-out visitor lands on the login page
+          instead of a page they cannot use. Both destinations are held by the
+          nav link tests. */}
       <div className="mt-14 border-t border-[#eeeae5] pt-8">
         <Link
           href="/titipan/request"
@@ -159,6 +160,21 @@ export default function TitipanPage() {
         >
           Mulai titipan
         </Link>
+
+        {/* The page a buyer lands on to answer "what happened to the parcel I
+            sent". It is the one link here that only makes sense to somebody who
+            has already sent something, so it sits under the call to action
+            rather than beside it. */}
+        <p className="mt-4 text-xs text-[#6c6870]">
+          Sudah pernah mengirim?{" "}
+          <Link
+            href="/titipan/mine"
+            className="font-semibold text-plum hover:underline"
+          >
+            Lihat permintaanmu
+          </Link>
+          .
+        </p>
 
         <p className="mt-4 text-xs text-[#6c6870]">
           Belum punya akun?{" "}

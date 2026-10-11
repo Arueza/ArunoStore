@@ -34,14 +34,14 @@ export default function TitipanRequestForm() {
         <p className="mt-2 text-sm leading-relaxed text-[#6c6870]">
           {state.message}
         </p>
-        {/* ponytail: points at /titipan because /titipan/mine does not exist
-            until 3.8. Swap this href and the sentence above it when the buyer's
-            own list lands — until then this link is the only one that resolves. */}
+        {/* Straight to the buyer's own list rather than back to /titipan: the
+            question after sending is "what happened to it", and the answer is on
+            this page. /titipan/mine arrived at 3.8, which is what this replaced. */}
         <Link
-          href="/titipan"
+          href="/titipan/mine"
           className="mt-5 inline-block text-sm font-semibold text-plum hover:underline"
         >
-          Kembali ke halaman titipan
+          Lihat permintaan titipan saya
         </Link>
       </div>
     );

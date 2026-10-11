@@ -256,6 +256,45 @@ describe("proxy", () => {
     });
   });
 
+  // Guards the buyer's list of their own requests, added at 3.8. Signed out
+  // there is a dead end: there is nothing to list and nowhere to sign in from.
+  describe("/titipan/mine", () => {
+    test("sends a signed-out visitor to the login page", async () => {
+      const res = await proxy(request("/titipan/mine"));
+
+      expect(res.status).toBe(307);
+      expect(pathnameOf(res)).toBe("/login");
+    });
+
+    test("lets a signed-in buyer through", async () => {
+      signedInAs("u1", "buyer");
+
+      const res = await proxy(request("/titipan/mine"));
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get("location")).toBeNull();
+    });
+
+    // The buyer list does not need the staff check, only the session. If this
+    // ever reads profiles.role it must not send a buyer to the store.
+    test("does not apply the staff check", async () => {
+      signedInAs("u1", "buyer");
+
+      await proxy(request("/titipan/mine"));
+
+      expect(mocks.chain.select).not.toHaveBeenCalled();
+    });
+
+    // The trap this entry exists to avoid: "/titipan/mine" read as a prefix
+    // would catch "/titipan" and lock the public explanation page. Only the
+    // whole segment or a path below it counts.
+    test("leaves the public titipan page alone", async () => {
+      const res = await proxy(request("/titipan"));
+
+      expect(res.status).toBe(200);
+    });
+  });
+
   test("leaves public routes untouched", async () => {
     const res = await proxy(request("/"));
 

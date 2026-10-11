@@ -95,9 +95,10 @@ describe("TitipanRequestForm", () => {
     expect(screen.queryByRole("button", { name: /kirim permintaan/i })).toBeNull();
   });
 
-  // Every link the confirmation offers has to resolve. /titipan/mine does not
-  // exist until 3.8, so this catches a link to it landing early — the same
-  // guarantee 1.11 and 1.14 gave the footer and the storefront.
+  // Every link the confirmation offers has to resolve. The confirmation points
+  // at /titipan/mine, which arrived at 3.8, so this is the assertion that would
+  // have failed had the link landed a task early — the same guarantee 1.11 and
+  // 1.14 gave the footer and the storefront.
   test("only links to pages that exist", async () => {
     await submit({ message: "Permintaan terkirim.", sent: true });
 
