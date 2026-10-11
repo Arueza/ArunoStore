@@ -82,13 +82,17 @@ Buyer sends a Japanese product link, staff quotes price + shipping + fee.
 - [x] **3.3** Request form: product link, size, colour, quantity, budget *(`a9ba3ff`)*
 - [x] **3.4** Save the form as a row with status `requested` *(`a9ba3ff`)*
 - [x] **3.5** Staff queue of all requests, newest first *(`59a6baa`)*
-- [ ] **3.6** Quote box: item price, shipping, service fee, total computed automatically, plus a note
-- [ ] **3.7** Save the quote, status becomes `quoted`
+- [x] **3.6** Quote box: item price, shipping, service fee, total computed automatically, plus a note
+- [x] **3.7** Save the quote, status becomes `quoted`
 - [ ] **3.8** Buyer's "my titipan requests" list
 - [ ] **3.9** Accept or decline a quote
 - [ ] **3.10** Mark as purchased
 - [ ] **3.11** Add courier and tracking number, status becomes `shipped`
 - [ ] **3.12** Buyer marks it arrived
+
+Prerequisites: 3.7 needs `0022` pasted, the first update to a row staff do not
+own; it pins the quote columns so 3.9's buyer policy cannot reopen them. `0023`
+lands at 3.9, `0024` (`purchased`, `shipped`, `arrived`) at 3.10.
 
 ## Phase 4 — Payments (Xendit test mode)
 

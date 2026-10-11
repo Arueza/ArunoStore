@@ -1,0 +1,213 @@
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { formatDate, formatRupiah } from "@/lib/format";
+import { statusLabel } from "@/lib/commissionStatus";
+import QuoteBox from "./QuoteBox";
+
+export const metadata: Metadata = {
+  title: "Titipan — Ruang Staf",
+};
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Spelled out because Supabase has no generated types for this project, so a
+// select() string is the only description of the row. Matches 0006's columns and
+// nothing else — every one of them is read below.
+type TitipanRequest = {
+  id: string;
+  buyer_id: string;
+  product_link: string;
+  size: string | null;
+  color: string | null;
+  quantity: number;
+  budget: number | null;
+  status: string;
+  quote_item_price: number | null;
+  quote_shipping: number | null;
+  quote_service_fee: number | null;
+  quote_note: string | null;
+  created_at: string;
+};
+
+async function RequestDetail({ params }: { params: Promise<{ id: string }> }) {
+  // Awaited here, not in the page body. With cacheComponents on, reading request
+  // data outside a Suspense boundary is a build error, and the boundary is what
+  // streams this in behind the heading rather than holding the whole page.
+  const { id } = await params;
+  const supabase = await createClient();
+
+  // Checked here as well as in the action. The action's check protects the write;
+  // this one keeps a wrong id in the URL a 404 rather than an empty page that
+  // looks like a request with nothing on it.
+  if (!UUID.test(id)) {
+    notFound();
+  }
+
+  const { data: request } = await supabase
+    .from("titipan_requests")
+    .select(
+      "id, buyer_id, product_link, size, color, quantity, budget, status, quote_item_price, quote_shipping, quote_service_fee, quote_note, created_at",
+    )
+    .eq("id", id)
+    .maybeSingle<TitipanRequest>();
+
+  // RLS is what answers this, not a role check: a buyer cannot read another
+  // buyer's row, so staff sees a 404 for a request that is not theirs to see.
+  if (!request) {
+    notFound();
+  }
+
+  const { data: buyer } = await supabase
+    .from("profiles")
+    .select("full_name, email")
+    .eq("id", request.buyer_id)
+    .maybeSingle();
+
+  const variant = [request.size, request.color].filter(Boolean).join(" · ");
+
+  return (
+    <div className="mt-8 grid gap-12 lg:grid-cols-[1fr_20rem]">
+      <div>
+        <Link
+          href="/staff/titipan"
+          className="text-sm font-semibold text-plum hover:underline"
+        >
+          ← Semua permintaan titipan
+        </Link>
+
+        <dl className="mt-6 divide-y divide-[#eeeae5] border-y border-[#eeeae5]">
+          <div className="flex flex-wrap items-baseline gap-x-4 py-4">
+            <dt className="w-36 shrink-0 text-sm text-[#6c6870]">Pembeli</dt>
+            <dd className="text-sm text-ink">
+              {buyer?.full_name || "—"}
+              {buyer?.email && (
+                <span className="block text-xs text-[#6c6870]">{buyer.email}</span>
+              )}
+            </dd>
+          </div>
+
+          <div className="flex flex-wrap items-baseline gap-x-4 py-4">
+            <dt className="w-36 shrink-0 text-sm text-[#6c6870]">Produk</dt>
+            <dd className="min-w-0 text-sm">
+              {/* 3.3 refuses anything but http/https, so this href cannot execute
+                  what the buyer typed — it is a link out to the shop, not markup
+                  they chose. */}
+              <a
+                href={request.product_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="break-all text-plum hover:underline"
+              >
+                {request.product_link}
+              </a>
+            </dd>
+          </div>
+
+          <div className="flex flex-wrap items-baseline gap-x-4 py-4">
+            <dt className="w-36 shrink-0 text-sm text-[#6c6870]">Varian</dt>
+            <dd className="text-sm text-ink">
+              {variant || "—"}
+              <span className="block text-xs text-[#6c6870]">
+                {request.quantity} barang
+              </span>
+            </dd>
+          </div>
+
+          <div className="flex flex-wrap items-baseline gap-x-4 py-4">
+            <dt className="w-36 shrink-0 text-sm text-[#6c6870]">Budget buyer</dt>
+            <dd className="text-sm text-ink">
+              {request.budget === null ? (
+                "—"
+              ) : (
+                <>{formatRupiah(request.budget)}</>
+              )}
+              <span className="block text-xs text-[#6c6870]">
+                Perkiraan dari buyer. Harga sebenarnya keluar di kutipan.
+              </span>
+            </dd>
+          </div>
+
+          <div className="flex flex-wrap items-baseline gap-x-4 py-4">
+            <dt className="w-36 shrink-0 text-sm text-[#6c6870]">Masuk</dt>
+            <dd className="text-sm text-ink">{formatDate(request.created_at)}</dd>
+          </div>
+
+          <div className="flex flex-wrap items-baseline gap-x-4 py-4">
+            <dt className="w-36 shrink-0 text-sm text-[#6c6870]">Status</dt>
+            <dd className="text-sm font-medium text-ink">
+              {statusLabel(request.status)}
+            </dd>
+          </div>
+        </dl>
+      </div>
+
+      <QuoteBox
+        id={request.id}
+        status={request.status}
+        quantity={request.quantity}
+        quoteItemPrice={request.quote_item_price}
+        quoteShipping={request.quote_shipping}
+        quoteServiceFee={request.quote_service_fee}
+        quoteNote={request.quote_note}
+      />
+    </div>
+  );
+}
+
+export default function StaffTitipanRequestPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ saved?: string; error?: string }>;
+}) {
+  return (
+    <main className="mx-auto w-full max-w-5xl px-5 py-14 sm:px-[6%] sm:py-20">
+      <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
+        Permintaan titipan
+      </h1>
+
+      <Suspense>
+        <SaveNotice searchParams={searchParams} />
+      </Suspense>
+
+      <Suspense>
+        <RequestDetail params={params} />
+      </Suspense>
+    </main>
+  );
+}
+
+/**
+ * What the server said about the last save.
+ *
+ * The action redirects with ?saved=1 or ?error=…, so the query string is the
+ * whole of the feedback. No client component, no state that could disagree with
+ * what was actually written.
+ *
+ * Its own boundary because reading searchParams is a request read: under
+ * cacheComponents that is a build error outside one. role="status" rather than
+ * role="alert" — this answers a button press, so it should be announced when it
+ * appears without interrupting whatever the staff member was doing.
+ */
+async function SaveNotice({
+  searchParams,
+}: {
+  searchParams: Promise<{ saved?: string; error?: string }>;
+}) {
+  const { saved, error } = await searchParams;
+
+  return (
+    <p role="status" className="mt-4 min-h-5 text-sm text-[#6c6870]">
+      {error && <span className="font-medium text-plum">{error}</span>}
+      {!error && saved === "1" && (
+        <span className="font-medium text-ink">
+          Kutipan tersimpan. Buyer bisa melihatnya sekarang.
+        </span>
+      )}
+    </p>
+  );
+}

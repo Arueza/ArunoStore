@@ -38,10 +38,10 @@ type TitipanRequest = {
  * .buyer_id references auth.users, not profiles, so there is no foreign key for
  * PostgREST to follow.
  *
- * Rows are not links yet. The detail page with the quote box arrives at 3.6, and
- * a queue that links to nothing is worse than a queue that does not pretend to.
- * The product link itself is a real link — to the shop the buyer chose, which is
- * what staff open first.
+ * Rows carry two links rather than being one big link themselves: the product
+ * link out to the shop, and the link to the detail page where the quote is
+ * written. One link wrapping the row would put an <a> inside an <a>, which is
+ * invalid and unpredictable to click.
  */
 export async function TitipanQueue() {
   const supabase = await createClient();
@@ -140,6 +140,13 @@ export async function TitipanQueue() {
                 Perkiraan budget {formatRupiah(row.budget)}
               </p>
             )}
+
+            <Link
+              href={`/staff/titipan/${row.id}`}
+              className="mt-3 inline-block text-sm font-semibold text-plum hover:underline"
+            >
+              Buka & tulis kutipan →
+            </Link>
           </li>
         );
       })}

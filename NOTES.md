@@ -5,11 +5,9 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
 
 ## Migrations
 
-- **Number with `000N_name.sql`.** `0001`–`0021` are taken (`0009` a deliberate gap, `0016` repairs P1's policies, `0017` artwork storage, `0018` staff update policy, `0019` staff reads profiles, `0020` buyer accepts/declines, `0021` delivery image bucket); `0022` next free. Supabase's own files (`20261004133000_…`) share the directory, not the count.
+- **Number with `000N_name.sql`.** `0001`–`0022` are taken (`0009` a deliberate gap, `0016` repairs P1's policies, `0017` artwork storage, `0018` staff update policy, `0019` staff reads profiles, `0020` buyer accepts/declines, `0021` delivery image bucket, `0022` titipan staff quote); `0023` next free. Supabase's own files (`20261004133000_…`) share the directory, not the count.
 - **Check the number is free before writing one.** `0017` was issued twice (2.4 storage, then 2.8 staff reads, renamed `0019`) and only git noticed: the SQL editor never sees a filename, so a duplicate applies cleanly then disagrees with the repo.
-- **Paste one statement at a time.** `0003` went in as a batch and aborted
-  silently. Verify after: `select policyname, qual from pg_policies where
-  tablename = 'profiles';`
+- **Paste one statement at a time.** `0003` went in as a batch and aborted silently. Verify after: `select policyname, qual from pg_policies where tablename = 'profiles';`
 - **`drop policy if exists "name"` can silently do nothing.** Read names as hex
   first: `encode(convert_to(polname,'utf8'),'hex')`.
 - **Never read table shape from the dashboard schema export.** It omitted four
@@ -36,6 +34,7 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
   quote_note, status`. Without it a staff session holding the anon key could
   rewrite `buyer_id` and hand one buyer's request to another account.
 - **Verify the grant landed.** The `information_schema.column_privileges` query at the foot of `0018` catches a revoke that silently did nothing: three columns was correct before 0021, four after it. `delivery_image` was added by `0021`.
+- **A column grant is not a role.** `0022`'s trigger puts the four `quote_*` columns back the way it found them on any update where `is_staff()` is false, because 3.9's buyer policy otherwise reopens the very grant the trigger is guarding — a buyer could quote themselves Rp 7.000 instead of Rp 700.000. `0020` never got this on commissions, so the same hole is open there today and the same trigger on `commissions` is owed.
 - **Read the reused clause before relying on it.** No `with check` means
   Postgres reuses `using`. On `0018` that is exactly what is wanted; on
   `admins` it is too weak and an admin can update their own `store_role`.
@@ -85,7 +84,8 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
   policy is unproven end to end — `actions.test.ts` asserts the row the action
   builds, not that RLS accepted it. 3.4 is in the same place: the titipan insert
   has never met a real database, and `titipan_requests` cannot be updated by
-  anyone until 0022 lands, which is the correct state for now.
+  anyone until `0022` is pasted into the SQL editor, which nothing here records.
+- **A glob or grep will not find `[id]`.** Brackets are a character class, so `src/**/*.{ts,tsx}` matches a file named `i` or `d` and silently skips every dynamic route. `git status` is what shows them; trust the diff, not the search.
 - **Nothing signed in has been seen against real rows.** 2.8–2.11 shipped as one
   commit (`c34914b`), proved only signed-out (queue, quote box and buyer list
   all 307 to `/login`) plus 104 tests. 6.2 is where that gets signed off.
