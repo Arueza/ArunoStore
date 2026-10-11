@@ -80,6 +80,16 @@ export default function AccountDropdown({ userName, userEmail }: Props) {
                   Commissions saya
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/titipan/mine"
+                  onClick={close}
+                  className="flex items-center gap-3 px-5 py-2.5 text-sm transition-colors hover:bg-[#f3f0ec]"
+                >
+                  <TitipanIcon />
+                  Titipan saya
+                </Link>
+              </li>
             </ul>
 
             <div className="border-t border-[#eeeae5] py-2">
@@ -136,6 +146,27 @@ function CommissionsIcon() {
     >
       <path d="M12 19l7-7-3-3" />
       <path d="M18 13H6a2 2 0 00-2 2v3" />
+    </svg>
+  );
+}
+
+function TitipanIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-4 w-4"
+      aria-hidden
+    >
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+      <path d="M3 6h18" />
+      <path d="M16 10a4 4 0 0 1-8 0" />
     </svg>
   );
 }
