@@ -36,7 +36,7 @@ vi.mock("@/lib/supabase/server", () => ({
   })),
 }));
 
-import { markAsPurchased, saveTitipanQuote } from "./actions";
+import { markAsPurchased, saveShipping, saveTitipanQuote } from "./actions";
 
 const ID = "3f7c1e6a-9b2d-4e5f-8a1b-2c3d4e5f6a7b";
 
@@ -214,6 +214,128 @@ describe("saveTitipanQuote", () => {
 
   test("updates only the row named in the form", async () => {
     await run(formData());
+
+    expect(mocks.update.mock.calls[0]![0]).toMatchObject({ id: ID });
+  });
+});
+
+describe("saveShipping", () => {
+  beforeEach(() => {
+    mocks.getUser.mockReset();
+    mocks.update.mockReset();
+    mocks.maybeSingle.mockReset();
+    mocks.updateError = null;
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "staff-1" } } });
+    mocks.maybeSingle
+      .mockResolvedValueOnce({ data: { role: "staff" } })
+      .mockResolvedValueOnce({ data: { status: "purchased" } })
+      .mockResolvedValue({ data: { role: "staff" } });
+  });
+
+  function shippingFormData(overrides: Record<string, string> = {}) {
+    const data = new FormData();
+    for (const [key, value] of Object.entries({
+      id: ID,
+      courier: "JNE",
+      tracking_number: "JD0123456789",
+      ...overrides,
+    })) {
+      data.append(key, value);
+    }
+    return data;
+  }
+
+  async function runShipping(data: FormData) {
+    try {
+      await saveShipping(data);
+      return null;
+    } catch (error) {
+      if (error instanceof Redirect) return error.to;
+      throw error;
+    }
+  }
+
+  test("stores courier, tracking number, and shipped status", async () => {
+    const to = await runShipping(shippingFormData());
+
+    expect(written()).toEqual({
+      courier: "JNE",
+      tracking_number: "JD0123456789",
+      status: "shipped",
+    });
+    expect(to).toBe(`/staff/titipan/${ID}?saved=1`);
+  });
+
+  test("trims whitespace from courier and tracking", async () => {
+    await runShipping(
+      shippingFormData({ courier: "  J&T  ", tracking_number: "  JP001  " }),
+    );
+
+    expect(written()).toMatchObject({ courier: "J&T", tracking_number: "JP001" });
+  });
+
+  test("refuses an id that is not a uuid, before touching Supabase", async () => {
+    const to = await runShipping(shippingFormData({ id: "../../login" }));
+
+    expect(to).toContain("error=");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  test("refuses a blank courier", async () => {
+    const to = await runShipping(shippingFormData({ courier: "   " }));
+
+    expect(to).toContain("error=");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  test("refuses a blank tracking number", async () => {
+    const to = await runShipping(shippingFormData({ tracking_number: "   " }));
+
+    expect(to).toContain("error=");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  test("refuses when the request is not in purchased status", async () => {
+    mocks.maybeSingle.mockReset();
+    mocks.maybeSingle
+      .mockResolvedValueOnce({ data: { role: "staff" } })
+      .mockResolvedValueOnce({ data: { status: "accepted" } } as never);
+
+    const to = await runShipping(shippingFormData());
+
+    expect(to).toContain("error=");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  test("sends a buyer back to the store and writes nothing", async () => {
+    mocks.maybeSingle.mockReset();
+    mocks.maybeSingle.mockResolvedValueOnce({ data: { role: "buyer" } } as never);
+
+    const to = await runShipping(shippingFormData());
+
+    expect(to).toBe("/");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  test("sends an expired session to the login page", async () => {
+    mocks.getUser.mockResolvedValueOnce({ data: { user: null } } as never);
+
+    const to = await runShipping(shippingFormData());
+
+    expect(to).toBe("/login");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  test("surfaces the error when Supabase refuses the update", async () => {
+    mocks.updateError = { message: "new row violates row-level security policy" };
+
+    const to = await runShipping(shippingFormData());
+
+    expect(decodeURIComponent(to!)).toContain("row-level security");
+  });
+
+  test("updates only the row named in the form", async () => {
+    await runShipping(shippingFormData());
 
     expect(mocks.update.mock.calls[0]![0]).toMatchObject({ id: ID });
   });

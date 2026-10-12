@@ -126,6 +126,92 @@ export async function saveTitipanQuote(formData: FormData): Promise<void> {
 }
 
 /**
+ * Saves the courier and tracking number; status becomes shipped.
+ *
+ * Roadmap 3.11. The parcel is on its way. Migration 0030 added the `shipped`
+ * enum value and granted update on courier and tracking_number.
+ *
+ * Three things decided here and not in the form:
+ *
+ *   id             — UUID-checked.
+ *   status         — set here, not read from form.
+ *   allowed status — only a purchased request can be marked shipped. Staff
+ *                    cannot ship something the buyer has not accepted, and
+ *                    cannot re-ship something already shipped.
+ */
+export async function saveShipping(formData: FormData): Promise<void> {
+  const id = formData.get("id");
+
+  if (typeof id !== "string" || !UUID.test(id)) {
+    redirect("/staff/titipan?error=Permintaan tidak valid.");
+  }
+
+  const path = `/staff/titipan/${id}`;
+
+  const courier = formData.get("courier");
+  const tracking = formData.get("tracking_number");
+
+  if (typeof courier !== "string" || !courier.trim()) {
+    redirect(`${path}?error=Nama kurir tidak boleh kosong.`);
+  }
+
+  if (typeof tracking !== "string" || !tracking.trim()) {
+    redirect(`${path}?error=Nomor resi tidak boleh kosong.`);
+  }
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profile?.role !== "staff") {
+    redirect("/");
+  }
+
+  const { data: request } = await supabase
+    .from("titipan_requests")
+    .select("status")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!request) {
+    redirect(`${path}?error=Permintaan tidak ditemukan.`);
+  }
+
+  if (request.status !== "purchased") {
+    redirect(
+      `${path}?error=Barang belum ditandai dibeli atau sudah dikirim.`,
+    );
+  }
+
+  const { error } = await supabase
+    .from("titipan_requests")
+    .update({
+      courier: courier.trim(),
+      tracking_number: tracking.trim(),
+      status: "shipped",
+    })
+    .eq("id", id);
+
+  if (error) {
+    redirect(`${path}?error=${encodeURIComponent(error.message)}`);
+  }
+
+  redirect(`${path}?saved=1`);
+}
+
+/**
  * Marks an accepted titipan request as purchased.
  *
  * Roadmap 3.10. The buyer has accepted the quote (3.9); staff now confirm they

@@ -27,6 +27,8 @@ type TitipanRequest = {
   quote_shipping: number | null;
   quote_service_fee: number | null;
   quote_note: string | null;
+  courier: string | null;
+  tracking_number: string | null;
   created_at: string;
 };
 
@@ -58,7 +60,7 @@ export async function MyTitipanRequests() {
   const { data: requests } = await supabase
     .from("titipan_requests")
     .select(
-      "id, product_link, size, color, quantity, status, quote_item_price, quote_shipping, quote_service_fee, quote_note, created_at",
+      "id, product_link, size, color, quantity, status, quote_item_price, quote_shipping, quote_service_fee, quote_note, courier, tracking_number, created_at",
     )
     .eq("buyer_id", claims.sub)
     .order("created_at", { ascending: false });
@@ -195,6 +197,17 @@ export async function MyTitipanRequests() {
                 </form>
               </div>
             )}
+
+            {(row.status === "shipped" || row.status === "arrived") &&
+              row.courier &&
+              row.tracking_number && (
+                <div className="mt-3 text-sm">
+                  <span className="text-[#6c6870]">Pengiriman: </span>
+                  <span className="font-medium text-ink">
+                    {row.courier} · {row.tracking_number}
+                  </span>
+                </div>
+              )}
           </li>
         );
       })}

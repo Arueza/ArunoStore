@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatDate, formatRupiah } from "@/lib/format";
 import { statusLabel } from "@/lib/commissionStatus";
 import QuoteBox from "./QuoteBox";
-import { markAsPurchased } from "./actions";
+import { markAsPurchased, saveShipping } from "./actions";
 
 export const metadata: Metadata = {
   title: "Titipan — Ruang Staf",
@@ -30,6 +30,8 @@ type TitipanRequest = {
   quote_shipping: number | null;
   quote_service_fee: number | null;
   quote_note: string | null;
+  courier: string | null;
+  tracking_number: string | null;
   created_at: string;
 };
 
@@ -50,7 +52,7 @@ async function RequestDetail({ params }: { params: Promise<{ id: string }> }) {
   const { data: request } = await supabase
     .from("titipan_requests")
     .select(
-      "id, buyer_id, product_link, size, color, quantity, budget, status, quote_item_price, quote_shipping, quote_service_fee, quote_note, created_at",
+      "id, buyer_id, product_link, size, color, quantity, budget, status, quote_item_price, quote_shipping, quote_service_fee, quote_note, courier, tracking_number, created_at",
     )
     .eq("id", id)
     .maybeSingle<TitipanRequest>();
@@ -160,6 +162,63 @@ async function RequestDetail({ params }: { params: Promise<{ id: string }> }) {
             </p>
           </div>
         )}
+
+        {request.status === "purchased" && (
+          <div className="mt-6 border-t border-[#eeeae5] pt-6">
+            <form action={saveShipping} className="space-y-4">
+              <input type="hidden" name="id" value={request.id} />
+              <div>
+                <label
+                  htmlFor="courier"
+                  className="block text-xs uppercase tracking-[0.14em] text-[#6c6870]"
+                >
+                  Nama kurir
+                </label>
+                <input
+                  id="courier"
+                  name="courier"
+                  type="text"
+                  placeholder="JNE, J&T, Kuroneko, dll."
+                  className="mt-2 w-full border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink focus:border-plum focus:outline-none"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="tracking_number"
+                  className="block text-xs uppercase tracking-[0.14em] text-[#6c6870]"
+                >
+                  Nomor resi
+                </label>
+                <input
+                  id="tracking_number"
+                  name="tracking_number"
+                  type="text"
+                  placeholder="JD0123456789"
+                  className="mt-2 w-full border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink focus:border-plum focus:outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                className="bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+              >
+                Tandai dikirim
+              </button>
+            </form>
+          </div>
+        )}
+
+        {(request.status === "shipped" || request.status === "arrived") &&
+          request.courier &&
+          request.tracking_number && (
+            <div className="mt-6 border-t border-[#eeeae5] pt-6">
+              <p className="text-xs uppercase tracking-[0.14em] text-[#6c6870]">
+                Info pengiriman
+              </p>
+              <p className="mt-2 text-sm text-ink">
+                {request.courier} · {request.tracking_number}
+              </p>
+            </div>
+          )}
       </div>
 
       <QuoteBox
