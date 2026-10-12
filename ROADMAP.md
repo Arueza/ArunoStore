@@ -86,7 +86,7 @@ Buyer sends a Japanese product link, staff quotes price + shipping + fee.
 - [x] **3.7** Save the quote, status becomes `quoted` *(`1bc4c92`)*
 - [x] **3.8** Buyer's "my titipan requests" list *(`5f44734`)*
 - [x] **3.9** Accept or decline a quote *(`4fe7673`)*
-- [ ] **3.10** Mark as purchased
+- [x] **3.10** Mark as purchased *(`c1c94b9`)*
 - [ ] **3.11** Add courier and tracking number, status becomes `shipped`
 - [ ] **3.12** Buyer marks it arrived
 - [x] **3.13** Signing in from a guarded titipan page returns the buyer to it *(`5ea4d4d`)*
