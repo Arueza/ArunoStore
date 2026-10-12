@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatDate, formatRupiah } from "@/lib/format";
 import { statusLabel } from "@/lib/commissionStatus";
 import QuoteBox from "./QuoteBox";
+import { markAsPurchased } from "./actions";
 
 export const metadata: Metadata = {
   title: "Titipan — Ruang Staf",
@@ -142,6 +143,23 @@ async function RequestDetail({ params }: { params: Promise<{ id: string }> }) {
             </dd>
           </div>
         </dl>
+
+        {request.status === "accepted" && (
+          <div className="mt-6 border-t border-[#eeeae5] pt-6">
+            <form action={markAsPurchased}>
+              <input type="hidden" name="id" value={request.id} />
+              <button
+                type="submit"
+                className="bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+              >
+                Tandai sudah dibeli
+              </button>
+            </form>
+            <p className="mt-2 text-xs leading-relaxed text-[#6c6870]">
+              Konfirmasi bahwa barang sudah dibeli dari toko di Jepang.
+            </p>
+          </div>
+        )}
       </div>
 
       <QuoteBox

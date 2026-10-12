@@ -15,6 +15,9 @@ const LABELS: Record<string, string> = {
   quoted: "Sudah dikutip",
   accepted: "Diterima",
   declined: "Ditolak",
+  purchased: "Sudah dibeli",
+  shipped: "Dikirim",
+  arrived: "Sampai",
 };
 
 export function statusLabel(status: string): string {

@@ -124,3 +124,79 @@ export async function saveTitipanQuote(formData: FormData): Promise<void> {
 
   redirect(`${path}?saved=1`);
 }
+
+/**
+ * Marks an accepted titipan request as purchased.
+ *
+ * Roadmap 3.10. The buyer has accepted the quote (3.9); staff now confirm they
+ * have bought the item from the Japanese shop. Status becomes `purchased`.
+ *
+ * Migration 0029 added the `purchased` enum value. The staff update policy
+ * from 0022 already covers this write, and `status` is already in the column
+ * grant.
+ *
+ * Two things are decided here and not in the form:
+ *
+ *   id      — checked as a uuid because it goes into a redirect path.
+ *   status  — set here, never read from the form. A forged field cannot move
+ *             status to an arbitrary value.
+ *
+ * The row is read first and checked to be `accepted`, so staff cannot mark a
+ * request as purchased before the buyer has accepted the quote.
+ */
+export async function markAsPurchased(formData: FormData): Promise<void> {
+  const id = formData.get("id");
+
+  if (typeof id !== "string" || !UUID.test(id)) {
+    redirect("/staff/titipan?error=Permintaan tidak valid.");
+  }
+
+  const path = `/staff/titipan/${id}`;
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profile?.role !== "staff") {
+    redirect("/");
+  }
+
+  const { data: request } = await supabase
+    .from("titipan_requests")
+    .select("status")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!request) {
+    redirect(`${path}?error=Permintaan tidak ditemukan.`);
+  }
+
+  if (request.status !== "accepted") {
+    redirect(
+      `${path}?error=Permintaan ini belum diterima buyer atau sudah diproses.`,
+    );
+  }
+
+  const { error } = await supabase
+    .from("titipan_requests")
+    .update({ status: "purchased" })
+    .eq("id", id);
+
+  if (error) {
+    redirect(`${path}?error=${encodeURIComponent(error.message)}`);
+  }
+
+  redirect(`${path}?saved=1`);
+}

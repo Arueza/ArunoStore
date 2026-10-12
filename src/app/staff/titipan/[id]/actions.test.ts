@@ -36,7 +36,7 @@ vi.mock("@/lib/supabase/server", () => ({
   })),
 }));
 
-import { saveTitipanQuote } from "./actions";
+import { markAsPurchased, saveTitipanQuote } from "./actions";
 
 const ID = "3f7c1e6a-9b2d-4e5f-8a1b-2c3d4e5f6a7b";
 
@@ -214,6 +214,117 @@ describe("saveTitipanQuote", () => {
 
   test("updates only the row named in the form", async () => {
     await run(formData());
+
+    expect(mocks.update.mock.calls[0]![0]).toMatchObject({ id: ID });
+  });
+});
+
+describe("markAsPurchased", () => {
+  beforeEach(() => {
+    mocks.getUser.mockReset();
+    mocks.update.mockReset();
+    mocks.maybeSingle.mockReset();
+    mocks.updateError = null;
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "staff-1" } } });
+    // markAsPurchased calls maybeSingle twice: once for the profile check,
+    // once for the request status check. Default: staff with accepted status.
+    mocks.maybeSingle
+      .mockResolvedValueOnce({ data: { role: "staff" } })
+      .mockResolvedValueOnce({ data: { status: "accepted" } })
+      .mockResolvedValue({ data: { role: "staff" } });
+  });
+
+  function purchasedFormData(overrides: Record<string, string> = {}) {
+    const data = new FormData();
+    for (const [key, value] of Object.entries({ id: ID, ...overrides })) {
+      data.append(key, value);
+    }
+    return data;
+  }
+
+  async function runPurchased(data: FormData) {
+    try {
+      await markAsPurchased(data);
+      return null;
+    } catch (error) {
+      if (error instanceof Redirect) return error.to;
+      throw error;
+    }
+  }
+
+  test("moves an accepted request to purchased", async () => {
+    const to = await runPurchased(purchasedFormData());
+
+    expect(written()).toEqual({ status: "purchased" });
+    expect(to).toBe(`/staff/titipan/${ID}?saved=1`);
+  });
+
+  test("ignores a forged status and always writes purchased", async () => {
+    await runPurchased(purchasedFormData({ status: "requested" }));
+
+    expect(written().status).toBe("purchased");
+  });
+
+  test("refuses an id that is not a uuid, before touching Supabase", async () => {
+    const to = await runPurchased(purchasedFormData({ id: "../../login" }));
+
+    expect(to).toContain("error=");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  test("refuses when the request does not exist or is not the staff's", async () => {
+    mocks.maybeSingle.mockReset();
+    mocks.maybeSingle
+      .mockResolvedValueOnce({ data: { role: "staff" } })
+      .mockResolvedValueOnce({ data: null } as never);
+
+    const to = await runPurchased(purchasedFormData());
+
+    expect(to).toContain("error=");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  test("refuses to mark as purchased before the buyer accepted", async () => {
+    mocks.maybeSingle.mockReset();
+    mocks.maybeSingle
+      .mockResolvedValueOnce({ data: { role: "staff" } })
+      .mockResolvedValueOnce({ data: { status: "quoted" } } as never);
+
+    const to = await runPurchased(purchasedFormData());
+
+    expect(to).toContain("error=");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  test("sends a buyer back to the store and writes nothing", async () => {
+    mocks.maybeSingle.mockReset();
+    mocks.maybeSingle.mockResolvedValueOnce({ data: { role: "buyer" } } as never);
+
+    const to = await runPurchased(purchasedFormData());
+
+    expect(to).toBe("/");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  test("sends an expired session to the login page", async () => {
+    mocks.getUser.mockResolvedValueOnce({ data: { user: null } } as never);
+
+    const to = await runPurchased(purchasedFormData());
+
+    expect(to).toBe("/login");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  test("surfaces the error when Supabase refuses the update", async () => {
+    mocks.updateError = { message: "new row violates row-level security policy" };
+
+    const to = await runPurchased(purchasedFormData());
+
+    expect(decodeURIComponent(to!)).toContain("row-level security");
+  });
+
+  test("updates only the row named in the form", async () => {
+    await runPurchased(purchasedFormData());
 
     expect(mocks.update.mock.calls[0]![0]).toMatchObject({ id: ID });
   });
