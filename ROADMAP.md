@@ -130,6 +130,7 @@ renders its empty state until 6.1 seeds rows.
 - [x] **6.5** Rewrite `README.md`: what it is, how to run, how to test *(`9b6dddb`)*
 - [ ] **6.6** Check nothing secret is in the repository
 - [ ] **6.7** Custom domain, if time allows
+- [x] **6.8** Replace `admins` table with `profiles` across all RLS policies *(`21d0ebc`)*
 
 ---
 
