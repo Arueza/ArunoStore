@@ -7,6 +7,7 @@ import { getClaims } from "@/lib/auth";
 import { formatDate, formatRupiah } from "@/lib/format";
 import { statusLabel } from "@/lib/commissionStatus";
 import { quoteTotal } from "@/lib/quote";
+import { respondToQuote } from "./actions";
 
 export const metadata: Metadata = {
   title: "Titipan Saya — Aruno Store",
@@ -170,6 +171,30 @@ export async function MyTitipanRequests() {
                 {row.quote_note}
               </p>
             )}
+            {row.status === "quoted" && (
+              <div className="mt-4 flex gap-3">
+                <form action={respondToQuote}>
+                  <input type="hidden" name="id" value={row.id} />
+                  <input type="hidden" name="decision" value="accept" />
+                  <button
+                    type="submit"
+                    className="bg-plum px-5 py-2 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+                  >
+                    Terima
+                  </button>
+                </form>
+                <form action={respondToQuote}>
+                  <input type="hidden" name="id" value={row.id} />
+                  <input type="hidden" name="decision" value="decline" />
+                  <button
+                    type="submit"
+                    className="border border-[#e2ddd7] px-5 py-2 text-xs uppercase tracking-[0.18em] text-ink transition-colors hover:border-plum"
+                  >
+                    Tolak
+                  </button>
+                </form>
+              </div>
+            )}
           </li>
         );
       })}
@@ -177,7 +202,11 @@ export async function MyTitipanRequests() {
   );
 }
 
-export default function MyTitipanRequestsPage() {
+export default function MyTitipanRequestsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ saved?: string; error?: string }>;
+}) {
   return (
     <main className="mx-auto w-full max-w-3xl px-5 py-14 sm:px-[6%] sm:py-20">
       <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
@@ -188,9 +217,10 @@ export default function MyTitipanRequestsPage() {
         Permintaan yang kamu kirim, dan kutipannya kalau sudah keluar.
       </p>
 
-      {/* The list reads cookies through createClient(), so it cannot be
-          prerendered. The boundary is what lets the heading above ship in the
-          static shell while the rows stream in behind it. */}
+      <Suspense>
+        <SaveNotice searchParams={searchParams} />
+      </Suspense>
+
       <Suspense>
         <MyTitipanRequests />
       </Suspense>
@@ -204,5 +234,24 @@ export default function MyTitipanRequestsPage() {
         </Link>
       </div>
     </main>
+  );
+}
+
+async function SaveNotice({
+  searchParams,
+}: {
+  searchParams: Promise<{ saved?: string; error?: string }>;
+}) {
+  const { saved, error } = await searchParams;
+
+  return (
+    <p role="status" className="mt-4 min-h-5 text-sm text-[#6c6870]">
+      {error && <span className="font-medium text-plum">{error}</span>}
+      {!error && saved === "1" && (
+        <span className="font-medium text-ink">
+          Keputusan tersimpan.
+        </span>
+      )}
+    </p>
   );
 }

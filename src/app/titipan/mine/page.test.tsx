@@ -84,10 +84,14 @@ const renderList = async (rows: unknown[]) => {
 };
 
 describe("MyTitipanRequestsPage", () => {
+  const searchParams = Promise.resolve({});
+
   test("the heading is in the static shell", () => {
-    expect(renderToStaticMarkup(<MyTitipanRequestsPage />)).toContain(
-      "Titipan Saya",
-    );
+    expect(
+      renderToStaticMarkup(
+        <MyTitipanRequestsPage searchParams={searchParams} />,
+      ),
+    ).toContain("Titipan Saya");
   });
 
   // If the session read moves back up into the page, the route stops
@@ -96,9 +100,11 @@ describe("MyTitipanRequestsPage", () => {
   test("the list is not in the static shell", () => {
     mocks.requests = [REQUEST];
 
-    expect(renderToStaticMarkup(<MyTitipanRequestsPage />)).not.toContain(
-      "store.example",
-    );
+    expect(
+      renderToStaticMarkup(
+        <MyTitipanRequestsPage searchParams={searchParams} />,
+      ),
+    ).not.toContain("store.example");
   });
 });
 

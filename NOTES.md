@@ -5,7 +5,7 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
 
 ## Migrations
 
-- **Number with `000N_name.sql`.** `0001`–`0027` are taken (`0009` a deliberate gap, `0016` repairs P1's policies, `0017` artwork storage, `0018` staff update policy, `0019` staff reads profiles, `0020` buyer accepts/declines, `0021` delivery image bucket, `0022` titipan staff quote, `0023` commissions quote trigger, `0024` seed data, `0025` admins→profiles migration, `0026` drop admins table, `0027` corrected reseed); `0028` next free. Supabase's own files (`20261004133000_…`) share the directory, not the count.
+- **Number with `000N_name.sql`.** `0001`–`0027` are taken (`0009` a deliberate gap, `0016` repairs P1's policies, `0017` artwork storage, `0018` staff update policy, `0019` staff reads profiles, `0020` buyer accepts/declines, `0021` delivery image bucket, `0022` titipan staff quote, `0023` commissions quote trigger, `0024` seed data, `0025` admins→profiles migration, `0026` drop admins table, `0027` corrected reseed, `0028` titipan buyer accept/decline policy); `0029` next free. Supabase's own files (`20261004133000_…`) share the directory, not the count.
 - **Check the number is free before writing one.** `0017` was issued twice (2.4 storage, then 2.8 staff reads, renamed `0019`) and only git noticed: the SQL editor never sees a filename, so a duplicate applies cleanly then disagrees with the repo.
 - **Paste one statement at a time.** `0003` went in as a batch and aborted silently. Verify after: `select policyname, qual from pg_policies where tablename = 'profiles';`
 - **`drop policy if exists "name"` can silently do nothing.** Read names as hex
