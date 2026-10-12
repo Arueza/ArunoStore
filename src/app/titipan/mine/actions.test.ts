@@ -42,7 +42,7 @@ vi.mock("@/lib/supabase/server", () => ({
   })),
 }));
 
-import { respondToQuote } from "./actions";
+import { markAsArrived, respondToQuote } from "./actions";
 
 const ID = "3f7c1e6a-9b2d-4e5f-8a1b-2c3d4e5f6a7b";
 
@@ -162,6 +162,94 @@ describe("respondToQuote", () => {
 
   test("updates only the row named in the form", async () => {
     await run(formData());
+
+    expect(mocks.update.mock.calls[0]![0]).toMatchObject({ id: ID });
+  });
+});
+
+describe("markAsArrived", () => {
+  beforeEach(() => {
+    mocks.getUser.mockReset();
+    mocks.select.mockReset();
+    mocks.maybeSingle.mockReset();
+    mocks.update.mockReset();
+    mocks.updateError = null;
+    mocks.getUser.mockResolvedValue({ data: { user: { id: "buyer-1" } } });
+    mocks.maybeSingle.mockResolvedValue({ data: { status: "shipped" } });
+  });
+
+  function arrivedFormData(overrides: Record<string, string> = {}) {
+    const data = new FormData();
+    for (const [key, value] of Object.entries({ id: ID, ...overrides })) {
+      data.append(key, value);
+    }
+    return data;
+  }
+
+  async function runArrived(data: FormData) {
+    try {
+      await markAsArrived(data);
+      return null;
+    } catch (error) {
+      if (error instanceof Redirect) return error.to;
+      throw error;
+    }
+  }
+
+  const writtenArrived = () =>
+    (mocks.update.mock.calls[0]![0] as { values: Record<string, unknown> }).values;
+
+  test("moves a shipped request to arrived", async () => {
+    const to = await runArrived(arrivedFormData());
+
+    expect(writtenArrived()).toEqual({ status: "arrived" });
+    expect(to).toBe("/titipan/mine?saved=1");
+  });
+
+  test("refuses an id that is not a uuid, before touching Supabase", async () => {
+    const to = await runArrived(arrivedFormData({ id: "../../login" }));
+
+    expect(to).toContain("error=");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  test("refuses when the request is not shipped", async () => {
+    mocks.maybeSingle.mockResolvedValueOnce({ data: { status: "purchased" } });
+
+    const to = await runArrived(arrivedFormData());
+
+    expect(to).toContain("error=");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  test("refuses when the request does not exist or is not the buyer's", async () => {
+    mocks.maybeSingle.mockResolvedValueOnce({ data: null });
+
+    const to = await runArrived(arrivedFormData());
+
+    expect(to).toContain("error=");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  test("sends an expired session to the login page", async () => {
+    mocks.getUser.mockResolvedValueOnce({ data: { user: null } } as never);
+
+    const to = await runArrived(arrivedFormData());
+
+    expect(to).toBe("/login");
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  test("surfaces the error when Supabase refuses the update", async () => {
+    mocks.updateError = { message: "new row violates row-level security policy" };
+
+    const to = await runArrived(arrivedFormData());
+
+    expect(decodeURIComponent(to!)).toContain("row-level security");
+  });
+
+  test("updates only the row named in the form", async () => {
+    await runArrived(arrivedFormData());
 
     expect(mocks.update.mock.calls[0]![0]).toMatchObject({ id: ID });
   });

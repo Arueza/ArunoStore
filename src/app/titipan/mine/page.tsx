@@ -7,7 +7,7 @@ import { getClaims } from "@/lib/auth";
 import { formatDate, formatRupiah } from "@/lib/format";
 import { statusLabel } from "@/lib/commissionStatus";
 import { quoteTotal } from "@/lib/quote";
-import { respondToQuote } from "./actions";
+import { markAsArrived, respondToQuote } from "./actions";
 
 export const metadata: Metadata = {
   title: "Titipan Saya — Aruno Store",
@@ -208,6 +208,18 @@ export async function MyTitipanRequests() {
                   </span>
                 </div>
               )}
+
+            {row.status === "shipped" && (
+              <form action={markAsArrived} className="mt-4">
+                <input type="hidden" name="id" value={row.id} />
+                <button
+                  type="submit"
+                  className="border border-[#e2ddd7] px-5 py-2 text-xs uppercase tracking-[0.18em] text-ink transition-colors hover:border-plum"
+                >
+                  Tandai sudah sampai
+                </button>
+              </form>
+            )}
           </li>
         );
       })}
