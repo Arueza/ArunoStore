@@ -88,7 +88,7 @@ Buyer sends a Japanese product link, staff quotes price + shipping + fee.
 - [x] **3.9** Accept or decline a quote *(`4fe7673`)*
 - [x] **3.10** Mark as purchased *(`c1c94b9`)*
 - [x] **3.11** Add courier and tracking number, status becomes `shipped` *(`346d703`)*
-- [ ] **3.12** Buyer marks it arrived
+- [x] **3.12** Buyer marks it arrived *(`2f9b0b8`)*
 - [x] **3.13** Signing in from a guarded titipan page returns the buyer to it *(`5ea4d4d`)*
 
 Prerequisites: 3.7 needs `0022` pasted, the first update to a row staff do not
