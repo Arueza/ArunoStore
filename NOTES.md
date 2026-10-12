@@ -145,3 +145,6 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
 - **Nothing measured since 1.12 / 1.13.** No Lighthouse run against the live
   site, and whether Supabase and Vercel functions share a region is unknown.
   Measure both after the next deploy.
+- **`admins` table is dead.** 0025 migrated `consignment_items.admin_id` to
+  `profiles(id)`, replaced all admin policies with `is_staff()`, and rewrote
+  notify functions to read from `profiles`. Drop the table in 0026.
