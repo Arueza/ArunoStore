@@ -5,7 +5,7 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
 
 ## Migrations
 
-- **Number with `000N_name.sql`.** `0001`–`0022` are taken (`0009` a deliberate gap, `0016` repairs P1's policies, `0017` artwork storage, `0018` staff update policy, `0019` staff reads profiles, `0020` buyer accepts/declines, `0021` delivery image bucket, `0022` titipan staff quote); `0023` next free. Supabase's own files (`20261004133000_…`) share the directory, not the count.
+- **Number with `000N_name.sql`.** `0001`–`0027` are taken (`0009` a deliberate gap, `0016` repairs P1's policies, `0017` artwork storage, `0018` staff update policy, `0019` staff reads profiles, `0020` buyer accepts/declines, `0021` delivery image bucket, `0022` titipan staff quote, `0023` commissions quote trigger, `0024` seed data, `0025` admins→profiles migration, `0026` drop admins table, `0027` corrected reseed); `0028` next free. Supabase's own files (`20261004133000_…`) share the directory, not the count.
 - **Check the number is free before writing one.** `0017` was issued twice (2.4 storage, then 2.8 staff reads, renamed `0019`) and only git noticed: the SQL editor never sees a filename, so a duplicate applies cleanly then disagrees with the repo.
 - **Paste one statement at a time.** `0003` went in as a batch and aborted silently. Verify after: `select policyname, qual from pg_policies where tablename = 'profiles';`
 - **`drop policy if exists "name"` can silently do nothing.** Read names as hex
@@ -34,7 +34,7 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
   quote_note, status`. Without it a staff session holding the anon key could
   rewrite `buyer_id` and hand one buyer's request to another account.
 - **Verify the grant landed.** The `information_schema.column_privileges` query at the foot of `0018` catches a revoke that silently did nothing: three columns was correct before 0021, four after it. `delivery_image` was added by `0021`.
-- **A column grant is not a role.** `0022`'s trigger puts the four `quote_*` columns back the way it found them on any update where `is_staff()` is false, because 3.9's buyer policy otherwise reopens the very grant the trigger is guarding — a buyer could quote themselves Rp 7.000 instead of Rp 700.000. `0020` never got this on commissions, so the same hole is open there today and the same trigger on `commissions` is owed.
+- **A column grant is not a role.** `0022`'s trigger puts the four `quote_*` columns back the way it found them on any update where `is_staff()` is false, because 3.9's buyer policy otherwise reopens the very grant the trigger is guarding — a buyer could quote themselves Rp 7.000 instead of Rp 700.000. `0023` applies the same trigger to `commissions`, pinning `quote_price` and `quote_note`.
 - **Read the reused clause before relying on it.** No `with check` means
   Postgres reuses `using`. On `0018` that is exactly what is wanted; on
   `admins` it is too weak and an admin can update their own `store_role`.
@@ -78,8 +78,8 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
 - **Vitest cannot render a `'use cache'` component.** `renderToStaticMarkup`,
   `renderToString` and `renderToPipeableStream` all fail — 2.5's only proof is
   that build and lint pass.
-- **`0004_services.sql` has no write policy on purpose:** 6.1 seeds in the SQL
-  editor. Until then `services` has 0 rows, so the populated service dropdown
+- **`0004_services.sql` has no write policy on purpose:** 5.6 adds staff CRUD.
+  Until then `services` is seeded by hand, so the populated service dropdown
   at 2.6 has never rendered in a browser, and the insert against `0005`'s
   policy is unproven end to end — `actions.test.ts` asserts the row the action
   builds, not that RLS accepted it. 3.4 is in the same place: the titipan insert
@@ -145,6 +145,6 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
 - **Nothing measured since 1.12 / 1.13.** No Lighthouse run against the live
   site, and whether Supabase and Vercel functions share a region is unknown.
   Measure both after the next deploy.
-- **`admins` table is dead.** 0025 migrated `consignment_items.admin_id` to
+- **`admins` table dropped.** 0025 migrated `consignment_items.admin_id` to
   `profiles(id)`, replaced all admin policies with `is_staff()`, and rewrote
-  notify functions to read from `profiles`. Drop the table in 0026.
+  notify functions to read from `profiles`. 0026 dropped the table entirely.

@@ -77,15 +77,22 @@ proves it landed in the same message, so the next person does not inherit a
 migration nobody ran. `0003` sat unapplied for days and every read of `profiles`
 was silently denied while nothing reported a permission error.
 
+**Every new migration must be recorded in `NOTES.md` (migration number + one-line
+purpose) or `ROADMAP.md` (if it completes a task) the same session it is written.**
+Stale migration references cause wrong assumptions, failed pastes, and duplicated
+work. Before writing a new migration, check the latest number in
+`supabase/migrations/` and update the docs immediately after committing.
+
 One Supabase project, one repository, two developers. Everything in it is
 ArunoStore and both of us can change all of it, so no table here is off limits.
 The line actually worth knowing is which tables a migration file describes.
 `profiles`, `services`, `commissions` and `titipan_requests` each have one in
-`supabase/migrations/`. `admins`, `users`, `consignment_*`,
+`supabase/migrations/`. `users`, `consignment_*`,
 `commission_categories`, `commission_images`, `commission_orders`,
 `commission_order_references`, `consignors` and `email_notifications` were built
 in the dashboard for Phase 3 and P1 reconstructed them — they are captured, not
-authored, so read their headers before changing them.
+authored, so read their headers before changing them. `admins` was dropped in
+`0026`; `profiles` is the single role source.
 
 Two services, one site: **Art Commission** (Verrel) and **Proxy Shopping**
 (Alfreza). They share `profiles`, one `buyer` / `staff` role, payments, and one

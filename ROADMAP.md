@@ -92,8 +92,8 @@ Buyer sends a Japanese product link, staff quotes price + shipping + fee.
 - [x] **3.13** Signing in from a guarded titipan page returns the buyer to it *(`5ea4d4d`)*
 
 Prerequisites: 3.7 needs `0022` pasted, the first update to a row staff do not
-own; it pins the quote columns so 3.9's buyer policy cannot reopen them. `0023`
-lands at 3.9, `0024` (`purchased`, `shipped`, `arrived`) at 3.10.
+own; it pins the quote columns so 3.9's buyer policy cannot reopen them. 3.9 needs
+its own enum migration for accept/decline; 3.10 needs `purchased|shipped|arrived`.
 
 ## Phase 4 — Payments (Xendit test mode)
 
@@ -123,14 +123,14 @@ renders its empty state until 6.1 seeds rows.
 
 ## Phase 6 — Submission
 
-- [x] **6.1** Seed data: a few services, artworks, sample requests *(`98f77a0`)*
+- [x] **6.1** Seed data: a few services, artworks, sample requests *(`d2245ca`)*
 - [ ] **6.2** Test the whole flow once more on the live site, signed out
 - [ ] **6.3** Write the demo script: what to click, in order
 - [ ] **6.4** Screenshots of every page
 - [x] **6.5** Rewrite `README.md`: what it is, how to run, how to test *(`9b6dddb`)*
 - [ ] **6.6** Check nothing secret is in the repository
 - [ ] **6.7** Custom domain, if time allows
-- [x] **6.8** Replace `admins` table with `profiles` across all RLS policies *(`21d0ebc`)*
+- [x] **6.8** Replace `admins` with `profiles` across all RLS policies, then drop table *(`21d0ebc`, `71f9d92`)*
 
 ---
 
