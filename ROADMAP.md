@@ -123,7 +123,7 @@ renders its empty state until 6.1 seeds rows.
 
 ## Phase 6 — Submission
 
-- [ ] **6.1** Seed data: a few services, artworks, sample requests
+- [x] **6.1** Seed data: a few services, artworks, sample requests *(`98f77a0`)*
 - [ ] **6.2** Test the whole flow once more on the live site, signed out
 - [ ] **6.3** Write the demo script: what to click, in order
 - [ ] **6.4** Screenshots of every page
