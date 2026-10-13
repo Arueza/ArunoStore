@@ -74,6 +74,7 @@ export async function proxy(request: NextRequest) {
 // which is why the public /titipan is not caught by the /titipan/mine entry.
 const SIGNED_IN_ROUTES = [
   "/account",
+  "/checkout",
   "/commissions/request",
   "/commissions/mine",
   "/titipan/request",

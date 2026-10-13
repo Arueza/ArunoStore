@@ -1,0 +1,139 @@
+import { NextResponse } from "next/server";
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { createServiceClient } from "@/lib/supabase/service";
+
+/**
+ * POST /api/midtrans/webhook — receives payment status notifications.
+ *
+ * Verifies signature_key (SHA512 of order_id + status_code + gross_amount + ServerKey),
+ * checks settlement conditions, and updates the payment row. Idempotent on order_id.
+ */
+export async function POST(request: Request) {
+  let body: {
+    order_id?: string;
+    status_code?: string;
+    gross_amount?: string;
+    signature_key?: string;
+    transaction_status?: string;
+    fraud_status?: string;
+    payment_type?: string;
+    transaction_id?: string;
+  };
+
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
+  }
+
+  const { order_id, status_code, gross_amount, signature_key } = body;
+
+  if (!order_id || !status_code || !gross_amount || !signature_key) {
+    return NextResponse.json({ error: "Missing fields." }, { status: 400 });
+  }
+
+  const serverKey = process.env.MIDTRANS_SERVER_KEY;
+  if (!serverKey) {
+    return NextResponse.json(
+      { error: "MIDTRANS_SERVER_KEY missing." },
+      { status: 500 },
+    );
+  }
+
+  // Verify signature: SHA512(order_id + status_code + gross_amount + serverKey)
+  const expected = createHmac("sha512", serverKey)
+    .update(`${order_id}${status_code}${gross_amount}`)
+    .digest("hex");
+
+  const sigBuf = Buffer.from(signature_key, "utf8");
+  const expBuf = Buffer.from(expected, "utf8");
+
+  if (sigBuf.length !== expBuf.length || !timingSafeEqual(sigBuf, expBuf)) {
+    return NextResponse.json({ error: "Invalid signature." }, { status: 401 });
+  }
+
+  const serviceClient = createServiceClient();
+
+  // Find the payment row.
+  const { data: payment, error: readError } = await serviceClient
+    .from("payments")
+    .select("id, amount, status, commission_id, titipan_request_id")
+    .eq("order_id", order_id)
+    .maybeSingle();
+
+  if (readError || !payment) {
+    return NextResponse.json({ error: "Payment not found." }, { status: 404 });
+  }
+
+  // Map Midtrans transaction_status to our payment status.
+  const txnStatus = body.transaction_status;
+  const fraud = body.fraud_status;
+
+  let paymentStatus: string;
+  if (txnStatus === "settlement" || txnStatus === "capture") {
+    if (status_code !== "200" || fraud !== "ACCEPT") {
+      return NextResponse.json(
+        { error: "Fraud check failed." },
+        { status: 400 },
+      );
+    }
+    paymentStatus = txnStatus;
+  } else if (txnStatus === "deny") {
+    paymentStatus = "deny";
+  } else if (txnStatus === "expire") {
+    paymentStatus = "expire";
+  } else if (txnStatus === "cancel") {
+    paymentStatus = "cancel";
+  } else if (txnStatus === "pending") {
+    paymentStatus = "pending";
+  } else {
+    paymentStatus = "failure";
+  }
+
+  // Idempotent: skip if already in final state.
+  if (
+    payment.status === "settlement" ||
+    payment.status === "capture" ||
+    payment.status === "deny" ||
+    payment.status === "expire" ||
+    payment.status === "cancel"
+  ) {
+    return NextResponse.json({ ok: true });
+  }
+
+  // Update payment row.
+  const { error: updateError } = await serviceClient
+    .from("payments")
+    .update({
+      status: paymentStatus,
+      transaction_id: body.transaction_id ?? null,
+      payment_type: body.payment_type ?? null,
+    })
+    .eq("id", payment.id);
+
+  if (updateError) {
+    return NextResponse.json(
+      { error: `Update failed: ${updateError.message}` },
+      { status: 500 },
+    );
+  }
+
+  // If settled, advance the order to paid (4.8).
+  if (paymentStatus === "settlement" || paymentStatus === "capture") {
+    if (payment.commission_id) {
+      await serviceClient
+        .from("commissions")
+        .update({ status: "paid" })
+        .eq("id", payment.commission_id)
+        .eq("status", "accepted");
+    } else if (payment.titipan_request_id) {
+      await serviceClient
+        .from("titipan_requests")
+        .update({ status: "paid" })
+        .eq("id", payment.titipan_request_id)
+        .eq("status", "accepted");
+    }
+  }
+
+  return NextResponse.json({ ok: true });
+}

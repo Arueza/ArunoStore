@@ -198,6 +198,17 @@ export async function MyTitipanRequests() {
               </div>
             )}
 
+            {row.status === "accepted" && (
+              <div className="mt-4">
+                <Link
+                  href={`/checkout?type=titipan&id=${row.id}`}
+                  className="inline-block bg-plum px-5 py-2 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+                >
+                  Bayar
+                </Link>
+              </div>
+            )}
+
             {(row.status === "shipped" || row.status === "arrived") &&
               row.courier &&
               row.tracking_number && (

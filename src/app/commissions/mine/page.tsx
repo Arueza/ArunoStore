@@ -159,6 +159,18 @@ async function MyCommissions() {
             </div>
           )}
 
+          {/* Bayar link for accepted orders — buyer pays before staff delivers. */}
+          {row.status === "accepted" && (
+            <div className="mt-4">
+              <Link
+                href={`/checkout?type=commission&id=${row.id}`}
+                className="inline-block bg-plum px-5 py-2 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+              >
+                Bayar
+              </Link>
+            </div>
+          )}
+
           {/* The finished drawing, visible to this buyer only. The signed URL
               expires; the bucket is private, and only this buyer's RLS-gated
               read reached the path that produced it. */}
