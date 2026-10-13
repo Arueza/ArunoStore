@@ -2,13 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense } from "react";
 import { NAV_LINKS } from "@/components/navLinks";
-import StaffLink from "@/components/StaffLink";
 import { usePanels } from "@/components/Panels";
 import logo from "@/components/aruno-logo.png";
 
 const ID = "menu";
+
+type Props = {
+  staffSlot?: React.ReactNode;
+};
 
 /**
  * The hamburger and the panel it opens, mobile only.
@@ -20,8 +22,12 @@ const ID = "menu";
  * Holds no open state of its own: Panels.tsx decides which panel is open, so
  * opening the cart closes this one without either component knowing the other
  * exists.
+ *
+ * The staff link arrives as a prop because this file is "use client" and
+ * cannot render the async StaffLink server component directly. Same slot as
+ * the desktop row, so the two cannot show different roles.
  */
-export default function MenuDrawer() {
+export default function MenuDrawer({ staffSlot }: Props) {
   const { open, toggle, close } = usePanels();
   const isOpen = open === ID;
 
@@ -77,11 +83,8 @@ export default function MenuDrawer() {
               {link.label}
             </Link>
           ))}
-          <div className="px-6 py-3.5">
-            <Suspense fallback={null}>
-              <StaffLink />
-            </Suspense>
-          </div>
+          {/* staffSlot already carries its own Suspense from Navbar. */}
+          <div className="px-6 py-3.5">{staffSlot}</div>
         </nav>
       </div>
     </>

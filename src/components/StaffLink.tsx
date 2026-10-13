@@ -1,43 +1,28 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { createBrowserSupabase } from "@/lib/supabase/browser";
+import { getProfile } from "@/lib/auth";
 
 /**
  * Staff-only link to /staff. Renders nothing for buyers and signed-out
  * visitors.
  *
- * A client component because MenuDrawer (mobile) is "use client" and cannot
- * render an async server component. Reads the role through the browser
- * Supabase client, which hits the same RLS policies as the server client —
- * 0003 lets each signed-in user read exactly their own profiles row.
+ * Async Server Component so it follows the session: the layout persists
+ * across navigations, and a client component with mount-once state kept the
+ * old role after logout until a full refresh. Reads the cached profile, so
+ * the extra cost over AuthSlot is nil — getProfile() reuses getClaims()'s
+ * cache and one profiles-row read.
  *
- * The role check is client-side convenience only. The real gate is the proxy
+ * The role check is convenience only. The real gate is the proxy
  * (src/proxy.ts): /staff and everything below it redirect non-staff to "/"
  * regardless of what this component renders.
+ *
+ * Rendered behind <Suspense> in Navbar (desktop row) and passed as a prop
+ * into MenuDrawer (mobile): a "use client" component cannot render an async
+ * server component directly, but receiving it as a prop is allowed.
  */
-export default function StaffLink() {
-  const [isStaff, setIsStaff] = useState(false);
+export default async function StaffLink() {
+  const profile = await getProfile();
 
-  useEffect(() => {
-    const supabase = createBrowserSupabase();
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) return;
-
-      supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", session.user.id)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (data?.role === "staff") setIsStaff(true);
-        });
-    });
-  }, []);
-
-  if (!isStaff) return null;
+  if (profile?.role !== "staff") return null;
 
   return (
     <Link

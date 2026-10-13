@@ -34,9 +34,18 @@ export default function Navbar() {
             account menu. AuthSlot renders inside it, so the account menu shares
             the same switch. */}
         <PanelProvider>
-          {/* Mobile only: desktop gets the visible row below instead. */}
+          {/* Mobile only: desktop gets the visible row below instead. The staff
+              link arrives as a prop because MenuDrawer is "use client" and
+              cannot render the async StaffLink directly — same instance as the
+              desktop row, so the two cannot show different roles. */}
           <div className="relative z-30 flex justify-start md:hidden">
-            <MenuDrawer />
+            <MenuDrawer
+              staffSlot={
+                <Suspense fallback={null}>
+                  <StaffLink />
+                </Suspense>
+              }
+            />
           </div>
 
           {/* Empty left cell on desktop keeps the wordmark centred now the

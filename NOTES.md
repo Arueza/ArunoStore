@@ -53,12 +53,10 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
   never reads role from FormData; promotion is manual in Supabase (1.16).
 - **Render with `getClaims()`, never `getUser()`.** The first is wrapped in
   React `cache()` and verifies locally; the second hits the Auth server, so it
-  is for Server Actions and Route Handlers only. Exception: `StaffLink.tsx` is a
-  client component (mobile drawer needs it) and reads role via the browser
-  Supabase client — `createBrowserSupabase()` + `getSession()` + `profiles.role`.
-  The proxy gate at `src/proxy.ts` is the real guard; the link is only a
-  convenience. If the proxy's `STAFF_ROUTES` ever widens, widen the link check
-  in the same change.
+  is for Server Actions and Route Handlers only. `StaffLink.tsx` is a server
+  component reading `getProfile()` — the old client version kept its role in
+  mount-once state and stayed visible after logout until a refresh. The proxy
+  gate at `src/proxy.ts` is the real guard; the link is only a convenience.
 - **Next 16 renamed `middleware.ts` to `src/proxy.ts`.** The guard is `SIGNED_IN_ROUTES` plus `STAFF_ROUTES` / `isStaff()`, and fails closed on a missing profile row — fail-open would hand `/staff` to the public. Public prefixes stay open deliberately: `/commissions/request` is in the array, `/commissions` is not.
 - **Signup route is `/auth/sign-up`,** not `/register`. Sign-up errors are
   swallowed in three places (`login/actions.ts`, `auth/sign-up/actions.ts`,
@@ -83,14 +81,8 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
 - **Vitest cannot render a `'use cache'` component.** `renderToStaticMarkup`,
   `renderToString` and `renderToPipeableStream` all fail — 2.5's only proof is
   that build and lint pass.
-- **`0004_services.sql` has no write policy on purpose:** 5.6 adds staff CRUD.
-  Until then `services` is seeded by hand, so the populated service dropdown
-  at 2.6 has never rendered in a browser, and the insert against `0005`'s
-  policy is unproven end to end — `actions.test.ts` asserts the row the action
-  builds, not that RLS accepted it. 3.4 is in the same place: the titipan insert
-  has never met a real database, and `titipan_requests` cannot be updated by
-  anyone until `0022` is pasted into the SQL editor, which nothing here records.
-- **A query string value will appear in the HTML, and that is not your code rendering it.** Next echoes the whole URL into the RSC flight payload (`self.__next_f.push`), JSON-escaped, on any page that reads `searchParams`. So `?next=//evil.example` shows up in the source of a page that never renders it — check *where* before treating it as a hole.
+- **Form-path RLS inserts were unproven end to end at 2.6/3.4** — `actions.test.ts` asserts the row built, not that RLS accepted it; 3.7's `0022` paste and 5.6's staff CRUD closed those gaps. 6.2 signs off the rest.
+- **A query string value will appear in the HTML, and that is not your code rendering it.** Next echoes the whole URL into the RSC flight payload (`self.__next_f.push`), JSON-escaped, on any page reading `searchParams` — check *where* before treating it as a hole.
 - **A glob or grep will not find `[id]`.** Brackets are a character class, so `src/**/*.{ts,tsx}` matches a file named `i` or `d` and silently skips every dynamic route. `git status` is what shows them; trust the diff, not the search.
 - **Nothing signed in has been seen against real rows.** 2.8–2.11 shipped as one
   commit (`c34914b`), proved only signed-out (queue, quote box and buyer list
@@ -112,15 +104,14 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
   bucket is private (0021); the server generates a signed URL after the RLS-gated
   commission read confirms the buyer owns the row. `next/image` would cache past
   expiry, so both pages use `<img>` with an eslint-disable.
-- **Display webp, keep originals.** Gallery and shop render through `next/image`,
-  which serves webp/avif per browser; delivery `<img>` stays plain until an
-  optimized derivative exists. Never resize the stored original — a full-size view
-  or download reads the original path, so a downscaled display copy must not
-  replace it.
+- **Display webp, keep originals.** Gallery and shop render through `next/image`
+  (webp/avif per browser); delivery `<img>` stays plain until an optimized
+  derivative exists. Never resize the stored original — full-size view or
+  download reads it.
 - **`formatDate()` in `src/lib/format.ts` is pinned to UTC by the `timeZone`
-  option, and a test caught it missing.** Without it `2026-10-09T23:30:00Z`
-  renders as the 10th here and the 9th on any UTC server. Switch to
-  `Asia/Jakarta` if staff and a buyer ever disagree about which day.
+  option, and a test caught it missing.** Without it a late-night UTC date
+  renders a day apart here vs the server. Switch to `Asia/Jakarta` if staff and
+  a buyer ever disagree about which day.
 - **The `.eq("buyer_id", claims.sub)` on `/commissions/mine` and `/titipan/mine` deliberately duplicates 0005's and 0006's policies.** If either policy were dropped or misspelled, RLS alone would hand one buyer every request in the table and nothing would look wrong; with it the worst case is an empty list.
 - **Both staff queues join in JavaScript, not in a PostgREST embed** — `commissions.buyer_id` and `titipan_requests.buyer_id` both reference `auth.users`, not `profiles`, so there is no FK to follow. Save feedback is the query string (`?saved=1` / `?error=…`) set by the server redirect: no client component that could disagree.
 - **2.6 and 3.3 both refuse anything but http/https, through one function.**
@@ -140,8 +131,8 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
   columns `used_slots` / `max_slots`, which do not exist, and sets
   `status='closed'`, which is not in `request_status`; the AFTER UPDATE trigger
   rolls the whole thing back. Blocked on the overlap decision.
-- **Commission orders cannot be inserted.** `notify_commission_order()` looks up `where store_role='art_commission' limit 1` and the column defaults to `'consignment'`; a null address then violates `email_notifications.recipient_email not null` and takes the order insert with it.
-- **Overlap: `commission_orders` / `commission_categories` do the work of `commissions` / `services`.** P1 captured both; choosing one is still undecided. Their money columns are `numeric`, against the whole-rupee rule, and `admins.store_role` still allows the three-role model Phase 1 deleted.
+- **Commission orders cannot be inserted.** `notify_commission_order()` looks up `store_role='art_commission'` but the column defaults to `'consignment'`; the null address then violates `recipient_email not null` and takes the insert with it.
+- **`overlap: commission_orders` / `commission_categories` duplicate `commissions` / `services`.** P1 captured both; choosing one is undecided. Their money columns are `numeric`, against the whole-rupee rule.
 - **`consignment_items.stock` can go negative** — no `check (stock >= 0)`, and
   `handle_consignment_order_confirmed()` decrements it.
 - **A confirmed consignment item never returns to `'tersedia'`.**
