@@ -105,9 +105,9 @@ Do this after both halves can reach "buyer accepts a quote".
 - [x] **4.3** Migration `0033_payments.sql`: order, amount, snap token, Midtrans ids *(`b74556f`)*
 - [x] **4.4** Migration `0034_payment_statuses.sql`: pending, settlement, deny, expire *(`b74556f`)*
 - [x] **4.5** Server code that creates a Snap transaction for an accepted quote *(`b74556f`)*
-- [x] **4.6** Shared `/checkout` page that shows the amount and opens Snap
-- [x] **4.7** Webhook that verifies `signature_key` and marks the payment settled
-- [x] **4.8** Marking settled also moves the order forward to `paid`
+- [x] **4.6** Shared `/checkout` page that shows the amount and opens Snap *(`2afd899`)*
+- [x] **4.7** Webhook that verifies `signature_key` and marks the payment settled *(`2afd899`)*
+- [x] **4.8** Marking settled also moves the order forward to `paid` *(`2afd899`)*
 - [ ] **4.9** Pay once in Sandbox with a fake card, confirm it works end to end
 - [ ] **4.10** A `deny` or `expire` path that does not advance the order
 
