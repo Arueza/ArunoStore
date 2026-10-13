@@ -12,7 +12,7 @@ Both halves run the same loop, and differ only at the end:
 A commission ends in a finished drawing. A titipan ends in a tracking number.
 
 Next.js App Router, server-rendered, TypeScript. Supabase for database, login
-and photos. Xendit in test mode for payments. Vercel free tier to host.
+and photos. Midtrans Snap in Sandbox mode for payments. Vercel free tier to host.
 
 ## Every session
 
@@ -62,7 +62,7 @@ sentence. Stop at "committed, ready for you to push". Verrel and Alfreza push.
 Never amend or rebase a shared commit. Pull first if you have write access:
 both humans commit straight to `main`.
 
-Never commit secrets. `.env*` is ignored; Supabase and Xendit keys live only in
+Never commit secrets. `.env*` is ignored; Supabase and Midtrans keys live only in
 `.env.local` and Vercel's settings. A key pushed by accident gets rotated —
 deleting the commit is not enough.
 
@@ -98,7 +98,7 @@ Two services, one site: **Art Commission** (Verrel) and **Proxy Shopping**
 (Alfreza). They share `profiles`, one `buyer` / `staff` role, payments, and one
 navbar. They do not share catalog tables — `services` and `artworks` on one
 side, `consignment_items` on the other. `consignment_*` is a misnomer for proxy
-shopping; the rename to `shop_*` waits for the Phase 4 migration that already
+shopping; the rename to `shop_*` waits for a later migration that already
 opens those tables. Read them as `ShopItem` in TypeScript meanwhile.
 
 ## Commit messages

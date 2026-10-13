@@ -9,7 +9,7 @@ out/
 build/
 dist/
 
-# Environment files. These hold the Supabase and Xendit secret keys.
+# Environment files. These hold the Supabase and Midtrans secret keys.
 # Never commit them. If one is ever committed, it must be rotated.
 .env*
 !.env.example

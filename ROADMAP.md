@@ -95,20 +95,20 @@ Prerequisites: 3.7 needs `0022` pasted, the first update to a row staff do not
 own; it pins the quote columns so 3.9's buyer policy cannot reopen them. 3.9 needs
 its own enum migration for accept/decline; 3.10 needs `purchased|shipped|arrived`.
 
-## Phase 4 — Payments (Xendit test mode)
+## Phase 4 — Payments (Midtrans Snap Sandbox)
 
 Do this after both halves can reach "buyer accepts a quote".
 
-- [ ] **4.1** Create the Xendit account, switch to test mode
-- [ ] **4.2** Put the test secret key in `.env.local` and Vercel
-- [ ] **4.3** Migration `0007_payments.sql`: order, amount, status, Xendit ids
-- [ ] **4.4** Migration `0008_order_statuses.sql`
-- [ ] **4.5** Server code that creates an invoice for an accepted quote
-- [ ] **4.6** Checkout page that shows the amount and opens the payment
-- [ ] **4.7** Webhook that marks the payment paid
-- [ ] **4.8** Marking paid also moves the order forward to `paid`
-- [ ] **4.9** Pay once with a fake card, confirm it works end to end
-- [ ] **4.10** A "payment failed" path that does not advance the order
+- [ ] **4.1** Create the Midtrans account, stay in the Sandbox environment
+- [ ] **4.2** Put the Sandbox Server and Client keys in `.env.local` and Vercel
+- [ ] **4.3** Migration `0032_payments.sql`: order, amount, snap token, Midtrans ids
+- [ ] **4.4** Migration `0033_payment_statuses.sql`: pending, settlement, deny, expire
+- [ ] **4.5** Server code that creates a Snap transaction for an accepted quote
+- [ ] **4.6** Shared `/checkout` page that shows the amount and opens Snap
+- [ ] **4.7** Webhook that verifies `signature_key` and marks the payment settled
+- [ ] **4.8** Marking settled also moves the order forward to `paid`
+- [ ] **4.9** Pay once in Sandbox with a fake card, confirm it works end to end
+- [ ] **4.10** A `deny` or `expire` path that does not advance the order
 
 ## Phase 5 — Nice to have, only if time allows
 
