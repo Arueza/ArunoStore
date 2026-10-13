@@ -100,11 +100,11 @@ its own enum migration for accept/decline; 3.10 needs `purchased|shipped|arrived
 
 Do this after both halves can reach "buyer accepts a quote".
 
-- [ ] **4.1** Create the Midtrans account, stay in the Sandbox environment
-- [ ] **4.2** Put the Sandbox Server and Client keys in `.env.local` and Vercel
-- [ ] **4.3** Migration `0032_payments.sql`: order, amount, snap token, Midtrans ids
-- [ ] **4.4** Migration `0033_payment_statuses.sql`: pending, settlement, deny, expire
-- [ ] **4.5** Server code that creates a Snap transaction for an accepted quote
+- [x] **4.1** Create the Midtrans account, stay in the Sandbox environment — manual, no commit *(manual)*
+- [x] **4.2** Put the Sandbox Server and Client keys in `.env.local` and Vercel *(manual)*
+- [x] **4.3** Migration `0033_payments.sql`: order, amount, snap token, Midtrans ids
+- [x] **4.4** Migration `0034_payment_statuses.sql`: pending, settlement, deny, expire
+- [x] **4.5** Server code that creates a Snap transaction for an accepted quote
 - [ ] **4.6** Shared `/checkout` page that shows the amount and opens Snap
 - [ ] **4.7** Webhook that verifies `signature_key` and marks the payment settled
 - [ ] **4.8** Marking settled also moves the order forward to `paid`

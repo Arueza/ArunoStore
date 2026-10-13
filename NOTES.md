@@ -5,7 +5,7 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
 
 ## Migrations
 
-- **Number with `000N_name.sql`.** `0001`–`0027` are taken (`0009` a deliberate gap, `0016` repairs P1's policies, `0017` artwork storage, `0018` staff update policy, `0019` staff reads profiles, `0020` buyer accepts/declines, `0021` delivery image bucket, `0022` titipan staff quote, `0023` commissions quote trigger, `0024` seed data, `0025` admins→profiles migration, `0026` drop admins table, `0027` corrected reseed, `0028` titipan buyer accept/decline policy, `0029` titipan purchased status, `0030` titipan shipped status + courier grant, `0031` titipan arrived status, `0032` shop-images bucket + non-negative stock check); `0033` next free. Supabase's own files (`20261004133000_…`) share the directory, not the count.
+- **Number with `000N_name.sql`.** `0001`–`0027` are taken (`0009` a deliberate gap, `0016` repairs P1's policies, `0017` artwork storage, `0018` staff update policy, `0019` staff reads profiles, `0020` buyer accepts/declines, `0021` delivery image bucket, `0022` titipan staff quote, `0023` commissions quote trigger, `0024` seed data, `0025` admins→profiles migration, `0026` drop admins table, `0027` corrected reseed, `0028` titipan buyer accept/decline policy, `0029` titipan purchased status, `0030` titipan shipped status + courier grant, `0031` titipan arrived status, `0032` shop-images bucket + non-negative stock check, `0033` payments table, `0034` payment status check constraint); `0035` next free. Supabase's own files (`20261004133000_…`) share the directory, not the count.
 - **Check the number is free before writing one.** `0017` was issued twice (2.4 storage, then 2.8 staff reads, renamed `0019`) and only git noticed: the SQL editor never sees a filename, so a duplicate applies cleanly then disagrees with the repo.
 - **Paste one statement at a time.** `0003` went in as a batch and aborted silently. Verify after: `select policyname, qual from pg_policies where tablename = 'profiles';`
 - **`drop policy if exists "name"` can silently do nothing.** Read names as hex
@@ -57,6 +57,9 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
   component reading `getProfile()` — the old client version kept its role in
   mount-once state and stayed visible after logout until a refresh. The proxy
   gate at `src/proxy.ts` is the real guard; the link is only a convenience.
+- **Service-role client (`src/lib/supabase/service.ts`) bypasses RLS.** Used by
+  server-only handlers (checkout, webhook) that write without a user session.
+  Key lives in `.env.local` and Vercel only.
 - **Next 16 renamed `middleware.ts` to `src/proxy.ts`.** The guard is `SIGNED_IN_ROUTES` plus `STAFF_ROUTES` / `isStaff()`, and fails closed on a missing profile row — fail-open would hand `/staff` to the public. Public prefixes stay open deliberately: `/commissions/request` is in the array, `/commissions` is not.
 - **Signup route is `/auth/sign-up`,** not `/register`. Sign-up errors are
   swallowed in three places (`login/actions.ts`, `auth/sign-up/actions.ts`,
@@ -96,6 +99,9 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
   3.9 and 4.x may add more. Widen in its own migration, one phase at a time.
 - **There is no `total` column.** `quoteTotal()` in `src/lib/quote.ts` is the
   only source (`SERVICE_FEE = 25000`, marked `ponytail:`).
+- **Payment status is text+check, not enum.** Enum values cannot be added
+  inside a transaction block; text+check stays re-runnable. Values mirror
+  Midtrans `transaction_status`.
 - **`statusLabel()` in `src/lib/commissionStatus.ts` is shared** by the staff
   queue, the buyer list, and the staff detail page so the three cannot call one
   state two ways. An unknown value falls through to itself — visible but wrong
