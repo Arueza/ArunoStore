@@ -109,7 +109,7 @@ Do this after both halves can reach "buyer accepts a quote".
 - [x] **4.7** Webhook that verifies `signature_key` and marks the payment settled *(`2afd899`)*
 - [x] **4.8** Marking settled also moves the order forward to `paid` *(`2afd899`)*
 - [x] **4.9** Pay once in Sandbox with a fake card, confirm it works end to end *(`9fe4cd8`)*
-- [x] **4.10** A `deny` or `expire` path that does not advance the order
+- [x] **4.10** A `deny` or `expire` path that does not advance the order *(`cf1c48a`)*
 
 ## Phase 5 — Nice to have, only if time allows
 
