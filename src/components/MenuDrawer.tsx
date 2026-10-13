@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import { NAV_LINKS } from "@/components/navLinks";
+import StaffLink from "@/components/StaffLink";
 import { usePanels } from "@/components/Panels";
 import logo from "@/components/aruno-logo.png";
 
@@ -75,6 +77,11 @@ export default function MenuDrawer() {
               {link.label}
             </Link>
           ))}
+          <div className="px-6 py-3.5">
+            <Suspense fallback={null}>
+              <StaffLink />
+            </Suspense>
+          </div>
         </nav>
       </div>
     </>

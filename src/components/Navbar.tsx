@@ -6,6 +6,7 @@ import AuthSlot from "@/components/AuthSlot";
 import CartDrawer from "@/components/CartDrawer";
 import MenuDrawer from "@/components/MenuDrawer";
 import { NAV_LINKS } from "@/components/navLinks";
+import StaffLink from "@/components/StaffLink";
 import { PanelProvider } from "@/components/Panels";
 import SearchPanel from "@/components/SearchPanel";
 import logo from "@/components/aruno-logo.png";
@@ -83,6 +84,11 @@ export default function Navbar() {
               </Link>
             </li>
           ))}
+          <li className="flex items-center">
+            <Suspense fallback={null}>
+              <StaffLink />
+            </Suspense>
+          </li>
         </ul>
       </nav>
     </header>

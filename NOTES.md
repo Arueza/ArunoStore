@@ -53,7 +53,12 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
   never reads role from FormData; promotion is manual in Supabase (1.16).
 - **Render with `getClaims()`, never `getUser()`.** The first is wrapped in
   React `cache()` and verifies locally; the second hits the Auth server, so it
-  is for Server Actions and Route Handlers only.
+  is for Server Actions and Route Handlers only. Exception: `StaffLink.tsx` is a
+  client component (mobile drawer needs it) and reads role via the browser
+  Supabase client — `createBrowserSupabase()` + `getSession()` + `profiles.role`.
+  The proxy gate at `src/proxy.ts` is the real guard; the link is only a
+  convenience. If the proxy's `STAFF_ROUTES` ever widens, widen the link check
+  in the same change.
 - **Next 16 renamed `middleware.ts` to `src/proxy.ts`.** The guard is `SIGNED_IN_ROUTES` plus `STAFF_ROUTES` / `isStaff()`, and fails closed on a missing profile row — fail-open would hand `/staff` to the public. Public prefixes stay open deliberately: `/commissions/request` is in the array, `/commissions` is not.
 - **Signup route is `/auth/sign-up`,** not `/register`. Sign-up errors are
   swallowed in three places (`login/actions.ts`, `auth/sign-up/actions.ts`,
