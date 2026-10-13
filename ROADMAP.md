@@ -43,7 +43,7 @@ into the route), **1.15 before 1.17** (data flipped before labels changed).
 - [x] **1.16** Sign-up hardcodes `buyer`; no role field, no way to claim staff *(`7dadf4c`)*
 - [x] **1.17** Account page shows two roles, no artist label *(`381ced3`)*
 - [x] **1.18** Create Verrel's login and set the role to `staff` — manual *(manual)*
-- [x] **1.19** Staff link renders server-side, so logging out hides it with no refresh
+- [x] **1.19** Staff link renders server-side, so logging out hides it with no refresh *(`6e0d29b`)*
 
 ## Before Phase 2 — one prerequisite
 
