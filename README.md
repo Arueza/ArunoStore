@@ -20,7 +20,7 @@ buyer asks  ->  staff quotes a price  ->  buyer accepts and pays  ->  staff deli
 | Styling | Tailwind CSS v4 |
 | Database, login, photos | Supabase (Postgres, Auth, Storage) |
 | Hosting | Vercel free tier |
-| Payments | Xendit, test mode |
+| Payments | Midtrans Snap, Sandbox |
 | Language | TypeScript |
 | Tests | Vitest |
 
@@ -96,7 +96,7 @@ roadmap task 0.3 brings over the Aruno look.
 
 ## Environment variables
 
-Supabase and Xendit keys live in `.env.local`, which is gitignored and must
+Supabase and Midtrans keys live in `.env.local`, which is gitignored and must
 never be committed. A `.env.example` listing the variable names lands with
 roadmap task 0.5. Vercel gets the same values from its own environment
 settings, never from a committed file.
