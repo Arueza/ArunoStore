@@ -117,6 +117,8 @@ Do this after both halves can reach "buyer accepts a quote".
 - [ ] **5.3** Buyer leaves a rating after delivery
 - [ ] **5.4** Curated titipan catalogue: staff list popular items, buyer adds to basket directly
 - [x] **5.5** `/shop` catalog page — grid of `consignment_items` with price, thumbnail, condition, category *(`282d434`)*
+- [x] **5.6** Category row below the header on desktop, hamburger stays for mobile *(`1502455`)*
+- [ ] **5.7** Hero slideshow with the three photos behind the shop button
 
 **5.5 was built ahead of 5.4**, using the table that was already live; the page
 renders its empty state until 6.1 seeds rows.
