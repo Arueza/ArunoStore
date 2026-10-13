@@ -133,6 +133,9 @@ export default function StaffPage() {
         <Link href="/staff/artworks" className="font-semibold text-plum hover:underline">
           Galeri karya
         </Link>
+        <Link href="/staff/shop" className="font-semibold text-plum hover:underline">
+          Katalog
+        </Link>
         <Link href="/commissions/request" className="font-semibold text-plum hover:underline">
           Lihat form buyer
         </Link>
