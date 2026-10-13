@@ -10,6 +10,7 @@ vi.mock("@/lib/auth", () => ({
 
 import { renderToStaticMarkup } from "react-dom/server";
 import Navbar from "./Navbar";
+import { NAV_LINKS } from "./navLinks";
 import { PENDING, pageExists } from "./pendingPages";
 
 describe("Navbar", () => {
@@ -39,17 +40,37 @@ describe("Navbar", () => {
     expect(shell).toContain('href="/titipan"');
   });
 
+  // Cottonink split: the drawer serves mobile, the visible row serves desktop.
+  // Both navs render server-side, so both labels are in the shell; the
+  // responsive classes decide which one a visitor sees.
+  test("the hamburger is mobile-only and the category row is desktop-only", () => {
+    const shell = renderToStaticMarkup(<Navbar />);
+
+    expect(shell.match(/Navigasi utama/g)?.length).toBe(2);
+    expect(shell).toContain("justify-start md:hidden");
+    expect(shell).toContain("md:block");
+  });
+
   // Every nav target must either resolve or be declared pending. This is the
   // check task 1.11 added for the footer, now covering the hamburger too — the
   // dashboard chrome had three links that resolved to nothing and nothing
   // watching them.
   test("every nav target has a page or is declared pending", () => {
-    for (const href of ["/shop", "/commissions", "/titipan"]) {
+    for (const link of NAV_LINKS) {
       expect(
-        PENDING.includes(href) || pageExists(href),
-        `${href} has no page`,
+        PENDING.includes(link.href) || pageExists(link.href),
+        `${link.href} has no page`,
       ).toBe(true);
     }
+  });
+
+  // One source for both navs: if a link is added to one and not the other,
+  // the shell carries it an odd number of times and this fails.
+  test("the drawer and the desktop row carry the same links", () => {
+    const shell = renderToStaticMarkup(<Navbar />);
+    const hrefs = shell.match(/href="\/(?:shop|commissions|titipan)"/g) ?? [];
+
+    expect(hrefs.length).toBe(NAV_LINKS.length * 2);
   });
 
   // If the session read ever moves back up into Navbar, this fails. That is the

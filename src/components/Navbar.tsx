@@ -5,6 +5,7 @@ import AnnouncementBar from "@/components/AnnouncementBar";
 import AuthSlot from "@/components/AuthSlot";
 import CartDrawer from "@/components/CartDrawer";
 import MenuDrawer from "@/components/MenuDrawer";
+import { NAV_LINKS } from "@/components/navLinks";
 import { PanelProvider } from "@/components/Panels";
 import SearchPanel from "@/components/SearchPanel";
 import logo from "@/components/aruno-logo.png";
@@ -32,9 +33,14 @@ export default function Navbar() {
             account menu. AuthSlot renders inside it, so the account menu shares
             the same switch. */}
         <PanelProvider>
-          <div className="relative z-30 flex justify-start">
+          {/* Mobile only: desktop gets the visible row below instead. */}
+          <div className="relative z-30 flex justify-start md:hidden">
             <MenuDrawer />
           </div>
+
+          {/* Empty left cell on desktop keeps the wordmark centred now the
+              hamburger is gone there. */}
+          <div aria-hidden="true" className="relative z-30 hidden md:block" />
 
           <Link
             href="/"
@@ -58,6 +64,27 @@ export default function Navbar() {
           </div>
         </PanelProvider>
       </div>
+
+      {/* Cottonink-style category row below the bar, desktop only. Same links
+          as the mobile drawer, one source (navLinks.ts) so the two cannot
+          drift apart. Inside the sticky header so it pins with the bar. */}
+      <nav
+        aria-label="Navigasi utama"
+        className="hidden border-b border-[#eeeae5] bg-cream md:block"
+      >
+        <ul className="mx-auto flex w-full max-w-5xl items-center justify-center gap-10 px-5 py-3 sm:px-[6%]">
+          {NAV_LINKS.map((link) => (
+            <li key={link.href}>
+              <Link
+                href={link.href}
+                className="text-xs font-medium uppercase tracking-[0.18em] transition-colors hover:text-plum"
+              >
+                {link.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
     </header>
   );
 }

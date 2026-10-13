@@ -2,22 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { NAV_LINKS } from "@/components/navLinks";
 import { usePanels } from "@/components/Panels";
 import logo from "@/components/aruno-logo.png";
 
 const ID = "menu";
 
-const LINKS = [
-  { href: "/shop", label: "Belanja" },
-  { href: "/commissions", label: "Commissions" },
-  { href: "/titipan", label: "Titipan" },
-];
-
 /**
- * The hamburger and the panel it opens.
+ * The hamburger and the panel it opens, mobile only.
  *
- * Cottonink keeps its navigation behind the hamburger rather than in a visible
- * row, which is why the header has room for a centred wordmark.
+ * Desktop shows the same links as a visible row below the header (Navbar,
+ * Cottonink-style), so this drawer hides from md up. The link list lives in
+ * navLinks.ts, shared with that row so the two cannot drift apart.
  *
  * Holds no open state of its own: Panels.tsx decides which panel is open, so
  * opening the cart closes this one without either component knowing the other
@@ -69,7 +65,7 @@ export default function MenuDrawer() {
         </div>
 
         <nav aria-label="Navigasi utama" className="py-3">
-          {LINKS.map((link) => (
+          {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
