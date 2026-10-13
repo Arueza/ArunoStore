@@ -1,4 +1,5 @@
 import Link from "next/link";
+import HeroSlideshow from "@/components/HeroSlideshow";
 
 const SERVICES = [
   {
@@ -38,26 +39,27 @@ const [shop, ...quotes] = SERVICES;
  * else. Commission and Titipan are both request-first flows, so they sit side by
  * side under it at equal weight.
  *
- * ponytail: the tiles are flat tinted panels. Real photography goes behind each
- * one via `next/image` once the catalogue has images — the tint is only here so
- * the block is not a wall of unbroken cream.
+ * The hero carries the three photos as a crossfading backdrop (HeroSlideshow,
+ * Cottonink-style). The headline and the button stay light text over a darkened
+ * overlay so they read on any slide.
  */
 export default function Home() {
   return (
     <main>
-      <section className="relative overflow-hidden bg-gradient-to-b from-[#f6d9de]/45 via-cream to-cream px-5 py-24 text-center sm:px-[6%] sm:py-36">
-        <h1 className="font-display text-5xl font-semibold tracking-wide text-ink sm:text-7xl">
+      <section className="relative overflow-hidden bg-ink px-5 py-24 text-center text-white sm:px-[6%] sm:py-36">
+        <HeroSlideshow />
+        <h1 className="relative font-display text-5xl font-semibold tracking-wide sm:text-7xl">
           Aruno Store
         </h1>
-        <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-[#6c6870] sm:text-base">
+        <p className="relative mx-auto mt-5 max-w-xl text-sm leading-relaxed text-white/85 sm:text-base">
           Commission seni dan titipan dari Jepang, dalam satu tempat.
         </p>
-        <p className="mt-2 text-xs uppercase tracking-[0.18em] text-[#b0acb5]">
+        <p className="relative mt-2 text-xs uppercase tracking-[0.18em] text-white/65">
           Harga ditentukan setelah permintaan ditinjau
         </p>
         <Link
           href={shop.href}
-          className="mt-9 inline-block bg-plum px-9 py-3.5 text-xs font-medium uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#8d4e66]"
+          className="relative mt-9 inline-block bg-plum px-9 py-3.5 text-xs font-medium uppercase tracking-[0.18em] text-white transition-colors hover:bg-[#8d4e66]"
         >
           Mulai Belanja
         </Link>
