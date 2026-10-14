@@ -1,10 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useActionState } from "react";
 import { signUp, type SignUpState } from "./actions";
-import logo from "@/components/aruno-logo.png";
 
 const initialState: SignUpState = {
   message: "",
@@ -16,13 +14,6 @@ export default function SignUpPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-cream px-4 py-12">
       <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="mb-8 flex justify-center">
-          <Link href="/">
-            <Image src={logo} alt="Aruno Store" width={146} height={80} priority />
-          </Link>
-        </div>
-
         <h1 className="mb-1 text-center font-display text-2xl font-semibold text-ink">
           Buat Akun
         </h1>

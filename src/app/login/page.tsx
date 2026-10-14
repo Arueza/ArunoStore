@@ -1,8 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
 import { safeNextPath } from "@/lib/nextPath";
-import logo from "@/components/aruno-logo.png";
 import LoginForm from "./LoginForm";
 
 /**
@@ -27,13 +25,6 @@ export default function LoginPage({
   return (
     <main className="flex min-h-screen items-center justify-center bg-cream px-4">
       <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="mb-8 flex justify-center">
-          <Link href="/">
-            <Image src={logo} alt="Aruno Store" width={146} height={80} priority />
-          </Link>
-        </div>
-
         <h1 className="mb-1 text-center font-display text-2xl font-semibold text-ink">
           Masuk
         </h1>
@@ -43,7 +34,7 @@ export default function LoginPage({
 
         {/* Reading searchParams is a request read, so under cacheComponents it
             needs a boundary of its own and must not be awaited in this body.
-            The heading and the logo above stay in the static shell; only the form
+            The heading stays in the static shell; only the form
             streams in. The placeholder reserves the form's height so the page
             does not jump under a typist who is already moving. */}
         <Suspense fallback={<div aria-hidden="true" className="h-72" />}>
