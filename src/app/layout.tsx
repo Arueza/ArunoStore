@@ -26,7 +26,7 @@ export default function RootLayout({
       <body className="flex min-h-dvh flex-col bg-cream text-ink antialiased">
         <Navbar />
         {/* flex-1 keeps the footer at the foot of the page on short pages. */}
-        <div className="flex-1">{children}</div>
+        <div className="flex flex-1 flex-col">{children}</div>
         <Footer />
       </body>
     </html>
