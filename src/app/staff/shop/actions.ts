@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { FASHION_SIZES } from "@/lib/shop";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const WHOLE_RUPIAH = /^\d+$/;
@@ -196,7 +197,28 @@ export async function addItem(formData: FormData): Promise<void> {
     );
   }
 
+  // Insert size variants for Fashion items if provided.
+  const sizesToInsert: { item_id: string; size: string; stock: number }[] = [];
+  for (const s of FASHION_SIZES) {
+    const raw = formData.get(`size_stock_${s}`);
+    if (typeof raw === "string" && raw.trim() !== "") {
+      const stockNum = Number(raw.trim());
+      if (Number.isInteger(stockNum) && stockNum >= 0) {
+        sizesToInsert.push({
+          item_id: item.id,
+          size: s,
+          stock: stockNum,
+        });
+      }
+    }
+  }
+
+  if (sizesToInsert.length > 0) {
+    await supabase.from("product_sizes").insert(sizesToInsert);
+  }
+
   revalidatePath("/shop");
+  revalidatePath(`/shop/${item.id}`);
   revalidatePath("/shop/commission");
   revalidatePath("/shop/titipan");
   redirect("/staff/shop?saved=1");
@@ -319,7 +341,32 @@ export async function updateItem(formData: FormData): Promise<void> {
     redirect(`${path}?error=${encodeURIComponent(error.message)}`);
   }
 
+  // Upsert or remove size variants for Fashion items.
+  for (const s of FASHION_SIZES) {
+    const raw = formData.get(`size_stock_${s}`);
+    if (typeof raw === "string" && raw.trim() !== "") {
+      const stockNum = Number(raw.trim());
+      if (Number.isInteger(stockNum) && stockNum >= 0) {
+        await supabase.from("product_sizes").upsert(
+          {
+            item_id: id,
+            size: s,
+            stock: stockNum,
+          },
+          { onConflict: "item_id,size" },
+        );
+      }
+    } else if (typeof raw === "string" && raw.trim() === "") {
+      await supabase
+        .from("product_sizes")
+        .delete()
+        .eq("item_id", id)
+        .eq("size", s);
+    }
+  }
+
   revalidatePath("/shop");
+  revalidatePath(`/shop/${id}`);
   revalidatePath("/shop/commission");
   revalidatePath("/shop/titipan");
   redirect(`${path}?saved=1`);
@@ -394,6 +441,7 @@ export async function deleteItem(formData: FormData): Promise<void> {
   }
 
   revalidatePath("/shop");
+  revalidatePath(`/shop/${id}`);
   revalidatePath("/shop/commission");
   revalidatePath("/shop/titipan");
   redirect("/staff/shop?saved=1");

@@ -2,14 +2,15 @@ import { describe, expect, test } from "vitest";
 import { safeNextPath } from "@/lib/nextPath";
 
 describe("safeNextPath", () => {
-  // The whole feature. These are the two routes the proxy sends a signed-out
+  // The whole feature. These are the routes the proxy sends a signed-out
   // visitor away from, and they are the only destinations that come back.
-  test.each(["/titipan/request", "/titipan/mine"])(
-    "keeps the titipan route %s",
-    (path) => {
-      expect(safeNextPath(path)).toBe(path);
-    },
-  );
+  test.each([
+    "/titipan/request",
+    "/titipan/mine",
+    "/shop/550e8400-e29b-41d4-a716-446655440000",
+  ])("keeps the allowed route %s", (path) => {
+    expect(safeNextPath(path)).toBe(path);
+  });
 
   // The attack this function exists to stop: a link that looks in-app in the
   // address bar and lands on somebody else's site after signing in.

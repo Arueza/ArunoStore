@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { createPublicClient } from "@/lib/supabase/public";
 import { formatRupiah } from "@/lib/format";
 import { pickThumb, type Showcase } from "@/lib/shop";
@@ -55,7 +56,7 @@ export default async function ShopGrid({ showcase }: { showcase?: Showcase }) {
         const thumb = pickThumb(item.consignment_images);
 
         return (
-          <div key={item.id}>
+          <Link key={item.id} href={`/shop/${item.id}`} className="group">
             <div className="relative aspect-[4/3] overflow-hidden border border-[#eeeae5] bg-cream">
               {thumb ? (
                 <Image
@@ -73,7 +74,9 @@ export default async function ShopGrid({ showcase }: { showcase?: Showcase }) {
             </div>
 
             <div className="mt-2 flex items-start justify-between gap-2">
-              <p className="text-sm font-medium text-ink">{item.name}</p>
+              <p className="text-sm font-medium text-ink group-hover:text-plum">
+                {item.name}
+              </p>
               {item.condition === "bekas" && (
                 <span className="shrink-0 text-[10px] uppercase tracking-wider text-[#b0acb5]">
                   Bekas
@@ -90,7 +93,7 @@ export default async function ShopGrid({ showcase }: { showcase?: Showcase }) {
                 {item.consignment_categories[0].name}
               </p>
             )}
-          </div>
+          </Link>
         );
       })}
     </div>

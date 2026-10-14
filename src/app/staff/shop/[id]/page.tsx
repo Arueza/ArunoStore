@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatRupiah } from "@/lib/format";
 import { addImages, deleteImage, deleteItem, setThumbnail, updateItem } from "../actions";
+import { FASHION_SIZES } from "@/lib/shop";
 
 export const metadata: Metadata = {
   title: "Produk — Ruang Staf",
@@ -28,6 +29,7 @@ type Product = {
     image_url: string;
     is_thumbnail: boolean | null;
   }[];
+  product_sizes: { size: string; stock: number }[];
 };
 
 const SHOWCASE_LABEL: Record<string, string> = {
@@ -51,7 +53,7 @@ async function ProductDetail({ id }: { id: string }) {
   const { data: product } = await supabase
     .from("consignment_items")
     .select(
-      "id, name, description, price, stock, condition, status, showcase, category_id, consignment_categories(id, name), consignment_images(id, image_url, is_thumbnail)",
+      "id, name, description, price, stock, condition, status, showcase, category_id, consignment_categories(id, name), consignment_images(id, image_url, is_thumbnail), product_sizes(size, stock)",
     )
     .eq("id", id)
     .maybeSingle<Product>();
@@ -125,6 +127,17 @@ async function ProductDetail({ id }: { id: string }) {
             {product.consignment_categories?.name ?? "Tanpa kategori"}
           </dd>
         </div>
+
+        {product.product_sizes && product.product_sizes.length > 0 && (
+          <div className="flex flex-wrap items-baseline gap-x-4 py-4">
+            <dt className="w-36 shrink-0 text-sm text-[#6c6870]">Ukuran</dt>
+            <dd className="text-sm text-ink">
+              {product.product_sizes
+                .map((s) => `${s.size} (${s.stock})`)
+                .join(", ")}
+            </dd>
+          </div>
+        )}
 
         <div className="flex flex-wrap items-baseline gap-x-4 py-4">
           <dt className="w-36 shrink-0 text-sm text-[#6c6870]">Deskripsi</dt>
@@ -315,6 +328,35 @@ async function ProductDetail({ id }: { id: string }) {
               ))}
             </select>
           </label>
+        </div>
+
+        <div className="mt-4 border-t border-[#eeeae5] pt-4">
+          <p className="text-xs uppercase tracking-[0.14em] text-[#6c6870]">
+            Stok per Ukuran (Khusus Kategori Fashion)
+          </p>
+          <p className="mt-1 text-xs text-[#b0acb5]">
+            Kosongkan jika produk bukan pakaian.
+          </p>
+          <div className="mt-3 grid grid-cols-5 gap-2">
+            {FASHION_SIZES.map((size) => {
+              const current = product.product_sizes?.find(
+                (s) => s.size === size,
+              );
+              return (
+                <label key={size} className="text-center text-xs text-[#6c6870]">
+                  <span className="font-semibold">{size}</span>
+                  <input
+                    type="number"
+                    name={`size_stock_${size}`}
+                    min="0"
+                    defaultValue={current ? current.stock : ""}
+                    placeholder="0"
+                    className="mt-1 w-full border border-[#e2ddd7] bg-white px-2 py-1.5 text-center text-sm text-ink focus:border-plum focus:outline-none"
+                  />
+                </label>
+              );
+            })}
+          </div>
         </div>
 
         <label className="mt-4 block text-xs uppercase tracking-[0.14em] text-[#6c6870]">

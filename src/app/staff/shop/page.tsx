@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatRupiah } from "@/lib/format";
 import { addItem } from "./actions";
 import CategorySelect from "@/components/CategorySelect";
+import { FASHION_SIZES } from "@/lib/shop";
 
 export const metadata: Metadata = {
   title: "Katalog — Ruang Staf",
@@ -209,6 +210,29 @@ export default function StaffShopPage() {
                 className="mt-1 w-full border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink placeholder:text-[#b0acb5] focus:border-plum focus:outline-none"
               />
             </label>
+          </div>
+
+          <div className="border-t border-[#eeeae5] pt-4">
+            <p className="text-xs uppercase tracking-[0.14em] text-[#6c6870]">
+              Stok per Ukuran (Khusus Kategori Fashion)
+            </p>
+            <p className="mt-1 text-xs text-[#b0acb5]">
+              Kosongkan jika produk bukan pakaian.
+            </p>
+            <div className="mt-3 grid grid-cols-5 gap-2">
+              {FASHION_SIZES.map((size) => (
+                <label key={size} className="text-center text-xs text-[#6c6870]">
+                  <span className="font-semibold">{size}</span>
+                  <input
+                    type="number"
+                    name={`size_stock_${size}`}
+                    min="0"
+                    placeholder="0"
+                    className="mt-1 w-full border border-[#e2ddd7] bg-white px-2 py-1.5 text-center text-sm text-ink focus:border-plum focus:outline-none"
+                  />
+                </label>
+              ))}
+            </div>
           </div>
 
           <label className="block text-xs uppercase tracking-[0.14em] text-[#6c6870]">

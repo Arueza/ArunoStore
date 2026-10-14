@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import AnnouncementBar from "@/components/AnnouncementBar";
 import AuthSlot from "@/components/AuthSlot";
 import CartDrawer from "@/components/CartDrawer";
+import CartItems from "@/components/CartItems";
 import MenuDrawer from "@/components/MenuDrawer";
 import { NAV_LINKS } from "@/components/navLinks";
 import StaffLink from "@/components/StaffLink";
@@ -67,7 +68,11 @@ export default function Navbar() {
 
           <div className="relative z-30 flex items-center justify-end gap-1 sm:gap-2">
             <SearchPanel />
-            <CartDrawer />
+            <CartDrawer>
+              <Suspense fallback={null}>
+                <CartItems />
+              </Suspense>
+            </CartDrawer>
             <Suspense fallback={<AccountFallback />}>
               <AuthSlot />
             </Suspense>

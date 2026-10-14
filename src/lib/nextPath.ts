@@ -6,7 +6,7 @@
  * one of them ends up stricter than the other, and a value the page accepts but
  * the action refuses is a form that silently drops where the buyer was going.
  *
- * Three refusals, in order of how much damage they would do:
+ * Four refusals, in order of how much damage they would do:
  *
  *   not a string        — it arrives from a query string into a FormData, and
  *                         neither is guaranteed to have held a string.
@@ -16,7 +16,7 @@
  *                         with it: some browsers normalise "\" to "/", so
  *                         "\\evil.example" would slip past a check that only
  *                         looks at the first character.
- *   not a titipan route — deliberately narrow. A crafted link must not be able
+ *   not a known route  — deliberately narrow. A crafted link must not be able
  *                         to walk a buyer into /staff or anywhere else after a
  *                         login, so only the routes this feature was built for
  *                         are honoured. Widening it means adding the route here
@@ -37,7 +37,14 @@ export function safeNextPath(value: unknown): string | null {
 
   // "/titipan" exactly is the public explanation page and needs no return trip;
   // "/titipan/..." is the guarded pair this exists for.
-  if (!/^\/titipan\/[A-Za-z0-9/_-]*$/.test(value)) return null;
+  // "/shop/<uuid>" is where Add to Cart sends a signed-out buyer.
+  const UUID = "[0-9a-fA-F-]{36}";
+  if (
+    !/^\/titipan\/[A-Za-z0-9/_-]*$/.test(value) &&
+    !new RegExp(`^\\/shop\\/${UUID}$`).test(value)
+  ) {
+    return null;
+  }
 
   return value;
 }

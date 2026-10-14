@@ -1,8 +1,38 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { usePanels } from "@/components/Panels";
 
 const ID = "cart";
+
+function readCartCount(): number {
+  if (typeof document === "undefined") return 0;
+  const match = document.cookie.match(/(?:^|;\s*)aruno_cart=([^;]*)/);
+  if (!match) return 0;
+  try {
+    const items = JSON.parse(decodeURIComponent(match[1]));
+    if (!Array.isArray(items)) return 0;
+    return items.reduce(
+      (sum: number, item: { qty?: number }) => sum + (item.qty ?? 0),
+      0,
+    );
+  } catch {
+    return 0;
+  }
+}
+
+function subscribe(callback: () => void) {
+  window.addEventListener("focus", callback);
+  return () => window.removeEventListener("focus", callback);
+}
+
+function getSnapshot() {
+  return readCartCount();
+}
+
+function getServerSnapshot() {
+  return 0;
+}
 
 /**
  * The shopping bag and the cart panel it opens.
@@ -11,14 +41,18 @@ const ID = "cart";
  * which is what this does. The panel carries its own open state for the reason
  * MenuDrawer does.
  *
- * ponytail: the cart is decorative until the quote flow in Phase 4 decides what
- * actually goes in it. A commission and a titipan are both quoted by staff
- * before anything is payable, so there is nothing to add to a basket yet — the
- * buyer accepts a quote instead. Delete this file if Phase 4 lands on that.
+ * CartItems (a server component) reads the cookie cart and renders the lines,
+ * subtotal, and Bayar button. revalidatePath in the cart actions keeps it
+ * fresh after every mutation.
  */
-export default function CartDrawer() {
+export default function CartDrawer({
+  children,
+}: {
+  children?: React.ReactNode;
+}) {
   const { open, toggle, close } = usePanels();
   const isOpen = open === ID;
+  const count = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   return (
     <>
@@ -27,9 +61,14 @@ export default function CartDrawer() {
         aria-label="Keranjang"
         aria-expanded={isOpen}
         onClick={() => toggle(ID)}
-        className="p-2 transition-colors hover:text-plum"
+        className="relative p-2 transition-colors hover:text-plum"
       >
         <BagIcon />
+        {count > 0 && (
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-plum px-1 text-[10px] font-semibold text-white">
+            {count > 99 ? "99+" : count}
+          </span>
+        )}
       </button>
 
       {isOpen && (
@@ -52,22 +91,7 @@ export default function CartDrawer() {
               </button>
             </div>
 
-            <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-              <BagIcon className="text-[#b0acb5]" />
-              <p className="text-sm text-[#6c6870]">
-                Keranjang kamu masih kosong.
-              </p>
-            </div>
-
-            <div className="border-t border-[#eeeae5] px-6 py-5">
-              <button
-                type="button"
-                disabled
-                className="w-full cursor-not-allowed rounded bg-plum px-4 py-2.5 text-sm font-semibold text-white opacity-40"
-              >
-                Bayar
-              </button>
-            </div>
+            {children}
           </div>
         </>
       )}

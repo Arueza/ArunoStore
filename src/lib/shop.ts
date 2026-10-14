@@ -25,3 +25,6 @@ export const SHOWCASE_LABEL: Record<Showcase, string> = {
   titipan: "Titipan",
   keduanya: "Keduanya",
 };
+
+export const FASHION_SIZES = ["S", "M", "L", "XL", "XXL"] as const;
+export type FashionSize = (typeof FASHION_SIZES)[number];

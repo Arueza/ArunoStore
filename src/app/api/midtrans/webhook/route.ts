@@ -57,7 +57,7 @@ export async function POST(request: Request) {
   // Find the payment row.
   const { data: payment, error: readError } = await serviceClient
     .from("payments")
-    .select("id, amount, status, commission_id, titipan_request_id")
+    .select("id, amount, status, commission_id, titipan_request_id, shop_order_id")
     .eq("order_id", order_id)
     .maybeSingle();
 
@@ -132,6 +132,32 @@ export async function POST(request: Request) {
         .update({ status: "paid" })
         .eq("id", payment.titipan_request_id)
         .eq("status", "accepted");
+    } else if (payment.shop_order_id) {
+      await serviceClient
+        .from("shop_orders")
+        .update({ status: "settled" })
+        .eq("id", payment.shop_order_id)
+        .eq("status", "pending");
+    }
+  } else if (
+    paymentStatus === "deny" ||
+    paymentStatus === "expire" ||
+    paymentStatus === "cancel"
+  ) {
+    // Deny/expire/cancel only touch shop_orders — commissions and titipan
+    // have no matching terminal state here and stay as they are.
+    if (payment.shop_order_id) {
+      const orderStatus =
+        paymentStatus === "deny"
+          ? "deny"
+          : paymentStatus === "expire"
+            ? "expire"
+            : "expire";
+      await serviceClient
+        .from("shop_orders")
+        .update({ status: orderStatus })
+        .eq("id", payment.shop_order_id)
+        .eq("status", "pending");
     }
   }
 

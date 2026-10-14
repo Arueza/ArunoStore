@@ -54,7 +54,7 @@ function setupPayment(payment: Record<string, unknown>) {
   mocks.paymentData = payment;
   mocks.from.mockImplementation((table: string) => ({
     select: () => ({ eq: () => ({ maybeSingle: mocks.maybeSingle }) }),
-    update: mocks.update.mockImplementation((_values: unknown) => ({
+    update: mocks.update.mockImplementation(() => ({
       eq: () => ({ eq: () => Promise.resolve({ error: mocks.updateError }) }),
     })),
     _table: table,

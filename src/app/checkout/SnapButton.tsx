@@ -21,7 +21,15 @@ declare global {
 
 const SNAP_SCRIPT_ID = "midtrans-snap-script";
 
-export function SnapButton({ type, id }: { type: string; id: string }) {
+export function SnapButton({
+  type,
+  id,
+  redirectPath,
+}: {
+  type: string;
+  id: string;
+  redirectPath?: string;
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,12 +84,14 @@ export function SnapButton({ type, id }: { type: string; id: string }) {
         return;
       }
 
+      const successPath = redirectPath ?? "/commissions/mine?saved=1";
+
       window.snap.pay(data.snap_token, {
         onSuccess: () => {
-          router.push("/commissions/mine?saved=1");
+          router.push(successPath);
         },
         onPending: () => {
-          router.push("/commissions/mine?saved=1");
+          router.push(successPath);
         },
         onError: () => {
           setError("Pembayaran gagal. Coba lagi.");
