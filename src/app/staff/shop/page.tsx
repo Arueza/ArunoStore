@@ -133,7 +133,7 @@ export default function StaffShopPage() {
           Tambah produk baru
         </h2>
 
-        <form action={addItem} className="mt-4 space-y-4" encType="multipart/form-data">
+        <form action={addItem} className="mt-4 space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="text-xs uppercase tracking-[0.14em] text-[#6c6870]">
               Nama produk

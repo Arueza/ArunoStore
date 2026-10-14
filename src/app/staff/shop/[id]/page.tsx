@@ -196,7 +196,6 @@ async function ProductDetail({ id }: { id: string }) {
         <form
           action={addImages}
           className="mt-5 flex flex-wrap items-end gap-3 border-t border-[#eeeae5] pt-5"
-          encType="multipart/form-data"
         >
           <input type="hidden" name="id" value={product.id} />
 

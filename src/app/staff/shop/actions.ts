@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -195,6 +196,9 @@ export async function addItem(formData: FormData): Promise<void> {
     );
   }
 
+  revalidatePath("/shop");
+  revalidatePath("/shop/commission");
+  revalidatePath("/shop/titipan");
   redirect("/staff/shop?saved=1");
 }
 
@@ -315,6 +319,9 @@ export async function updateItem(formData: FormData): Promise<void> {
     redirect(`${path}?error=${encodeURIComponent(error.message)}`);
   }
 
+  revalidatePath("/shop");
+  revalidatePath("/shop/commission");
+  revalidatePath("/shop/titipan");
   redirect(`${path}?saved=1`);
 }
 
@@ -386,6 +393,9 @@ export async function deleteItem(formData: FormData): Promise<void> {
     }
   }
 
+  revalidatePath("/shop");
+  revalidatePath("/shop/commission");
+  revalidatePath("/shop/titipan");
   redirect("/staff/shop?saved=1");
 }
 
