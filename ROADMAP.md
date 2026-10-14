@@ -111,6 +111,7 @@ Do this after both halves can reach "buyer accepts a quote".
 - [x] **4.9** Pay once in Sandbox with a fake card, confirm it works end to end *(`9fe4cd8`)*
 - [x] **4.10** A `deny` or `expire` path that does not advance the order *(`cf1c48a`)*
 - [x] **4.11** Sandbox pay flips the order to `paid`: plain-SHA512 signature, lowercase fraud, `0039` service-role trigger *(`347ed52`)*
+- [ ] **4.12** Point Midtrans Notification URL at the Vercel webhook and live-retest one Sandbox pay end to end
 
 ## Phase 5 — Nice to have, only if time allows
 
