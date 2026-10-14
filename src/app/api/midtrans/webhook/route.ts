@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { createServiceClient } from "@/lib/supabase/service";
 
 /**
@@ -40,9 +40,10 @@ export async function POST(request: Request) {
     );
   }
 
-  // Verify signature: SHA512(order_id + status_code + gross_amount + serverKey)
-  const expected = createHmac("sha512", serverKey)
-    .update(`${order_id}${status_code}${gross_amount}`)
+  // Verify signature: SHA512(order_id + status_code + gross_amount + serverKey).
+  // Plain hash, not HMAC — Midtrans appends the key to the message.
+  const expected = createHash("sha512")
+    .update(`${order_id}${status_code}${gross_amount}${serverKey}`)
     .digest("hex");
 
   const sigBuf = Buffer.from(signature_key, "utf8");
@@ -67,11 +68,14 @@ export async function POST(request: Request) {
 
   // Map Midtrans transaction_status to our payment status.
   const txnStatus = body.transaction_status;
-  const fraud = body.fraud_status;
+  // Midtrans sends fraud_status lowercase ("accept"), and only for credit
+  // cards — bank transfer, QRIS and e-wallets omit it.
+  const fraud = (body.fraud_status ?? "").toLowerCase();
+  const isCard = (body.payment_type ?? "").toLowerCase() === "credit_card";
 
   let paymentStatus: string;
   if (txnStatus === "settlement" || txnStatus === "capture") {
-    if (status_code !== "200" || fraud !== "ACCEPT") {
+    if (status_code !== "200" || (isCard && fraud !== "accept")) {
       return NextResponse.json(
         { error: "Fraud check failed." },
         { status: 400 },
@@ -118,20 +122,33 @@ export async function POST(request: Request) {
     );
   }
 
-  // If settled, advance the order to paid (4.8).
+  // If settled, advance the order to paid (4.8). Errors are reported rather
+  // than swallowed: a reverted trigger or a lost write must surface as a 500.
   if (paymentStatus === "settlement" || paymentStatus === "capture") {
     if (payment.commission_id) {
-      await serviceClient
+      const { error: orderError } = await serviceClient
         .from("commissions")
         .update({ status: "paid" })
         .eq("id", payment.commission_id)
         .eq("status", "accepted");
+      if (orderError) {
+        return NextResponse.json(
+          { error: `Order update failed: ${orderError.message}` },
+          { status: 500 },
+        );
+      }
     } else if (payment.titipan_request_id) {
-      await serviceClient
+      const { error: orderError } = await serviceClient
         .from("titipan_requests")
         .update({ status: "paid" })
         .eq("id", payment.titipan_request_id)
         .eq("status", "accepted");
+      if (orderError) {
+        return NextResponse.json(
+          { error: `Order update failed: ${orderError.message}` },
+          { status: 500 },
+        );
+      }
     } else if (payment.shop_order_id) {
       await serviceClient
         .from("shop_orders")

@@ -155,9 +155,9 @@ async function RequestDetail({ params }: { params: Promise<{ id: string }> }) {
           quoteNote={commission.quote_note}
         />
 
-        {/* The delivery upload appears once the buyer has accepted the quote.
-            The drawing starts after the price is agreed, not before. */}
-        {commission.status === "accepted" && (
+        {/* The delivery upload appears once the buyer has accepted the quote
+            (or paid it). The drawing starts after the price is agreed. */}
+        {(commission.status === "accepted" || commission.status === "paid") && (
           <DeliveryUpload
             commissionId={commission.id}
             existingPath={commission.delivery_image}

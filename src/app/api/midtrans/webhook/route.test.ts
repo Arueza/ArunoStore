@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -27,7 +27,7 @@ function makeBody(overrides: Record<string, unknown> = {}) {
     gross_amount: "125000",
     signature_key: "valid",
     transaction_status: "pending",
-    fraud_status: "ACCEPT",
+    fraud_status: "accept",
     payment_type: "credit_card",
     transaction_id: "txn-123",
     ...overrides,
@@ -42,10 +42,10 @@ function makeRequest(body: unknown) {
   });
 }
 
-/** Computes the valid signature for a given body. */
+/** Computes the valid signature for a given body (Midtrans style: plain SHA512). */
 function sign(body: Record<string, unknown>): string {
-  return createHmac("sha512", SERVER_KEY)
-    .update(`${body.order_id}${body.status_code}${body.gross_amount}`)
+  return createHash("sha512")
+    .update(`${body.order_id}${body.status_code}${body.gross_amount}${SERVER_KEY}`)
     .digest("hex");
 }
 
@@ -140,6 +140,72 @@ describe("webhook", () => {
     });
 
     const body = makeBody({ transaction_status: "settlement" });
+    body.signature_key = sign(body);
+
+    const res = await POST(makeRequest(body));
+
+    expect(res.status).toBe(200);
+    expect(mocks.from).toHaveBeenCalledWith("titipan_requests");
+  });
+
+  test("capture with lowercase accept advances order to paid", async () => {
+    setupPayment({
+      id: "pay-1",
+      amount: 15000,
+      status: "pending",
+      commission_id: "comm-1",
+      titipan_request_id: null,
+    });
+
+    const body = makeBody({
+      transaction_status: "capture",
+      fraud_status: "accept",
+      payment_type: "credit_card",
+      gross_amount: "15000.00",
+    });
+    body.signature_key = sign(body);
+
+    const res = await POST(makeRequest(body));
+
+    expect(res.status).toBe(200);
+    expect(mocks.from).toHaveBeenCalledWith("commissions");
+  });
+
+  test("capture with challenge fraud is rejected", async () => {
+    setupPayment({
+      id: "pay-1",
+      amount: 15000,
+      status: "pending",
+      commission_id: "comm-1",
+      titipan_request_id: null,
+    });
+
+    const body = makeBody({
+      transaction_status: "capture",
+      fraud_status: "challenge",
+    });
+    body.signature_key = sign(body);
+
+    const res = await POST(makeRequest(body));
+
+    expect(res.status).toBe(400);
+    expect(mocks.from).not.toHaveBeenCalledWith("commissions");
+  });
+
+  test("settlement without fraud_status advances non-card order", async () => {
+    setupPayment({
+      id: "pay-1",
+      amount: 125000,
+      status: "pending",
+      commission_id: null,
+      titipan_request_id: "req-1",
+    });
+
+    const body = makeBody({
+      transaction_status: "settlement",
+      payment_type: "bank_transfer",
+    });
+    delete (body as Record<string, unknown>).fraud_status;
     body.signature_key = sign(body);
 
     const res = await POST(makeRequest(body));

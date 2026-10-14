@@ -146,7 +146,7 @@ async function RequestDetail({ params }: { params: Promise<{ id: string }> }) {
           </div>
         </dl>
 
-        {request.status === "accepted" && (
+        {(request.status === "accepted" || request.status === "paid") && (
           <div className="mt-6 border-t border-[#eeeae5] pt-6">
             <form action={markAsPurchased}>
               <input type="hidden" name="id" value={request.id} />

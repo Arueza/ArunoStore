@@ -12,8 +12,8 @@ import { saveDeliveryImage } from "./actions";
  * insert, 0021's storage policy), then calls the saveDeliveryImage server
  * action to write the storage path on the commission row.
  *
- * Only shown when the commission status is 'accepted' — the drawing starts
- * after the buyer agrees to the price.
+ * Only shown when the commission status is 'accepted' or 'paid' — the drawing
+ * starts after the buyer agrees to the price.
  *
  * ponytail: no image resizing or processing. The image is stored as-is.
  * Add sharp or similar if upload sizes become a problem.

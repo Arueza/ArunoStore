@@ -269,7 +269,7 @@ export async function markAsPurchased(formData: FormData): Promise<void> {
     redirect(`${path}?error=Permintaan tidak ditemukan.`);
   }
 
-  if (request.status !== "accepted") {
+  if (request.status !== "accepted" && request.status !== "paid") {
     redirect(
       `${path}?error=Permintaan ini belum diterima buyer atau sudah diproses.`,
     );
