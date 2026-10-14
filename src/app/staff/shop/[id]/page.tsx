@@ -20,6 +20,7 @@ type Product = {
   stock: number;
   condition: "baru" | "bekas";
   status: "tersedia" | "terjual" | "ditarik";
+  showcase: string;
   category_id: string | null;
   consignment_categories: { id: string; name: string } | null;
   consignment_images: {
@@ -27,6 +28,12 @@ type Product = {
     image_url: string;
     is_thumbnail: boolean | null;
   }[];
+};
+
+const SHOWCASE_LABEL: Record<string, string> = {
+  commission: "Commission",
+  titipan: "Titipan",
+  keduanya: "Keduanya",
 };
 
 type Category = {
@@ -44,7 +51,7 @@ async function ProductDetail({ id }: { id: string }) {
   const { data: product } = await supabase
     .from("consignment_items")
     .select(
-      "id, name, description, price, stock, condition, status, category_id, consignment_categories(id, name), consignment_images(id, image_url, is_thumbnail)",
+      "id, name, description, price, stock, condition, status, showcase, category_id, consignment_categories(id, name), consignment_images(id, image_url, is_thumbnail)",
     )
     .eq("id", id)
     .maybeSingle<Product>();
@@ -103,6 +110,13 @@ async function ProductDetail({ id }: { id: string }) {
         <div className="flex flex-wrap items-baseline gap-x-4 py-4">
           <dt className="w-36 shrink-0 text-sm text-[#6c6870]">Status</dt>
           <dd className="text-sm text-ink">{statusLabel}</dd>
+        </div>
+
+        <div className="flex flex-wrap items-baseline gap-x-4 py-4">
+          <dt className="w-36 shrink-0 text-sm text-[#6c6870]">Tampil di</dt>
+          <dd className="text-sm text-ink">
+            {SHOWCASE_LABEL[product.showcase] ?? product.showcase}
+          </dd>
         </div>
 
         <div className="flex flex-wrap items-baseline gap-x-4 py-4">
@@ -271,6 +285,19 @@ async function ProductDetail({ id }: { id: string }) {
               <option value="tersedia">Tersedia</option>
               <option value="ditarik">Ditarik</option>
               <option value="terjual">Terjual</option>
+            </select>
+          </label>
+
+          <label className="text-xs uppercase tracking-[0.14em] text-[#6c6870]">
+            Tampil di
+            <select
+              name="showcase"
+              defaultValue={product.showcase}
+              className="mt-1 w-full border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink focus:border-plum focus:outline-none"
+            >
+              <option value="commission">Commission</option>
+              <option value="titipan">Titipan</option>
+              <option value="keduanya">Keduanya</option>
             </select>
           </label>
 

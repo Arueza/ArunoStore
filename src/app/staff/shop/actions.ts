@@ -58,6 +58,7 @@ export async function addItem(formData: FormData): Promise<void> {
   const price = wholeRupiah(formData, "price", "Harga", "/staff/shop");
   const stock = wholeRupiah(formData, "stock", "Stok", "/staff/shop");
   const condition = formData.get("condition");
+  const showcase = formData.get("showcase");
   const description = formData.get("description");
   const categoryId = formData.get("category_id");
   const categoryNew = formData.get("category_new");
@@ -75,6 +76,14 @@ export async function addItem(formData: FormData): Promise<void> {
 
   if (condition !== "baru" && condition !== "bekas") {
     redirect("/staff/shop?error=Kondisi tidak valid.");
+  }
+
+  if (
+    showcase !== "commission" &&
+    showcase !== "titipan" &&
+    showcase !== "keduanya"
+  ) {
+    redirect("/staff/shop?error=Pilihan tampil tidak valid.");
   }
 
   if (files.length === 0) {
@@ -154,6 +163,7 @@ export async function addItem(formData: FormData): Promise<void> {
       price,
       stock,
       condition,
+      showcase,
       status: "tersedia",
     })
     .select("id")
@@ -212,6 +222,7 @@ export async function updateItem(formData: FormData): Promise<void> {
   const stock = wholeRupiah(formData, "stock", "Stok", path);
   const condition = formData.get("condition");
   const status = formData.get("status");
+  const showcase = formData.get("showcase");
   const description = formData.get("description");
   const categoryId = formData.get("category_id");
   const categoryNew = formData.get("category_new");
@@ -230,6 +241,14 @@ export async function updateItem(formData: FormData): Promise<void> {
 
   if (status !== "tersedia" && status !== "terjual" && status !== "ditarik") {
     redirect(`${path}?error=Status tidak valid.`);
+  }
+
+  if (
+    showcase !== "commission" &&
+    showcase !== "titipan" &&
+    showcase !== "keduanya"
+  ) {
+    redirect(`${path}?error=Pilihan tampil tidak valid.`);
   }
 
   const supabase = await createClient();
@@ -286,6 +305,7 @@ export async function updateItem(formData: FormData): Promise<void> {
       stock,
       condition,
       status,
+      showcase,
       category_id: finalCategoryId,
       updated_at: new Date().toISOString(),
     })

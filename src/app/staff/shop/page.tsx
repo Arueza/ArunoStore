@@ -16,8 +16,15 @@ type ShopItem = {
   price: number;
   condition: "baru" | "bekas" | null;
   status: string;
+  showcase: string;
   consignment_categories: { name: string }[] | null;
   consignment_images: { image_url: string; is_thumbnail: boolean | null }[] | null;
+};
+
+const SHOWCASE_LABEL: Record<string, string> = {
+  commission: "Commission",
+  titipan: "Titipan",
+  keduanya: "Keduanya",
 };
 
 async function ShopList() {
@@ -26,7 +33,7 @@ async function ShopList() {
   const { data: items } = await supabase
     .from("consignment_items")
     .select(
-      "id, name, price, condition, status, consignment_categories(name), consignment_images(image_url, is_thumbnail)",
+      "id, name, price, condition, status, showcase, consignment_categories(name), consignment_images(image_url, is_thumbnail)",
     )
     .order("created_at", { ascending: false });
 
@@ -72,6 +79,9 @@ async function ShopList() {
                   Bekas
                 </span>
               )}
+              <span className="text-[10px] uppercase tracking-wider text-[#b0acb5]">
+                {SHOWCASE_LABEL[item.showcase] ?? item.showcase}
+              </span>
               <p className="text-xs text-[#b0acb5]">
                 {item.consignment_categories?.[0]
                   ? item.consignment_categories[0].name
@@ -169,6 +179,19 @@ export default function StaffShopPage() {
               >
                 <option value="baru">Baru</option>
                 <option value="bekas">Bekas</option>
+              </select>
+            </label>
+
+            <label className="text-xs uppercase tracking-[0.14em] text-[#6c6870]">
+              Tampil di
+              <select
+                name="showcase"
+                defaultValue="keduanya"
+                className="mt-1 w-full border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink focus:border-plum focus:outline-none"
+              >
+                <option value="commission">Commission</option>
+                <option value="titipan">Titipan</option>
+                <option value="keduanya">Keduanya</option>
               </select>
             </label>
 

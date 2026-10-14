@@ -15,3 +15,13 @@ export function pickThumb(
 
   return (images.find((img) => img.is_thumbnail) ?? images[0]).image_url;
 }
+
+// Where a catalogue item appears. `keduanya` lands in both catalogues and is
+// the default, so existing rows need no backfill. /shop ignores it.
+export type Showcase = "commission" | "titipan" | "keduanya";
+
+export const SHOWCASE_LABEL: Record<Showcase, string> = {
+  commission: "Commission",
+  titipan: "Titipan",
+  keduanya: "Keduanya",
+};
