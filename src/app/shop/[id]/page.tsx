@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { createPublicClient } from "@/lib/supabase/public";
 import { formatRupiah } from "@/lib/format";
 import AddToCart from "./AddToCart";
+import ProductGallery from "./ProductGallery";
 
 export async function generateMetadata({
   params,
@@ -81,43 +82,8 @@ async function ProductLoader({ id }: { id: string }) {
 
   return (
     <div className="grid gap-10 lg:grid-cols-2">
-      {/* Gallery: main image + thumbnail strip, Cottonink-style. */}
-      <div>
-        <div className="relative aspect-square overflow-hidden border border-[#eeeae5] bg-cream">
-          {images[0] ? (
-            // eslint-disable-next-line @next/next/no-img-element -- public bucket URL
-            <img
-              src={images[0].image_url}
-              alt={item.name}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <span className="absolute inset-0 flex items-center justify-center text-sm text-[#b0acb5]">
-              Tanpa gambar
-            </span>
-          )}
-        </div>
-
-        {images.length > 1 && (
-          <div className="mt-3 flex gap-3 overflow-x-auto">
-            {images.map((img) => (
-              <button
-                key={img.id}
-                type="button"
-                aria-label="Lihat gambar"
-                className="relative h-20 w-20 shrink-0 overflow-hidden border border-[#eeeae5] bg-cream"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element -- public bucket URL */}
-                <img
-                  src={img.image_url}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Gallery: carousel with arrows, thumbnails and a counter. */}
+      <ProductGallery images={images} name={item.name} />
 
       {/* Info: name, price, size, qty, Add to Cart. */}
       <div className="flex flex-col">
