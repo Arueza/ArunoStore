@@ -126,7 +126,7 @@ Do this after both halves can reach "buyer accepts a quote".
 - [x] **5.9** Product detail `/shop/[id]`, size selection (Fashion S-XL), cookie cart, Snap checkout for `shop_orders` (migrations `0037`, `0038`) *(`7208472`)*
 - [x] **5.10** Product gallery carousel on `/shop/[id]`: arrows, clickable thumbnails, counter *(`0f0f7e7`)*
 - [x] **5.11** Replace `/shop/orders` with unified `/checkout?type=shop` receipt *(`c108a5d`)*
-- [x] **5.12** Fix false add-to-cart failure, add loading and success state
+- [x] **5.12** Fix false add-to-cart failure, add loading and success state *(`e3488c4`)*
 
 **5.5 was built ahead of 5.4**, using the table that was already live; the page
 renders its empty state until 6.1 seeds rows.
