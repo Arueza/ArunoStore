@@ -86,7 +86,7 @@ describe("respondToQuote", () => {
     const to = await run(formData({ decision: "accept" }));
 
     expect(written()).toEqual({ status: "accepted" });
-    expect(to).toBe("/titipan/mine?saved=1");
+    expect(to).toBe(`/checkout?type=titipan&id=${ID}`);
   });
 
   test("declines a quote by moving the row to declined", async () => {

@@ -54,7 +54,7 @@ export async function respondToQuote(formData: FormData): Promise<void> {
     );
   }
 
-  redirect("/titipan/mine?saved=1");
+  redirect(decision === "accept" ? `/checkout?type=titipan&id=${id}` : "/titipan/mine?saved=1");
 }
 
 /**

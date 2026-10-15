@@ -84,7 +84,7 @@ export async function respondToQuote(formData: FormData): Promise<void> {
     );
   }
 
-  redirect("/commissions/mine?saved=1");
+  redirect(decision === "accept" ? `/checkout?type=commission&id=${id}` : "/commissions/mine?saved=1");
 }
 
 /**
