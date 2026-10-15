@@ -7,6 +7,7 @@ import { getClaims } from "@/lib/auth";
 import { formatRupiah } from "@/lib/format";
 import { quoteTotal } from "@/lib/quote";
 import { SnapButton } from "./SnapButton";
+import AddressForm from "./AddressForm";
 
 export const metadata: Metadata = {
   title: "Pembayaran — Aruno Store",
@@ -52,7 +53,7 @@ async function CheckoutContent({
     const { data: order, error } = await supabase
       .from("shop_orders")
       .select(
-        "id, buyer_id, status, total_price, created_at, shop_order_items(item_id, size, quantity, price, consignment_items(name, consignment_images(image_url, is_thumbnail)))",
+        "id, buyer_id, status, total_price, created_at, recipient_name, phone, address, city, province, postal_code, note, shop_order_items(item_id, size, quantity, price, consignment_items(name, consignment_images(image_url, is_thumbnail)))",
       )
       .eq("id", id)
       .maybeSingle<{
@@ -61,6 +62,13 @@ async function CheckoutContent({
         status: string;
         total_price: number;
         created_at: string;
+        recipient_name: string | null;
+        phone: string | null;
+        address: string | null;
+        city: string | null;
+        province: string | null;
+        postal_code: string | null;
+        note: string | null;
         shop_order_items: {
           item_id: string;
           size: string | null;
@@ -86,6 +94,25 @@ async function CheckoutContent({
     }
 
     const canPay = order.status === "pending" && order.buyer_id === claims.sub;
+
+    const savedAddress = {
+      recipient_name: order.recipient_name,
+      phone: order.phone,
+      address: order.address,
+      city: order.city,
+      province: order.province,
+      postal_code: order.postal_code,
+      note: order.note,
+    };
+
+    const addressComplete = Boolean(
+      order.recipient_name?.trim() &&
+        order.phone?.trim() &&
+        order.address?.trim() &&
+        order.city?.trim() &&
+        order.province?.trim() &&
+        order.postal_code?.trim(),
+    );
 
     return (
       <main className="mx-auto w-full max-w-3xl px-5 py-14 sm:px-[6%] sm:py-20">
@@ -176,7 +203,52 @@ async function CheckoutContent({
           </p>
         </div>
 
-        {canPay && (
+        <div className="mt-10 border border-[#eeeae5] bg-cream p-5">
+          <h2 className="font-display text-lg font-semibold text-ink">
+            Alamat pengiriman
+          </h2>
+
+          {addressComplete ? (
+            <>
+              <dl className="mt-4 space-y-1 text-sm leading-relaxed text-[#6c6870]">
+                <dt className="sr-only">Penerima</dt>
+                <dd className="font-medium text-ink">
+                  {order.recipient_name} · {order.phone}
+                </dd>
+                <dt className="sr-only">Alamat</dt>
+                <dd>{order.address}</dd>
+                <dd>
+                  {order.city}, {order.province} {order.postal_code}
+                </dd>
+                {order.note && <dd>Catatan: {order.note}</dd>}
+              </dl>
+
+              {canPay && (
+                <details className="mt-4">
+                  <summary className="cursor-pointer text-sm font-semibold text-plum hover:underline">
+                    Ubah alamat
+                  </summary>
+                  <AddressForm orderId={order.id} initial={savedAddress} />
+                </details>
+              )}
+            </>
+          ) : canPay ? (
+            <>
+              <p className="mt-2 text-sm leading-relaxed text-[#6c6870]">
+                Isi alamat pengiriman dulu — tombol bayar muncul setelah
+                alamat disimpan.
+              </p>
+
+              <AddressForm orderId={order.id} initial={savedAddress} />
+            </>
+          ) : (
+            <p className="mt-2 text-sm leading-relaxed text-[#6c6870]">
+              Buyer belum mengisi alamat pengiriman.
+            </p>
+          )}
+        </div>
+
+        {canPay && addressComplete && (
           <>
             <p className="mt-6 text-sm leading-relaxed text-[#6c6870]">
               Kamu akan diarahkan ke halaman pembayaran Snap Midtrans. Setelah selesai,

@@ -53,7 +53,9 @@ export async function POST(request: Request) {
   if (type === "shop") {
     const { data: shopOrder, error: shopReadError } = await supabase
       .from("shop_orders")
-      .select("id, buyer_id, status, total_price")
+      .select(
+        "id, buyer_id, status, total_price, recipient_name, phone, address, city, province, postal_code",
+      )
       .eq("id", id)
       .maybeSingle();
 
@@ -68,6 +70,22 @@ export async function POST(request: Request) {
     if (shopOrder.status !== "pending") {
       return NextResponse.json(
         { error: "Order is not in pending state." },
+        { status: 400 },
+      );
+    }
+
+    // The checkout page gates the Snap button on a saved address, but the
+    // button is only UI — refuse here too so a forged POST cannot settle an
+    // order nobody knows where to send.
+    const recipient = (shopOrder as { recipient_name: string | null }).recipient_name?.trim();
+    const orderPhone = (shopOrder as { phone: string | null }).phone?.trim();
+    const orderAddress = (shopOrder as { address: string | null }).address?.trim();
+    const orderCity = (shopOrder as { city: string | null }).city?.trim();
+    const orderPostal = (shopOrder as { postal_code: string | null }).postal_code?.trim();
+
+    if (!recipient || !orderPhone || !orderAddress || !orderCity || !orderPostal) {
+      return NextResponse.json(
+        { error: "Alamat pengiriman belum diisi." },
         { status: 400 },
       );
     }
@@ -105,6 +123,13 @@ export async function POST(request: Request) {
 
     const basicAuth = Buffer.from(`${serverKey}:`).toString("base64");
 
+    // Address rides along to Snap so the buyer sees it on the payment page.
+    // Truncated to Midtrans-sized fields; the database keeps the full text.
+    // First word is the given name, the rest the family name.
+    const nameParts = recipient.split(/\s+/);
+    const firstName = nameParts[0]!.slice(0, 20);
+    const lastName = nameParts.slice(1).join(" ").slice(0, 20) || undefined;
+
     let snapToken: string;
     try {
       const res = await fetch(MIDTRANS_SNAP_URL, {
@@ -118,6 +143,20 @@ export async function POST(request: Request) {
           transaction_details: {
             order_id: orderId,
             gross_amount: amount,
+          },
+          customer_details: {
+            first_name: firstName,
+            ...(lastName ? { last_name: lastName } : {}),
+            phone: orderPhone.slice(0, 20),
+            shipping_address: {
+              first_name: firstName,
+              ...(lastName ? { last_name: lastName } : {}),
+              phone: orderPhone.slice(0, 20),
+              address: orderAddress.slice(0, 200),
+              city: orderCity.slice(0, 50),
+              postal_code: orderPostal.slice(0, 10),
+              country_code: "IDN",
+            },
           },
         }),
       });
