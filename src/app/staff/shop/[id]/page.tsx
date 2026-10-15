@@ -4,7 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatRupiah } from "@/lib/format";
-import { addImages, deleteImage, deleteItem, setThumbnail, updateItem } from "../actions";
+import { deleteImage, deleteItem, setThumbnail, updateItem } from "../actions";
+import AddImagesForm from "./AddImagesForm";
 import { FASHION_SIZES } from "@/lib/shop";
 
 export const metadata: Metadata = {
@@ -206,30 +207,7 @@ async function ProductDetail({ id }: { id: string }) {
           ))}
         </div>
 
-        <form
-          action={addImages}
-          className="mt-5 flex flex-wrap items-end gap-3 border-t border-[#eeeae5] pt-5"
-        >
-          <input type="hidden" name="id" value={product.id} />
-
-          <label className="text-xs uppercase tracking-[0.14em] text-[#6c6870]">
-            Tambah gambar
-            <input
-              type="file"
-              name="images"
-              multiple
-              accept="image/*"
-              className="mt-1 block text-xs text-ink"
-            />
-          </label>
-
-          <button
-            type="submit"
-            className="bg-plum px-4 py-2 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
-          >
-            Unggah
-          </button>
-        </form>
+        <AddImagesForm id={product.id} />
       </div>
 
       <form action={updateItem} className="border border-[#eeeae5] bg-cream p-5">

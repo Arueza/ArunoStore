@@ -129,6 +129,7 @@ Do this after both halves can reach "buyer accepts a quote".
 - [x] **5.12** Fix false add-to-cart failure, add loading and success state *(`e3488c4`)*
 - [x] **5.13** Buyer payment history at `/payments`: pending and settled per order, linked from the account menu *(`b4a966b`)*
 - [x] **5.14** Buyer edits name and password at `/account/edit` (old password required, migration `0040`) *(`e312ffe`)*
+- [ ] **5.15** Staff shop uploads compress to WebP in browser, direct to Storage (fixes 1 MB Action limit)
 
 **5.5 was built ahead of 5.4**, using the table that was already live; the page
 renders its empty state until 6.1 seeds rows.

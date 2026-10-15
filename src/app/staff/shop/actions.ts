@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isValidShopImagePath } from "@/lib/image";
 import { FASHION_SIZES } from "@/lib/shop";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -15,8 +16,10 @@ const PUBLIC_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/pu
  * Adds a product to the staff shop catalogue.
  *
  * Roadmap 5.4. Staff fills in name, description, price, stock, condition,
- * category, and at least one image. The image goes to a public bucket so
- * /shop can render it without a signed URL; only staff can write to it.
+ * category, and at least one image. Images arrive as storage paths, not
+ * files: the form compresses to WebP in the browser and uploads straight to
+ * the public bucket (staff-only write, 0032), so the action body stays tiny
+ * and never hits the 1 MB Server Action limit.
  *
  * Six things are decided here and not in the form:
  *
@@ -64,9 +67,12 @@ export async function addItem(formData: FormData): Promise<void> {
   const description = formData.get("description");
   const categoryId = formData.get("category_id");
   const categoryNew = formData.get("category_new");
-  const files = formData.getAll("images").filter(
-    (f): f is File => f instanceof File && f.size > 0,
-  );
+  const imagePaths = formData
+    .getAll("image_path")
+    .filter(
+      (p): p is string => typeof p === "string" && p.trim().length > 0,
+    )
+    .map((p) => p.trim());
 
   if (typeof name !== "string" || !name.trim()) {
     redirect("/staff/shop?error=Nama produk wajib diisi.");
@@ -88,8 +94,12 @@ export async function addItem(formData: FormData): Promise<void> {
     redirect("/staff/shop?error=Pilihan tampil tidak valid.");
   }
 
-  if (files.length === 0) {
+  if (imagePaths.length === 0) {
     redirect("/staff/shop?error=Minimal satu gambar wajib diunggah.");
+  }
+
+  if (imagePaths.length > 10 || imagePaths.some((p) => !isValidShopImagePath(p))) {
+    redirect("/staff/shop?error=Path gambar tidak valid.");
   }
 
   const supabase = await createClient();
@@ -137,23 +147,9 @@ export async function addItem(formData: FormData): Promise<void> {
     finalCategoryId = categoryId;
   }
 
-  // Upload all files first, then insert. If the insert fails, remove the files.
-  const uploadedPaths: string[] = [];
-
-  for (const file of files) {
-    const path = `${crypto.randomUUID()}/${file.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from(BUCKET)
-      .upload(path, file);
-
-    if (uploadError) {
-      // Clean up files uploaded so far in this loop.
-      await supabase.storage.from(BUCKET).remove(uploadedPaths);
-      redirect(`/staff/shop?error=Gagal mengunggah gambar: ${uploadError.message}`);
-    }
-
-    uploadedPaths.push(path);
-  }
+  // Paths arrive from the client upload. If the insert fails, remove them so
+  // an orphan image does not sit in the bucket.
+  const uploadedPaths: string[] = [...imagePaths];
 
   const { data: item, error: insertError } = await supabase
     .from("consignment_items")
@@ -450,8 +446,9 @@ export async function deleteItem(formData: FormData): Promise<void> {
 /**
  * Adds images to an existing product.
  *
- * Roadmap 5.4. Multiple files at once. The first image added does not become
- * the thumbnail if one already exists — setThumbnail handles that.
+ * Roadmap 5.4. Multiple paths at once, uploaded client-side like addItem.
+ * The first image added does not become the thumbnail if one already
+ * exists — setThumbnail handles that.
  */
 export async function addImages(formData: FormData): Promise<void> {
   const id = formData.get("id");
@@ -462,12 +459,19 @@ export async function addImages(formData: FormData): Promise<void> {
 
   const path = `/staff/shop/${id}`;
 
-  const files = formData.getAll("images").filter(
-    (f): f is File => f instanceof File && f.size > 0,
-  );
+  const imagePaths = formData
+    .getAll("image_path")
+    .filter(
+      (p): p is string => typeof p === "string" && p.trim().length > 0,
+    )
+    .map((p) => p.trim());
 
-  if (files.length === 0) {
+  if (imagePaths.length === 0) {
     redirect(`${path}?error=Minimal satu gambar wajib dipilih.`);
+  }
+
+  if (imagePaths.length > 10 || imagePaths.some((p) => !isValidShopImagePath(p))) {
+    redirect(`${path}?error=Path gambar tidak valid.`);
   }
 
   const supabase = await createClient();
@@ -498,22 +502,8 @@ export async function addImages(formData: FormData): Promise<void> {
 
   const hasThumbnail = existingImages?.some((img) => img.is_thumbnail) ?? false;
 
-  // Upload all files.
-  const uploadedPaths: string[] = [];
-
-  for (const file of files) {
-    const filePath = `${crypto.randomUUID()}/${file.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from(BUCKET)
-      .upload(filePath, file);
-
-    if (uploadError) {
-      await supabase.storage.from(BUCKET).remove(uploadedPaths);
-      redirect(`${path}?error=Gagal mengunggah gambar: ${uploadError.message}`);
-    }
-
-    uploadedPaths.push(filePath);
-  }
+  // Paths arrive from the client upload.
+  const uploadedPaths: string[] = [...imagePaths];
 
   const imageRows = uploadedPaths.map((filePath, i) => ({
     item_id: id,
