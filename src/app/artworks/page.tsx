@@ -68,7 +68,7 @@ export default async function ArtworksPage() {
       </h1>
 
       <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#6c6870] sm:text-base">
-        Karya-karya yang sudah selesai. Setiap piece dibuat oleh Verrel untuk
+        Karya-karya yang sudah selesai. Setiap piece dibuat oleh Nobu untuk
         klien commission.
       </p>
 
