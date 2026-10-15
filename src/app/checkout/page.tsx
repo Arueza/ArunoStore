@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getClaims } from "@/lib/auth";
@@ -14,12 +15,20 @@ export const metadata: Metadata = {
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const STATUS_LABEL: Record<string, string> = {
+  pending: "Menunggu pembayaran",
+  settled: "Lunas",
+  paid: "Lunas",
+  deny: "Ditolak",
+  expire: "Kedaluwarsa",
+};
+
 async function CheckoutContent({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string; id?: string }>;
+  searchParams: Promise<{ type?: string; id?: string; saved?: string }>;
 }) {
-  const { type, id } = await searchParams;
+  const { type, id, saved } = await searchParams;
 
   if (type !== "commission" && type !== "titipan" && type !== "shop") {
     redirect("/commissions/mine");
@@ -37,47 +46,152 @@ async function CheckoutContent({
 
   const supabase = await createClient();
 
-  // Shop orders: created by createShopOrder from the cookie cart, status
-  // "pending" until Snap settles. Amount is total_price, set at order time.
+  // Shop orders: created by createShopOrder from the cookie cart.
+  // Shows full order receipt, items, status, and SnapButton when pending.
   if (type === "shop") {
     const { data: order, error } = await supabase
       .from("shop_orders")
-      .select("id, buyer_id, status, total_price")
+      .select(
+        "id, buyer_id, status, total_price, created_at, shop_order_items(item_id, size, quantity, price, consignment_items(name, consignment_images(image_url, is_thumbnail)))",
+      )
       .eq("id", id)
+      .maybeSingle<{
+        id: string;
+        buyer_id: string;
+        status: string;
+        total_price: number;
+        created_at: string;
+        shop_order_items: {
+          item_id: string;
+          size: string | null;
+          quantity: number;
+          price: number;
+          consignment_items: {
+            name: string;
+            consignment_images: { image_url: string; is_thumbnail: boolean | null }[];
+          };
+        }[];
+      }>();
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", claims.sub)
       .maybeSingle();
 
-    if (error || !order || order.buyer_id !== claims.sub) {
+    const isStaff = profile?.role === "staff";
+
+    if (error || !order || (!isStaff && order.buyer_id !== claims.sub)) {
       redirect("/shop");
     }
 
-    if (order.status !== "pending") {
-      redirect(`/shop/orders/${order.id}`);
-    }
+    const canPay = order.status === "pending" && order.buyer_id === claims.sub;
 
     return (
       <main className="mx-auto w-full max-w-3xl px-5 py-14 sm:px-[6%] sm:py-20">
-        <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
+        <Link
+          href="/shop"
+          className="text-xs uppercase tracking-[0.14em] text-[#6c6870] hover:text-plum"
+        >
+          ← Kembali ke katalog
+        </Link>
+
+        <h1 className="mt-4 font-display text-3xl font-semibold text-ink sm:text-4xl">
           Pembayaran
         </h1>
 
-        <p className="mt-4 text-sm text-[#6c6870]">Pesanan</p>
-
-        <p className="mt-6 text-3xl font-semibold text-ink">
-          {formatRupiah(order.total_price)}
+        <p className="mt-3 text-sm text-[#6c6870]">
+          Status:{" "}
+          <span className="font-medium text-ink">
+            {STATUS_LABEL[order.status] ?? order.status}
+          </span>
         </p>
 
-        <p className="mt-6 text-sm leading-relaxed text-[#6c6870]">
-          Kamu akan diarahkan ke halaman pembayaran Snap Midtrans. Setelah selesai,
-          kamu kembali ke halaman pesanan.
-        </p>
+        {order.created_at && (
+          <p className="mt-1 text-xs text-[#b0acb5]">
+            {new Date(order.created_at).toLocaleDateString("id-ID", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+          </p>
+        )}
 
-        <div className="mt-8">
-          <SnapButton
-            type="shop"
-            id={order.id}
-            redirectPath={`/shop/orders/${order.id}?saved=1`}
-          />
+        {saved === "1" && (
+          <p className="mt-4 bg-[#f0f9f4] p-3 text-sm text-[#2d6a4f]" role="status">
+            Pembayaran sedang diverifikasi atau telah selesai.
+          </p>
+        )}
+
+        <ul className="mt-8 divide-y divide-[#eeeae5] border-y border-[#eeeae5]">
+          {order.shop_order_items?.map((item) => {
+            const thumb =
+              item.consignment_items?.consignment_images?.find(
+                (img) => img.is_thumbnail,
+              ) ??
+              item.consignment_items?.consignment_images?.[0];
+
+            return (
+              <li
+                key={`${item.item_id}-${item.size ?? "nosize"}`}
+                className="flex items-center gap-4 py-4"
+              >
+                <div className="h-16 w-16 shrink-0 overflow-hidden border border-[#eeeae5] bg-cream">
+                  {thumb && (
+                    // eslint-disable-next-line @next/next/no-img-element -- public bucket URL
+                    <img
+                      src={thumb.image_url}
+                      alt={item.consignment_items?.name ?? "Produk"}
+                      className="h-full w-full object-cover"
+                    />
+                  )}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-ink">
+                    {item.consignment_items?.name ?? "Produk"}
+                  </p>
+                  {item.size && (
+                    <p className="mt-0.5 text-xs text-[#6c6870]">
+                      Ukuran {item.size}
+                    </p>
+                  )}
+                  <p className="mt-0.5 text-xs text-[#6c6870]">
+                    {item.quantity} × {formatRupiah(item.price)}
+                  </p>
+                </div>
+
+                <p className="text-sm font-semibold text-ink">
+                  {formatRupiah(item.price * item.quantity)}
+                </p>
+              </li>
+            );
+          })}
+        </ul>
+
+        <div className="mt-6 flex items-baseline justify-between">
+          <p className="text-sm text-[#6c6870]">Total</p>
+          <p className="text-2xl font-semibold text-ink">
+            {formatRupiah(order.total_price)}
+          </p>
         </div>
+
+        {canPay && (
+          <>
+            <p className="mt-6 text-sm leading-relaxed text-[#6c6870]">
+              Kamu akan diarahkan ke halaman pembayaran Snap Midtrans. Setelah selesai,
+              kamu kembali ke halaman ini.
+            </p>
+
+            <div className="mt-8">
+              <SnapButton
+                type="shop"
+                id={order.id}
+                redirectPath={`/checkout?type=shop&id=${order.id}&saved=1`}
+              />
+            </div>
+          </>
+        )}
       </main>
     );
   }
@@ -147,7 +261,7 @@ async function CheckoutContent({
 export default function CheckoutPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string; id?: string }>;
+  searchParams: Promise<{ type?: string; id?: string; saved?: string }>;
 }) {
   return (
     <Suspense>

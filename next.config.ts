@@ -25,6 +25,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+
+  async redirects() {
+    return [
+      {
+        source: "/shop/orders/:id",
+        destination: "/checkout?type=shop&id=:id",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
