@@ -67,6 +67,16 @@ export default function AccountDropdown({ userName, userEmail }: Props) {
                   Akun saya
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/account/edit"
+                  onClick={close}
+                  className="flex items-center gap-3 px-5 py-2.5 text-sm transition-colors hover:bg-[#f3f0ec]"
+                >
+                  <EditIcon />
+                  Ubah data akun
+                </Link>
+              </li>
               {/* Where a buyer goes to see whether a quote has arrived. The menu
                   only renders signed in, and the page is guarded anyway, so no
                   signed-out link is created by this. */}
@@ -139,6 +149,25 @@ export function AccountIcon({ className }: { className?: string }) {
     >
       <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
       <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
+function EditIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-4 w-4"
+      aria-hidden
+    >
+      <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
     </svg>
   );
 }

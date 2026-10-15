@@ -31,8 +31,14 @@ export default function AccountPage() {
 
       <div className="mt-8 flex flex-wrap gap-3">
         <Link
-          href="/commissions/mine"
+          href="/account/edit"
           className="inline-block bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+        >
+          Ubah data akun
+        </Link>
+        <Link
+          href="/commissions/mine"
+          className="inline-block border border-[#e2ddd7] px-6 py-3 text-xs uppercase tracking-[0.18em] text-ink transition-colors hover:border-plum"
         >
           Lihat Komisi saya
         </Link>
