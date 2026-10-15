@@ -5,15 +5,19 @@ import { useEffect, useState } from "react";
 import ghiblik from "@/components/hero/ghiblik.jpg";
 import nadeko from "@/components/hero/nadeko.jpg";
 import pricon from "@/components/hero/pricon.jpg";
+import kimono from "@/components/hero/kimono-1.jpg";
+import rando from "@/components/hero/rando.webp";
 
 const SLIDES = [
   { src: ghiblik, alt: "Ilustrasi gaya Ghibli" },
   { src: pricon, alt: "Ilustrasi karakter" },
   { src: nadeko, alt: "Ilustrasi Nadeko" },
+  { src: kimono, alt: "Ilustrasi kimono" },
+  { src: rando, alt: "Ilustrasi rando" },
 ];
 
 /**
- * The hero backdrop: the three photos crossfade behind the headline.
+ * The hero backdrop: the five photos crossfade behind the headline.
  *
  * Client-side on purpose, but the first slide renders from the server too, so
  * a visitor without JavaScript still sees a full photo, not an empty hero. The

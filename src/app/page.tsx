@@ -39,7 +39,7 @@ const [shop, ...quotes] = SERVICES;
  * else. Commission and Titipan are both request-first flows, so they sit side by
  * side under it at equal weight.
  *
- * The hero carries the three photos as a crossfading backdrop (HeroSlideshow,
+ * The hero carries the five photos as a crossfading backdrop (HeroSlideshow,
  * Cottonink-style). The headline and the button stay light text over a darkened
  * overlay so they read on any slide.
  */
