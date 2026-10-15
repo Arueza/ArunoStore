@@ -299,6 +299,35 @@ describe("proxy", () => {
     });
   });
 
+  // Guards the buyer's payment history. Signed out there is a dead end:
+  // there is nothing to list and nowhere to sign in from.
+  describe("/payments", () => {
+    test("sends a signed-out visitor to the login page", async () => {
+      const res = await proxy(request("/payments"));
+
+      expect(res.status).toBe(307);
+      expect(pathnameOf(res)).toBe("/login");
+    });
+
+    test("lets a signed-in buyer through", async () => {
+      signedInAs("u1", "buyer");
+
+      const res = await proxy(request("/payments"));
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get("location")).toBeNull();
+    });
+
+    // The history list does not need the staff check, only the session.
+    test("does not apply the staff check", async () => {
+      signedInAs("u1", "buyer");
+
+      await proxy(request("/payments"));
+
+      expect(mocks.chain.select).not.toHaveBeenCalled();
+    });
+  });
+
   // Where a signed-out buyer is sent, and what they are told to come back to.
   // The proxy is the only place that knows where they were trying to go, so it
   // is the only place that can carry it — and therefore the only place that can

@@ -90,6 +90,19 @@ export default function AccountDropdown({ userName, userEmail }: Props) {
                   Titipan saya
                 </Link>
               </li>
+              {/* One history for every payment, whichever half it belongs to.
+                  The menu only renders signed in, and the page is guarded
+                  anyway, so no signed-out link is created by this. */}
+              <li>
+                <Link
+                  href="/payments"
+                  onClick={close}
+                  className="flex items-center gap-3 px-5 py-2.5 text-sm transition-colors hover:bg-[#f3f0ec]"
+                >
+                  <ReceiptIcon />
+                  Riwayat transaksi
+                </Link>
+              </li>
             </ul>
 
             <div className="border-t border-[#eeeae5] py-2">
@@ -167,6 +180,27 @@ function TitipanIcon() {
       <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
       <path d="M3 6h18" />
       <path d="M16 10a4 4 0 0 1-8 0" />
+    </svg>
+  );
+}
+
+function ReceiptIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-4 w-4"
+      aria-hidden
+    >
+      <path d="M5 3h14v18l-2.3-1.5L14.4 21l-2.4-1.5L9.6 21l-2.3-1.5L5 21Z" />
+      <line x1="9" y1="8" x2="15" y2="8" />
+      <line x1="9" y1="12" x2="15" y2="12" />
     </svg>
   );
 }

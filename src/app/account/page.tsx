@@ -42,6 +42,12 @@ export default function AccountPage() {
         >
           Lihat Titipan saya
         </Link>
+        <Link
+          href="/payments"
+          className="inline-block border border-[#e2ddd7] px-6 py-3 text-xs uppercase tracking-[0.18em] text-ink transition-colors hover:border-plum"
+        >
+          Riwayat transaksi
+        </Link>
       </div>
 
       <Link

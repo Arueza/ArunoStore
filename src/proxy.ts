@@ -66,7 +66,8 @@ export async function proxy(request: NextRequest) {
 }
 
 // Sign-in only. /account holds the visitor's own name and role, so it must never
-// render for a signed-out visitor. /commissions/request needs a session to write
+// render for a signed-out visitor. /payments reads the buyer's own payment
+// rows, and one signed out has none. /commissions/request needs a session to write
 // a row at all, so a signed-out visitor there is a dead end. /commissions/mine
 // reads other people's commissions, and one signed out has none. The titipan pair
 // is the same two reasons under different names: the form writes a row, the list
@@ -75,6 +76,7 @@ export async function proxy(request: NextRequest) {
 const SIGNED_IN_ROUTES = [
   "/account",
   "/checkout",
+  "/payments",
   "/commissions/request",
   "/commissions/mine",
   "/titipan/request",
