@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { saveShopOrderAddress } from "../shop/actions";
+import { saveAddress } from "./actions";
 
 export type SavedAddress = {
   recipient_name: string | null;
@@ -26,9 +27,12 @@ export type SavedAddress = {
 export default function AddressForm({
   orderId,
   initial,
+  type,
 }: {
   orderId: string;
   initial: SavedAddress;
+  /** Order type. Absent = shop order; present = commission / titipan row. */
+  type?: "commission" | "titipan";
 }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
@@ -41,7 +45,10 @@ export default function AddressForm({
     setSaving(true);
     setError(null);
 
-    const result = await saveShopOrderAddress(orderId, new FormData(e.currentTarget));
+    const form = new FormData(e.currentTarget);
+    const result = type
+      ? await saveAddress(type, orderId, form)
+      : await saveShopOrderAddress(orderId, form);
 
     if (!result.ok) {
       setError(result.message);

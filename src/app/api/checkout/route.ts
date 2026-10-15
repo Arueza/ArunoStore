@@ -201,13 +201,13 @@ export async function POST(request: Request) {
     type === "commission"
       ? await supabase
           .from("commissions")
-          .select("id, buyer_id, status, quote_price")
+          .select("id, buyer_id, status, quote_price, recipient_name, phone, address, city, province, postal_code")
           .eq("id", id)
           .maybeSingle()
       : await supabase
           .from("titipan_requests")
           .select(
-            "id, buyer_id, status, quote_item_price, quote_shipping, quote_service_fee",
+            "id, buyer_id, status, quote_item_price, quote_shipping, quote_service_fee, recipient_name, phone, address, city, province, postal_code",
           )
           .eq("id", id)
           .maybeSingle();
@@ -223,6 +223,22 @@ export async function POST(request: Request) {
   if (order.status !== "accepted") {
     return NextResponse.json(
       { error: "Order is not in accepted state." },
+      { status: 400 },
+    );
+  }
+
+  // The checkout page gates the Snap button on a saved address, but the button
+  // is only UI — refuse here too so a forged POST cannot settle an order
+  // nobody knows where to send. Same rule as the shop branch above.
+  const recipient = (order as { recipient_name: string | null }).recipient_name?.trim();
+  const orderPhone = (order as { phone: string | null }).phone?.trim();
+  const orderAddress = (order as { address: string | null }).address?.trim();
+  const orderCity = (order as { city: string | null }).city?.trim();
+  const orderPostal = (order as { postal_code: string | null }).postal_code?.trim();
+
+  if (!recipient || !orderPhone || !orderAddress || !orderCity || !orderPostal) {
+    return NextResponse.json(
+      { error: "Alamat pengiriman belum diisi." },
       { status: 400 },
     );
   }

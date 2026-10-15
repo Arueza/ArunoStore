@@ -32,6 +32,13 @@ type TitipanRequest = {
   quote_note: string | null;
   courier: string | null;
   tracking_number: string | null;
+  recipient_name: string | null;
+  phone: string | null;
+  address: string | null;
+  city: string | null;
+  province: string | null;
+  postal_code: string | null;
+  note: string | null;
   created_at: string;
 };
 
@@ -52,7 +59,7 @@ async function RequestDetail({ params }: { params: Promise<{ id: string }> }) {
   const { data: request } = await supabase
     .from("titipan_requests")
     .select(
-      "id, buyer_id, product_link, size, color, quantity, budget, status, quote_item_price, quote_shipping, quote_service_fee, quote_note, courier, tracking_number, created_at",
+      "id, buyer_id, product_link, size, color, quantity, budget, status, quote_item_price, quote_shipping, quote_service_fee, quote_note, courier, tracking_number, recipient_name, phone, address, city, province, postal_code, note, created_at",
     )
     .eq("id", id)
     .maybeSingle<TitipanRequest>();
@@ -145,6 +152,22 @@ async function RequestDetail({ params }: { params: Promise<{ id: string }> }) {
             </dd>
           </div>
         </dl>
+
+        {request.recipient_name && (
+          <div className="mt-6 border border-[#eeeae5] bg-cream p-5 text-sm leading-relaxed">
+            <p className="font-semibold text-ink">Alamat pengiriman</p>
+            <p className="mt-2 text-[#6c6870]">
+              {request.recipient_name} · {request.phone}
+            </p>
+            <p className="text-[#6c6870]">{request.address}</p>
+            <p className="text-[#6c6870]">
+              {request.city}, {request.province} {request.postal_code}
+            </p>
+            {request.note && (
+              <p className="text-[#6c6870]">Catatan: {request.note}</p>
+            )}
+          </div>
+        )}
 
         {(request.status === "accepted" || request.status === "paid") && (
           <div className="mt-6 border-t border-[#eeeae5] pt-6">

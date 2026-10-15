@@ -27,6 +27,13 @@ type Commission = {
   quote_price: number | null;
   quote_note: string | null;
   delivery_image: string | null;
+  recipient_name: string | null;
+  phone: string | null;
+  address: string | null;
+  city: string | null;
+  province: string | null;
+  postal_code: string | null;
+  note: string | null;
   created_at: string;
 };
 
@@ -46,7 +53,7 @@ async function RequestDetail({ params }: { params: Promise<{ id: string }> }) {
 
   const { data: commission } = await supabase
     .from("commissions")
-    .select("id, buyer_id, service_id, brief, reference_links, status, quote_price, quote_note, delivery_image, created_at")
+    .select("id, buyer_id, service_id, brief, reference_links, status, quote_price, quote_note, delivery_image, recipient_name, phone, address, city, province, postal_code, note, created_at")
     .eq("id", id)
     .maybeSingle<Commission>();
 
@@ -146,6 +153,22 @@ async function RequestDetail({ params }: { params: Promise<{ id: string }> }) {
           </>
         )}
       </div>
+
+      {commission.recipient_name && (
+        <div className="mt-8 border border-[#eeeae5] bg-cream p-5 text-sm leading-relaxed">
+          <p className="font-semibold text-ink">Alamat pengiriman</p>
+          <p className="mt-2 text-[#6c6870]">
+            {commission.recipient_name} · {commission.phone}
+          </p>
+          <p className="text-[#6c6870]">{commission.address}</p>
+          <p className="text-[#6c6870]">
+            {commission.city}, {commission.province} {commission.postal_code}
+          </p>
+          {commission.note && (
+            <p className="text-[#6c6870]">Catatan: {commission.note}</p>
+          )}
+        </div>
+      )}
 
       <div className="space-y-6">
         <QuoteBox

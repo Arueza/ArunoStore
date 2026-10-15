@@ -272,13 +272,13 @@ async function CheckoutContent({
     type === "commission"
       ? await supabase
           .from("commissions")
-          .select("id, buyer_id, status, quote_price")
+          .select("id, buyer_id, status, quote_price, recipient_name, phone, address, city, province, postal_code, note")
           .eq("id", id)
           .maybeSingle()
       : await supabase
           .from("titipan_requests")
           .select(
-            "id, buyer_id, status, quote_item_price, quote_shipping, quote_service_fee",
+            "id, buyer_id, status, quote_item_price, quote_shipping, quote_service_fee, recipient_name, phone, address, city, province, postal_code, note",
           )
           .eq("id", id)
           .maybeSingle();
@@ -306,6 +306,25 @@ async function CheckoutContent({
 
   const label = type === "commission" ? "Commission" : "Titipan";
 
+  const addressComplete = Boolean(
+    (order as { recipient_name: string | null }).recipient_name?.trim() &&
+      (order as { phone: string | null }).phone?.trim() &&
+      (order as { address: string | null }).address?.trim() &&
+      (order as { city: string | null }).city?.trim() &&
+      (order as { province: string | null }).province?.trim() &&
+      (order as { postal_code: string | null }).postal_code?.trim(),
+  );
+
+  const savedAddress = {
+    recipient_name: (order as { recipient_name: string | null }).recipient_name,
+    phone: (order as { phone: string | null }).phone,
+    address: (order as { address: string | null }).address,
+    city: (order as { city: string | null }).city,
+    province: (order as { province: string | null }).province,
+    postal_code: (order as { postal_code: string | null }).postal_code,
+    note: (order as { note: string | null }).note,
+  };
+
   return (
     <main className="mx-auto w-full max-w-3xl px-5 py-14 sm:px-[6%] sm:py-20">
       <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
@@ -318,14 +337,62 @@ async function CheckoutContent({
         {formatRupiah(amount)}
       </p>
 
-      <p className="mt-6 text-sm leading-relaxed text-[#6c6870]">
-        Kamu akan diarahkan ke halaman pembayaran Snap Midtrans. Setelah selesai,
-        kamu kembali ke halaman ini.
-      </p>
+      <div className="mt-10 border border-[#eeeae5] bg-cream p-5">
+        <h2 className="font-display text-lg font-semibold text-ink">
+          Alamat pengiriman
+        </h2>
 
-      <div className="mt-8">
-        <SnapButton type={type} id={id} />
+        {addressComplete ? (
+          <>
+            <dl className="mt-4 space-y-1 text-sm leading-relaxed text-[#6c6870]">
+              <dt className="sr-only">Penerima</dt>
+              <dd className="font-medium text-ink">
+                {(order as { recipient_name: string }).recipient_name} ·{" "}
+                {(order as { phone: string }).phone}
+              </dd>
+              <dt className="sr-only">Alamat</dt>
+              <dd>{(order as { address: string }).address}</dd>
+              <dd>
+                {(order as { city: string }).city},{" "}
+                {(order as { province: string }).province}{" "}
+                {(order as { postal_code: string }).postal_code}
+              </dd>
+              {(order as { note: string | null }).note && (
+                <dd>Catatan: {(order as { note: string }).note}</dd>
+              )}
+            </dl>
+
+            <details className="mt-4">
+              <summary className="cursor-pointer text-sm font-semibold text-plum hover:underline">
+                Ubah alamat
+              </summary>
+              <AddressForm orderId={id} initial={savedAddress} type={type} />
+            </details>
+          </>
+        ) : (
+          <>
+            <p className="mt-2 text-sm leading-relaxed text-[#6c6870]">
+              Isi alamat pengiriman dulu — tombol bayar muncul setelah alamat
+              disimpan.
+            </p>
+
+            <AddressForm orderId={id} initial={savedAddress} type={type} />
+          </>
+        )}
       </div>
+
+      {addressComplete && (
+        <>
+          <p className="mt-6 text-sm leading-relaxed text-[#6c6870]">
+            Kamu akan diarahkan ke halaman pembayaran Snap Midtrans. Setelah
+            selesai, kamu kembali ke halaman ini.
+          </p>
+
+          <div className="mt-8">
+            <SnapButton type={type} id={id} />
+          </div>
+        </>
+      )}
     </main>
   );
 }
