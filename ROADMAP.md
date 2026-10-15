@@ -116,7 +116,7 @@ Do this after both halves can reach "buyer accepts a quote".
 ## Phase 5 — Nice to have, only if time allows
 
 - [x] **5.1** Staff overview: counts of open requests per status *(`02fa473`)*
-- [ ] **5.2** Search and filter on both lists
+- [x] **5.2** Search and filter on both lists *(`4e74d99`)*
 - [ ] **5.3** Buyer leaves a rating after delivery
 - [x] **5.4** Curated titipan catalogue: staff list popular items, buyer adds to basket directly *(`faf6c43`)*
 - [x] **5.5** `/shop` catalog page — grid of `consignment_items` with price, thumbnail, condition, category *(`282d434`)*
