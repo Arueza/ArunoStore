@@ -74,4 +74,35 @@ describe("ProductGallery", () => {
 
     expect(screen.getByText("Tanpa gambar")).toBeDefined();
   });
+
+  // Commission goods are portrait artwork: no crop, and the stage links out
+  // to the untouched original at full resolution.
+  test("artwork variant renders uncropped with a full-resolution link", () => {
+    render(<ProductGallery images={IMAGES} name="Print A4" artwork />);
+
+    expect(mainImage().getAttribute("class")).toContain("object-contain");
+    expect(
+      screen
+        .getByRole("region", { name: /galeri/i })
+        .getAttribute("class"),
+    ).toContain("aspect-[3/4]");
+
+    const full = screen.getByRole("link", { name: "Lihat gambar penuh" });
+    expect(full).toHaveAttribute("href", "https://example.com/a.jpg");
+    expect(full).toHaveAttribute("target", "_blank");
+  });
+
+  test("default variant keeps the square crop with no full-resolution link", () => {
+    render(<ProductGallery images={IMAGES} name="Boneka" />);
+
+    expect(mainImage().getAttribute("class")).toContain("object-cover");
+    expect(
+      screen
+        .getByRole("region", { name: /galeri/i })
+        .getAttribute("class"),
+    ).toContain("aspect-square");
+    expect(
+      screen.queryByRole("link", { name: "Lihat gambar penuh" }),
+    ).toBeNull();
+  });
 });

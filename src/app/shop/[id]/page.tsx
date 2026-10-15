@@ -82,8 +82,13 @@ async function ProductLoader({ id }: { id: string }) {
 
   return (
     <div className="grid gap-10 lg:grid-cols-2">
-      {/* Gallery: carousel with arrows, thumbnails and a counter. */}
-      <ProductGallery images={images} name={item.name} />
+      {/* Gallery: carousel with arrows, thumbnails and a counter. Commission
+          goods render uncropped with a full-resolution link. */}
+      <ProductGallery
+        images={images}
+        name={item.name}
+        artwork={item.showcase === "commission"}
+      />
 
       {/* Info: name, price, size, qty, Add to Cart. */}
       <div className="flex flex-col">

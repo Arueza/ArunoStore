@@ -15,13 +15,19 @@ export type GalleryImage = {
  * keeps the active index in state. Arrows wrap around, thumbnails jump to an
  * image, and a counter shows the position. A single image (or none) renders
  * with no controls, so the layout never promises navigation it cannot do.
+ *
+ * Commission goods are portrait artwork, so `artwork` renders them uncropped
+ * in a portrait stage with a link out to the full-resolution original.
+ * Everything else keeps the square crop.
  */
 export default function ProductGallery({
   images,
   name,
+  artwork = false,
 }: {
   images: GalleryImage[];
   name: string;
+  artwork?: boolean;
 }) {
   const [active, setActive] = useState(0);
 
@@ -44,20 +50,42 @@ export default function ProductGallery({
   return (
     <div>
       <div
-        className="relative aspect-square overflow-hidden border border-[#eeeae5] bg-cream"
+        className={`relative overflow-hidden border border-[#eeeae5] bg-cream ${
+          artwork ? "aspect-[3/4]" : "aspect-square"
+        }`}
         role="region"
         aria-roledescription="carousel"
         aria-label={`Galeri ${name}`}
       >
-        <Image
-          key={current.id}
-          src={current.image_url}
-          alt={name}
-          fill
-          priority
-          className="object-cover"
-          sizes="(max-width: 1024px) 100vw, 50vw"
-        />
+        {artwork ? (
+          <a
+            href={current.image_url}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Lihat gambar penuh"
+            className="absolute inset-0"
+          >
+            <Image
+              key={current.id}
+              src={current.image_url}
+              alt={name}
+              fill
+              priority
+              className="object-contain"
+              sizes="(max-width: 1024px) 100vw, 50vw"
+            />
+          </a>
+        ) : (
+          <Image
+            key={current.id}
+            src={current.image_url}
+            alt={name}
+            fill
+            priority
+            className="object-cover"
+            sizes="(max-width: 1024px) 100vw, 50vw"
+          />
+        )}
 
         {showControls && (
           <>

@@ -142,6 +142,7 @@ Do this after both halves can reach "buyer accepts a quote".
 - [x] **5.25** Wide section pages with sticky rail, 3-up commission cards, artworks retired (rows+objects via `0045`) *(`03e03a9`)*
 - [x] **5.26** Catalog management in sections + `/shop` Kelola tab: shared manager, `/staff/shop` retired with redirect *(`3dc16d7`)*
 - [ ] **5.27** Seed commission merch: 18 prints × A4/A5 + 2 standees, `Print`/`Standee` categories (migration `0046`)
+- [ ] **5.28** Full-size commission images on `/shop/[id]`: no-crop portrait stage + full-resolution link
 
 **5.5 was built ahead of 5.4**, using the table that was already live; the page renders its empty state until 6.1 seeds rows.
 
@@ -168,7 +169,6 @@ Drop in this order, and do not drop them silently — say so in the final write-
 
 1. Phase 5, all of it.
 2. Task 3.12 and 6.7.
-3. Task 5.3 in phase 5 (already covered by the first cut).
-4. Gallery uploads — use a link to an image instead.
+3. Gallery uploads — use a link to an image instead.
 
 Never cut: payment, login, or the quote step. They are the assignment.
