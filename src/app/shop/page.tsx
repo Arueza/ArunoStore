@@ -4,7 +4,9 @@ import { Suspense } from "react";
 import ShopGrid from "@/components/ShopGrid";
 import ShopFilter from "@/components/ShopFilter";
 import ShopSideToggle, { parseSide } from "@/components/ShopSideToggle";
+import CatalogManager from "@/components/CatalogManager";
 import { createPublicClient } from "@/lib/supabase/public";
+import { getProfile } from "@/lib/auth";
 import { parseSort } from "@/lib/shop";
 
 export const metadata: Metadata = {
@@ -37,6 +39,7 @@ export default async function ShopPage({
     max?: string;
     side?: string;
     sort?: string;
+    tab?: string;
   }>;
 }) {
   return (
@@ -99,9 +102,10 @@ async function ShopGridFromQuery({
     max?: string;
     side?: string;
     sort?: string;
+    tab?: string;
   }>;
 }) {
-  const { q, cat, cond, min, max, side: sideParam, sort: sortParam } = await searchParams;
+  const { q, cat, cond, min, max, side: sideParam, sort: sortParam, tab: tabParam } = await searchParams;
   const search = q?.trim();
   const categoryId = cat?.trim() || undefined;
   const condition = cond?.trim() || undefined;
@@ -109,6 +113,9 @@ async function ShopGridFromQuery({
   const maxPrice = max?.trim() || undefined;
   const side = parseSide(sideParam?.trim());
   const sort = parseSort(sortParam?.trim());
+  // Only an explicit ?tab=kelola switches the view, and only for staff —
+  // buyers asking for it still get the public grid (see ShopRoleView).
+  const tab = tabParam?.trim() === "kelola" ? "kelola" : "lihat";
   // Fetch categories for the dropdown. Only real ids reach the query; a
   // forged value falls back to unfiltered rather than to zero rows.
   const supabase = createPublicClient();
@@ -185,7 +192,7 @@ async function ShopGridFromQuery({
             )}
           </p>
         )}
-        <ShopGrid
+        <ShopRoleView
           query={search}
           categoryId={categoryId}
           condition={condition}
@@ -193,8 +200,140 @@ async function ShopGridFromQuery({
           maxPrice={maxPrice}
           showcase={side}
           sort={sort}
+          tab={tab}
+          toggleParams={toggleParams}
+          filterParams={searchParams}
         />
       </div>
     </div>
+  );
+}
+
+/**
+ * Public grid or staff Kelola tab (roadmap 5.26).
+ *
+ * Staff asking for ?tab=kelola get catalogue management — the same block
+ * that used to live at /staff/shop — instead of the public grid. Everyone
+ * else, including staff on the plain view, gets the grid. The fallback is
+ * the grid, so buyers and signed-out visitors render with no flash.
+ */
+export async function ShopRoleView({
+  query,
+  categoryId,
+  condition,
+  minPrice,
+  maxPrice,
+  showcase,
+  sort,
+  tab,
+  toggleParams,
+  filterParams,
+}: {
+  query?: string;
+  categoryId?: string;
+  condition?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  showcase?: "commission" | "titipan";
+  sort: "terbaru" | "termurah" | "termahal" | "nama";
+  tab: "lihat" | "kelola";
+  toggleParams: {
+    q?: string;
+    cat?: string;
+    cond?: string;
+    min?: string;
+    max?: string;
+    side?: "commission" | "titipan";
+    sort?: string;
+  };
+  filterParams: Promise<{
+    cat?: string;
+    cond?: string;
+    min?: string;
+    max?: string;
+    status?: string;
+  }>;
+}) {
+  const profile = await getProfile();
+
+  if (profile?.role === "staff") {
+    const hrefFor = (kelola: boolean) => {
+      const params = new URLSearchParams();
+      if (toggleParams.q) params.set("q", toggleParams.q);
+      if (toggleParams.cat) params.set("cat", toggleParams.cat);
+      if (toggleParams.cond) params.set("cond", toggleParams.cond);
+      if (toggleParams.min) params.set("min", toggleParams.min);
+      if (toggleParams.max) params.set("max", toggleParams.max);
+      if (toggleParams.side) params.set("side", toggleParams.side);
+      if (toggleParams.sort) params.set("sort", toggleParams.sort);
+      if (kelola) params.set("tab", "kelola");
+      const queryString = params.toString();
+      return queryString ? `/shop?${queryString}` : "/shop";
+    };
+
+    const activeClass =
+      "bg-plum px-5 py-2 text-xs uppercase tracking-[0.18em] text-white";
+    const idleClass =
+      "border border-[#e2ddd7] bg-white px-5 py-2 text-xs uppercase tracking-[0.18em] text-[#6c6870] transition-colors hover:border-plum hover:text-plum";
+
+    return (
+      <div>
+        <div role="group" aria-label="Tampilan katalog" className="flex gap-2">
+          {tab === "kelola" ? (
+            <>
+              <Link href={hrefFor(false)} className={idleClass}>
+                Lihat
+              </Link>
+              <span aria-current="true" className={activeClass}>
+                Kelola
+              </span>
+            </>
+          ) : (
+            <>
+              <span aria-current="true" className={activeClass}>
+                Lihat
+              </span>
+              <Link href={hrefFor(true)} className={idleClass}>
+                Kelola
+              </Link>
+            </>
+          )}
+        </div>
+
+        <div className="mt-8">
+          {tab === "kelola" ? (
+            <Suspense>
+              <CatalogManager
+                from="shop"
+                baseHref="/shop?tab=kelola"
+                searchParams={filterParams}
+              />
+            </Suspense>
+          ) : (
+            <ShopGrid
+              query={query}
+              categoryId={categoryId}
+              condition={condition}
+              minPrice={minPrice}
+              maxPrice={maxPrice}
+              showcase={showcase}
+              sort={sort}
+            />
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <ShopGrid
+      query={query}
+      categoryId={categoryId}
+      condition={condition}
+      minPrice={minPrice}
+      maxPrice={maxPrice}
+      showcase={showcase}
+      sort={sort}
+    />
   );
 }

@@ -75,6 +75,14 @@ const nextConfig: NextConfig = {
         destination: "/shop?side=commission",
         permanent: true,
       },
+      // 5.26 moved catalogue management onto the /shop Kelola tab; a
+      // bookmarked staff list lands on management instead of a 404. Exact
+      // path only, so /staff/shop/[id] edit pages are untouched.
+      {
+        source: "/staff/shop",
+        destination: "/shop?tab=kelola",
+        permanent: true,
+      },
     ];
   },
 };

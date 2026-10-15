@@ -6,13 +6,13 @@ export const metadata: Metadata = {
 };
 
 /**
- * The staff hub (roadmap 1.8's guarded page, slimmed at 5.24).
+ * The staff hub (roadmap 1.8's guarded page, slimmed at 5.24, landing-only
+ * at 5.26).
  *
- * The commission and titipan queues used to live here and under
- * /staff/titipan; both now render as Kelola blocks on /commissions and
- * /titipan for staff sessions. The artworks gallery retired at 5.25, so
- * this page keeps only catalogue management, which moves to the section
- * dashboards at 5.26.
+ * Every management surface now lives where its readers are: request queues
+ * and catalogue blocks on /commissions and /titipan, the full catalogue on
+ * the /shop Kelola tab. This page is only the jump-off the navbar Staff
+ * link lands on.
  */
 export default function StaffPage() {
   return (
@@ -22,13 +22,18 @@ export default function StaffPage() {
       </h1>
 
       <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#6c6870] sm:text-base">
-        Kelola katalog belanja. Permintaan commission dan
-        titipan dikelola dari halaman masing-masing.
+        Kelola commission, titipan, dan katalog dari halaman masing-masing.
       </p>
 
       <nav aria-label="Menu staf" className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-        <Link href="/staff/shop" className="font-semibold text-plum hover:underline">
-          Katalog
+        <Link href="/commissions" className="font-semibold text-plum hover:underline">
+          Kelola commission
+        </Link>
+        <Link href="/titipan" className="font-semibold text-plum hover:underline">
+          Kelola titipan
+        </Link>
+        <Link href="/shop?tab=kelola" className="font-semibold text-plum hover:underline">
+          Kelola katalog
         </Link>
       </nav>
     </main>

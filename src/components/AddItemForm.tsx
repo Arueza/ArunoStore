@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import CategorySelect from "@/components/CategorySelect";
 import { Spinner } from "@/components/SubmitButton";
 import { FASHION_SIZES } from "@/lib/shop";
-import { addItem } from "./actions";
-import { compressAndUploadShopImages } from "./shopImages";
+import { addItem } from "@/app/staff/shop/actions";
+import { compressAndUploadShopImages } from "@/app/staff/shop/shopImages";
 
 /**
  * New-product form. Same fields as the old server `<form action={addItem}>`;
@@ -14,10 +14,19 @@ import { compressAndUploadShopImages } from "./shopImages";
  * and uploaded straight to Storage, so the Server Action receives path
  * strings and never hits the 1 MB body limit.
  *
+ * Shared by the three management surfaces (roadmap 5.26): the Kelola tab on
+ * /shop and the Kelola katalog blocks on /commissions and /titipan.
+ * `defaultShowcase` preselects the embedding page's side; every option stays
+ * choosable, because `keduanya` items need a home somewhere.
+ *
  * On success the form resets and the catalogue list refreshes in place, so
  * staff can immediately enter the next product with no manual reload.
  */
-export default function AddItemForm() {
+export default function AddItemForm({
+  defaultShowcase = "keduanya",
+}: {
+  defaultShowcase?: "commission" | "titipan" | "keduanya";
+}) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -120,7 +129,7 @@ export default function AddItemForm() {
           Tampil di
           <select
             name="showcase"
-            defaultValue="keduanya"
+            defaultValue={defaultShowcase}
             className="mt-1 w-full border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink focus:border-plum focus:outline-none"
           >
             <option value="commission">Commission</option>

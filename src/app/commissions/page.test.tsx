@@ -80,6 +80,10 @@ describe("CommissionRail", () => {
       "href",
       "#kelola",
     );
+    expect(screen.getByRole("link", { name: /kelola katalog/i })).toHaveAttribute(
+      "href",
+      "#kelola-katalog",
+    );
     expect(screen.queryByRole("link", { name: "Mulai commission" })).toBeNull();
   });
 });
@@ -89,7 +93,9 @@ describe("CommissionDashboard", () => {
     for (const profile of [null, { full_name: "Siti", role: "buyer" }]) {
       getProfile.mockResolvedValue(profile);
 
-      const { container, unmount } = render(await CommissionDashboard());
+      const { container, unmount } = render(
+        await CommissionDashboard({ searchParams: Promise.resolve({}) }),
+      );
 
       expect(container).toBeEmptyDOMElement();
       unmount();
@@ -99,7 +105,9 @@ describe("CommissionDashboard", () => {
   test("staff get the Kelola dashboard instead of the call to action", async () => {
     getProfile.mockResolvedValue({ full_name: "Verrel", role: "staff" });
 
-    render(await CommissionDashboard());
+    render(
+      await CommissionDashboard({ searchParams: Promise.resolve({}) }),
+    );
 
     expect(screen.getByText("Kelola permintaan")).toBeInTheDocument();
   });

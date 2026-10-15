@@ -137,6 +137,10 @@ describe("TitipanRail", () => {
       "href",
       "#kelola",
     );
+    expect(screen.getByRole("link", { name: /kelola katalog/i })).toHaveAttribute(
+      "href",
+      "#kelola-katalog",
+    );
     expect(screen.queryByRole("link", { name: "Mulai titipan" })).toBeNull();
   });
 });
@@ -146,7 +150,9 @@ describe("TitipanDashboard", () => {
     for (const profile of [null, { full_name: "Siti", role: "buyer" }]) {
       getProfile.mockResolvedValue(profile);
 
-      const { container, unmount } = render(await TitipanDashboard());
+      const { container, unmount } = render(
+        await TitipanDashboard({ searchParams: Promise.resolve({}) }),
+      );
 
       expect(container).toBeEmptyDOMElement();
       unmount();
@@ -156,7 +162,9 @@ describe("TitipanDashboard", () => {
   test("staff get the Kelola dashboard instead of the call to action", async () => {
     getProfile.mockResolvedValue({ full_name: "Alfreza", role: "staff" });
 
-    render(await TitipanDashboard());
+    render(
+      await TitipanDashboard({ searchParams: Promise.resolve({}) }),
+    );
 
     expect(screen.getByText("Kelola permintaan")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Mulai titipan" })).toBeNull();

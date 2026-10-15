@@ -43,5 +43,10 @@ describe("next.config redirects", () => {
       destination: "/shop?side=commission",
       permanent: true,
     });
+    expect(redirects).toContainEqual({
+      source: "/staff/shop",
+      destination: "/shop?tab=kelola",
+      permanent: true,
+    });
   });
 });
