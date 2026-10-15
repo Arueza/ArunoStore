@@ -147,3 +147,4 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
 - **`admins` table dropped.** 0025 migrated `consignment_items.admin_id` to
   `profiles(id)`, replaced all admin policies with `is_staff()`, and rewrote
   notify functions to read from `profiles`. 0026 dropped the table entirely.
+  VERCEL TEST
