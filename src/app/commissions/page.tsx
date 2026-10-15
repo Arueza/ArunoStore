@@ -62,7 +62,7 @@ async function ServicesList() {
 
 export default function CommissionsPage() {
   return (
-    <main className="mx-auto w-full max-w-3xl px-5 py-14 sm:px-[6%] sm:py-20">
+    <main className="mx-auto w-full max-w-6xl px-5 py-14 sm:px-[6%] sm:py-20">
       <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
         Commissions
       </h1>
@@ -72,67 +72,111 @@ export default function CommissionsPage() {
         mengirim kutipan harga dan waktu pengerjaan.
       </p>
 
-      <section aria-labelledby="layanan" className="mt-14">
-        <h2
-          id="layanan"
-          className="font-display text-xl font-semibold text-ink"
-        >
-          Layanan
-        </h2>
+      <div className="mt-14 grid gap-12 lg:grid-cols-[1fr_20rem]">
+        <div>
+          <section aria-labelledby="layanan">
+            <h2
+              id="layanan"
+              className="font-display text-xl font-semibold text-ink"
+            >
+              Layanan
+            </h2>
 
-        <Suspense>
-          <ServicesList />
-        </Suspense>
-      </section>
+            <Suspense>
+              <ServicesList />
+            </Suspense>
+          </section>
 
-      <section aria-labelledby="katalog" className="mt-14">
-        <h2
-          id="katalog"
-          className="font-display text-xl font-semibold text-ink"
-        >
-          Katalog
-        </h2>
+          <section aria-labelledby="katalog" className="mt-14">
+            <h2
+              id="katalog"
+              className="font-display text-xl font-semibold text-ink"
+            >
+              Katalog
+            </h2>
 
-        <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#6c6870]">
-          Merchandise seni dan karya endorse yang siap kirim. Kalau tidak ada
-          yang cocok, minta karya custom lewat commission.
-        </p>
+            <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#6c6870]">
+              Merchandise seni dan karya endorse yang siap kirim. Kalau tidak ada
+              yang cocok, minta karya custom lewat commission.
+            </p>
 
-        <Link
-          href="/shop?side=commission"
-          className="mt-6 inline-block bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
-        >
-          Lihat katalog
-        </Link>
-      </section>
+            <Link
+              href="/shop?side=commission"
+              className="mt-6 inline-block bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+            >
+              Lihat katalog
+            </Link>
+          </section>
+        </div>
 
-      <div className="mt-14 border-t border-[#eeeae5] pt-8">
-        {/* The call to action for buyers ships in the static shell; staff get
-            the Kelola dashboard once the session resolves. Same island pattern
-            as AuthSlot: no session read in the page body, so the route keeps
-            prerendering. */}
-        <Suspense fallback={<BuyerCTA />}>
-          <CommissionRoleView />
-        </Suspense>
+        {/* Role island for the rail: buyers get the call to action in the
+            static shell, staff get the Kelola quick card once the session
+            resolves. Same pattern as AuthSlot — no session read in the page
+            body, so the route keeps prerendering. */}
+        <aside className="h-fit border border-[#eeeae5] bg-white p-6 lg:sticky lg:top-24">
+          <Suspense fallback={<BuyerCTA />}>
+            <CommissionRail />
+          </Suspense>
+        </aside>
       </div>
+
+      {/* Staff-only dashboard below the content. Buyers resolve to nothing,
+          so there is no fallback markup and no flash for them. */}
+      <Suspense fallback={null}>
+        <CommissionDashboard />
+      </Suspense>
     </main>
   );
 }
 
 /**
- * Buyer or manager view of the commissions page (roadmap 5.24).
+ * Rail card for the commissions page (roadmap 5.24, rail at 5.25).
  *
  * Staff are the commissioner side themselves, so they never start a request:
- * they get the incoming queue where buyers get the CTA. Signed out and buyer
+ * they get quick links where buyers get the CTA. Signed out and buyer
  * sessions render exactly the fallback above, with no flash.
  */
-export async function CommissionRoleView() {
+export async function CommissionRail() {
   const profile = await getProfile();
 
   if (profile?.role !== "staff") return <BuyerCTA />;
 
   return (
-    <section aria-labelledby="kelola">
+    <nav aria-label="Kelola commission">
+      <p className="font-display text-lg font-semibold text-ink">Kelola</p>
+      <ul className="mt-4 space-y-3 text-sm">
+        <li>
+          <a href="#kelola" className="font-semibold text-plum hover:underline">
+            Permintaan masuk →
+          </a>
+        </li>
+        <li>
+          <Link
+            href="/commissions/request"
+            className="text-[#6c6870] hover:text-plum hover:underline"
+          >
+            Lihat form buyer
+          </Link>
+        </li>
+      </ul>
+    </nav>
+  );
+}
+
+/**
+ * Staff dashboard for the commissions page: the incoming queue, full width
+ * below the content. Buyers resolve to nothing.
+ */
+export async function CommissionDashboard() {
+  const profile = await getProfile();
+
+  if (profile?.role !== "staff") return null;
+
+  return (
+    <section
+      aria-labelledby="kelola"
+      className="mt-14 border-t border-[#eeeae5] pt-8"
+    >
       <h2
         id="kelola"
         className="font-display text-xl font-semibold text-ink"

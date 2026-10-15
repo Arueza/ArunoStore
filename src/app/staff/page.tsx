@@ -10,8 +10,9 @@ export const metadata: Metadata = {
  *
  * The commission and titipan queues used to live here and under
  * /staff/titipan; both now render as Kelola blocks on /commissions and
- * /titipan for staff sessions, so this page keeps only the shop half —
- * gallery and catalogue management, which have no section page to live on.
+ * /titipan for staff sessions. The artworks gallery retired at 5.25, so
+ * this page keeps only catalogue management, which moves to the section
+ * dashboards at 5.26.
  */
 export default function StaffPage() {
   return (
@@ -21,14 +22,11 @@ export default function StaffPage() {
       </h1>
 
       <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#6c6870] sm:text-base">
-        Kelola galeri karya dan katalog belanja. Permintaan commission dan
+        Kelola katalog belanja. Permintaan commission dan
         titipan dikelola dari halaman masing-masing.
       </p>
 
       <nav aria-label="Menu staf" className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-        <Link href="/staff/artworks" className="font-semibold text-plum hover:underline">
-          Galeri karya
-        </Link>
         <Link href="/staff/shop" className="font-semibold text-plum hover:underline">
           Katalog
         </Link>

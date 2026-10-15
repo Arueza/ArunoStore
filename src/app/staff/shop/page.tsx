@@ -169,14 +169,14 @@ export default function StaffShopPage({
       </p>
 
       <nav aria-label="Menu staf" className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+        <Link href="/commissions" className="font-semibold text-plum hover:underline">
+          Kelola commission
+        </Link>
+        <Link href="/titipan" className="font-semibold text-plum hover:underline">
+          Kelola titipan
+        </Link>
         <Link href="/staff" className="font-semibold text-plum hover:underline">
-          Permintaan commission
-        </Link>
-        <Link href="/staff/titipan" className="font-semibold text-plum hover:underline">
-          Permintaan titipan
-        </Link>
-        <Link href="/staff/artworks" className="font-semibold text-plum hover:underline">
-          Galeri karya
+          Ruang staf
         </Link>
       </nav>
 

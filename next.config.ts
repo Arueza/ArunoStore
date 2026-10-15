@@ -63,6 +63,18 @@ const nextConfig: NextConfig = {
         destination: "/titipan",
         permanent: true,
       },
+      // 5.25 retired the artworks gallery into the commission side of the
+      // shop; the public gallery and the staff manager both land there.
+      {
+        source: "/artworks",
+        destination: "/shop?side=commission",
+        permanent: true,
+      },
+      {
+        source: "/staff/artworks",
+        destination: "/shop?side=commission",
+        permanent: true,
+      },
     ];
   },
 };

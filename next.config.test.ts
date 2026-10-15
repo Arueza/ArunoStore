@@ -33,5 +33,15 @@ describe("next.config redirects", () => {
       destination: "/titipan",
       permanent: true,
     });
+    expect(redirects).toContainEqual({
+      source: "/artworks",
+      destination: "/shop?side=commission",
+      permanent: true,
+    });
+    expect(redirects).toContainEqual({
+      source: "/staff/artworks",
+      destination: "/shop?side=commission",
+      permanent: true,
+    });
   });
 });

@@ -45,7 +45,7 @@ vi.mock("@/lib/supabase/server", () => ({
   })),
 }));
 
-import CommissionsPage, { CommissionRoleView } from "./page";
+import CommissionsPage, { CommissionDashboard, CommissionRail } from "./page";
 import { CommissionQueue } from "@/components/CommissionQueue";
 
 describe("Commissions page", () => {
@@ -56,12 +56,12 @@ describe("Commissions page", () => {
   });
 });
 
-describe("CommissionRoleView", () => {
-  test("buyers and visitors get the call to action, never the dashboard", async () => {
+describe("CommissionRail", () => {
+  test("buyers and visitors get the call to action, never the Kelola card", async () => {
     for (const profile of [null, { full_name: "Siti", role: "buyer" }]) {
       getProfile.mockResolvedValue(profile);
 
-      const { unmount } = render(await CommissionRoleView());
+      const { unmount } = render(await CommissionRail());
 
       expect(
         screen.getByRole("link", { name: "Mulai commission" }),
@@ -71,13 +71,37 @@ describe("CommissionRoleView", () => {
     }
   });
 
+  test("staff get the Kelola card instead of the call to action", async () => {
+    getProfile.mockResolvedValue({ full_name: "Verrel", role: "staff" });
+
+    render(await CommissionRail());
+
+    expect(screen.getByRole("link", { name: /permintaan masuk/i })).toHaveAttribute(
+      "href",
+      "#kelola",
+    );
+    expect(screen.queryByRole("link", { name: "Mulai commission" })).toBeNull();
+  });
+});
+
+describe("CommissionDashboard", () => {
+  test("buyers and visitors resolve to nothing", async () => {
+    for (const profile of [null, { full_name: "Siti", role: "buyer" }]) {
+      getProfile.mockResolvedValue(profile);
+
+      const { container, unmount } = render(await CommissionDashboard());
+
+      expect(container).toBeEmptyDOMElement();
+      unmount();
+    }
+  });
+
   test("staff get the Kelola dashboard instead of the call to action", async () => {
     getProfile.mockResolvedValue({ full_name: "Verrel", role: "staff" });
 
-    render(await CommissionRoleView());
+    render(await CommissionDashboard());
 
     expect(screen.getByText("Kelola permintaan")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Mulai commission" })).toBeNull();
   });
 
   // The queue streams behind its own boundary, which the test renderer cannot

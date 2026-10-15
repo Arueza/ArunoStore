@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { PENDING, pageExists } from "@/components/pendingPages";
-import TitipanPage, { TitipanRoleView } from "./page";
+import TitipanPage, { TitipanDashboard, TitipanRail } from "./page";
 
 const getProfile = vi.fn();
 
@@ -113,12 +113,12 @@ describe("Titipan page", () => {
   });
 });
 
-describe("TitipanRoleView", () => {
-  test("buyers and visitors get the call to action, never the dashboard", async () => {
+describe("TitipanRail", () => {
+  test("buyers and visitors get the call to action, never the Kelola card", async () => {
     for (const profile of [null, { full_name: "Siti", role: "buyer" }]) {
       getProfile.mockResolvedValue(profile);
 
-      const { unmount } = render(await TitipanRoleView());
+      const { unmount } = render(await TitipanRail());
 
       expect(
         screen.getByRole("link", { name: "Mulai titipan" }),
@@ -128,10 +128,35 @@ describe("TitipanRoleView", () => {
     }
   });
 
+  test("staff get the Kelola card instead of the call to action", async () => {
+    getProfile.mockResolvedValue({ full_name: "Alfreza", role: "staff" });
+
+    render(await TitipanRail());
+
+    expect(screen.getByRole("link", { name: /permintaan masuk/i })).toHaveAttribute(
+      "href",
+      "#kelola",
+    );
+    expect(screen.queryByRole("link", { name: "Mulai titipan" })).toBeNull();
+  });
+});
+
+describe("TitipanDashboard", () => {
+  test("buyers and visitors resolve to nothing", async () => {
+    for (const profile of [null, { full_name: "Siti", role: "buyer" }]) {
+      getProfile.mockResolvedValue(profile);
+
+      const { container, unmount } = render(await TitipanDashboard());
+
+      expect(container).toBeEmptyDOMElement();
+      unmount();
+    }
+  });
+
   test("staff get the Kelola dashboard instead of the call to action", async () => {
     getProfile.mockResolvedValue({ full_name: "Alfreza", role: "staff" });
 
-    render(await TitipanRoleView());
+    render(await TitipanDashboard());
 
     expect(screen.getByText("Kelola permintaan")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Mulai titipan" })).toBeNull();

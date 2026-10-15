@@ -44,6 +44,12 @@ const COSTS = [
   },
 ];
 
+const RULES = [
+  "Tautannya harus produk yang masih bisa dibeli dan boleh dikirim ke Indonesia.",
+  "Budget hanya perkiraan. Harga sebenarnya keluar di kutipan.",
+  "Kalau produknya gagal dibeli atau tidak bisa dikirim, permintaan dibatalkan dan uangmu dikembalikan penuh.",
+];
+
 // One worked example, so "the total is the three added up" is not the only thing
 // the buyer has to trust. The total comes from quoteTotal(), the same function
 // task 3.6 will use in the staff quote box.
@@ -52,12 +58,6 @@ const EXAMPLE = {
   shipping: 180000,
   serviceFee: SERVICE_FEE,
 };
-
-const RULES = [
-  "Tautannya harus produk yang masih bisa dibeli dan boleh dikirim ke Indonesia.",
-  "Budget hanya perkiraan. Harga sebenarnya keluar di kutipan.",
-  "Kalau produknya gagal dibeli atau tidak bisa dikirim, permintaan dibatalkan dan uangmu dikembalikan penuh.",
-];
 
 /**
  * What a titipan is and what it costs, for someone who has not asked for one yet.
@@ -68,8 +68,9 @@ const RULES = [
  *
  * Reads no session. That is what lets this route prerender whole under
  * cacheComponents, like the storefront; a session read here would put a Supabase
- * round trip in front of the page and undo 1.12 and 1.13 on one route. So there is
- * no <Suspense> boundary either — the boundary exists only because of the read.
+ * round trip in front of the page and undo 1.12 and 1.13 on one route. So the
+ * role switch lives in islands below — the boundaries exist only because of
+ * the read.
  *
  * The call to action points at the form, which arrived at 3.3. Signed out, the
  * proxy sends the visitor to the login page rather than to a form they cannot
@@ -77,7 +78,7 @@ const RULES = [
  */
 export default function TitipanPage() {
   return (
-    <main className="mx-auto w-full max-w-3xl px-5 py-14 sm:px-[6%] sm:py-20">
+    <main className="mx-auto w-full max-w-6xl px-5 py-14 sm:px-[6%] sm:py-20">
       <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
         Titipan dari Jepang
       </h1>
@@ -87,120 +88,164 @@ export default function TitipanPage() {
         lalu kirim ke alamatmu di Indonesia.
       </p>
 
-      <section aria-labelledby="cara" className="mt-14">
-        <h2
-          id="cara"
-          className="font-display text-xl font-semibold text-ink"
-        >
-          Cara kerjanya
-        </h2>
-
-        {/* An ordered list rather than numbered characters, so the order is in
-            the markup and not only in how it looks. marker: colors the numbers
-            without reaching into the <li>. */}
-        <ol className="mt-5 list-inside list-decimal space-y-3 text-sm leading-relaxed text-[#6c6870] marker:font-medium marker:text-plum">
-          {STEPS.map((step) => (
-            <li key={step}>{step}</li>
-          ))}
-        </ol>
-      </section>
-
-      <section aria-labelledby="biaya" className="mt-14">
-        <h2
-          id="biaya"
-          className="font-display text-xl font-semibold text-ink"
-        >
-          Biayanya
-        </h2>
-
-        <dl className="mt-5 divide-y divide-[#eeeae5] border-y border-[#eeeae5]">
-          {COSTS.map((cost) => (
-            <div
-              key={cost.label}
-              className="flex flex-wrap items-baseline gap-x-4 py-4"
+      <div className="mt-14 grid gap-12 lg:grid-cols-[1fr_20rem]">
+        <div>
+          <section aria-labelledby="cara">
+            <h2
+              id="cara"
+              className="font-display text-xl font-semibold text-ink"
             >
-              <dt className="w-40 shrink-0 text-sm font-medium text-ink">
-                {cost.label}
-              </dt>
-              <dd className="text-sm leading-relaxed text-[#6c6870]">
-                {cost.note}
-              </dd>
-            </div>
-          ))}
-        </dl>
+              Cara kerjanya
+            </h2>
 
-        <p className="mt-4 text-sm leading-relaxed text-[#6c6870]">
-          {`Contoh: barang ${formatRupiah(EXAMPLE.itemPrice)} + ongkir ${formatRupiah(EXAMPLE.shipping)} + layanan ${formatRupiah(EXAMPLE.serviceFee)} = `}
-          <b className="font-medium text-ink">
-            {formatRupiah(quoteTotal(EXAMPLE))}
-          </b>
-        </p>
-      </section>
+            {/* An ordered list rather than numbered characters, so the order is in
+                the markup and not only in how it looks. marker: colors the numbers
+                without reaching into the <li>. */}
+            <ol className="mt-5 list-inside list-decimal space-y-3 text-sm leading-relaxed text-[#6c6870] marker:font-medium marker:text-plum">
+              {STEPS.map((step) => (
+                <li key={step}>{step}</li>
+              ))}
+            </ol>
+          </section>
 
-      <section aria-labelledby="sebelum" className="mt-14">
-        <h2
-          id="sebelum"
-          className="font-display text-xl font-semibold text-ink"
-        >
-          Sebelum kamu mengirim
-        </h2>
+          <section aria-labelledby="biaya" className="mt-14">
+            <h2
+              id="biaya"
+              className="font-display text-xl font-semibold text-ink"
+            >
+              Biayanya
+            </h2>
 
-        <ul className="mt-5 list-inside list-disc space-y-2.5 text-sm leading-relaxed text-[#6c6870] marker:text-plum">
-          {RULES.map((rule) => (
-            <li key={rule}>{rule}</li>
-          ))}
-        </ul>
-      </section>
+            <dl className="mt-5 divide-y divide-[#eeeae5] border-y border-[#eeeae5]">
+              {COSTS.map((cost) => (
+                <div
+                  key={cost.label}
+                  className="flex flex-wrap items-baseline gap-x-4 py-4"
+                >
+                  <dt className="w-40 shrink-0 text-sm font-medium text-ink">
+                    {cost.label}
+                  </dt>
+                  <dd className="text-sm leading-relaxed text-[#6c6870]">
+                    {cost.note}
+                  </dd>
+                </div>
+              ))}
+            </dl>
 
-      <section aria-labelledby="katalog" className="mt-14">
-        <h2
-          id="katalog"
-          className="font-display text-xl font-semibold text-ink"
-        >
-          Katalog
-        </h2>
+            <p className="mt-4 text-sm leading-relaxed text-[#6c6870]">
+              {`Contoh: barang ${formatRupiah(EXAMPLE.itemPrice)} + ongkir ${formatRupiah(EXAMPLE.shipping)} + layanan ${formatRupiah(EXAMPLE.serviceFee)} = `}
+              <b className="font-medium text-ink">
+                {formatRupiah(quoteTotal(EXAMPLE))}
+              </b>
+            </p>
+          </section>
 
-        <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#6c6870]">
-          Barang dari Jepang yang sudah jadi dan siap kirim. Kalau tidak ada
-          yang cocok, kirim tautan produk dan kami belikan untukmu.
-        </p>
+          <section aria-labelledby="sebelum" className="mt-14">
+            <h2
+              id="sebelum"
+              className="font-display text-xl font-semibold text-ink"
+            >
+              Sebelum kamu mengirim
+            </h2>
 
-        <Link
-          href="/shop?side=titipan"
-          className="mt-6 inline-block bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
-        >
-          Lihat katalog
-        </Link>
-      </section>
+            <ul className="mt-5 list-inside list-disc space-y-2.5 text-sm leading-relaxed text-[#6c6870] marker:text-plum">
+              {RULES.map((rule) => (
+                <li key={rule}>{rule}</li>
+              ))}
+            </ul>
+          </section>
 
-      {/* /titipan/request exists as of 3.3 and /titipan/mine as of 3.8, and
-          both are guarded, so a signed-out visitor lands on the login page
-          instead of a page they cannot use. Both destinations are held by the
-          nav link tests. Staff get the Kelola dashboard here instead of the
-          CTA, by the same island pattern as /commissions. */}
-      <div className="mt-14 border-t border-[#eeeae5] pt-8">
-        <Suspense fallback={<BuyerCTA />}>
-          <TitipanRoleView />
-        </Suspense>
+          <section aria-labelledby="katalog" className="mt-14">
+            <h2
+              id="katalog"
+              className="font-display text-xl font-semibold text-ink"
+            >
+              Katalog
+            </h2>
+
+            <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#6c6870]">
+              Barang dari Jepang yang sudah jadi dan siap kirim. Kalau tidak ada
+              yang cocok, kirim tautan produk dan kami belikan untukmu.
+            </p>
+
+            <Link
+              href="/shop?side=titipan"
+              className="mt-6 inline-block bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+            >
+              Lihat katalog
+            </Link>
+          </section>
+        </div>
+
+        {/* Role island for the rail: buyers get the call to action in the
+            static shell, staff get the Kelola quick card once the session
+            resolves. /titipan/request and /titipan/mine are guarded, so a
+            signed-out visitor lands on the login page rather than on pages
+            they cannot use. */}
+        <aside className="h-fit border border-[#eeeae5] bg-white p-6 lg:sticky lg:top-24">
+          <Suspense fallback={<BuyerCTA />}>
+            <TitipanRail />
+          </Suspense>
+        </aside>
       </div>
+
+      {/* Staff-only dashboard below the content. Buyers resolve to nothing,
+          so there is no fallback markup and no flash for them. */}
+      <Suspense fallback={null}>
+        <TitipanDashboard />
+      </Suspense>
     </main>
   );
 }
 
 /**
- * Buyer or manager view of the titipan page (roadmap 5.24).
+ * Rail card for the titipan page (roadmap 5.24, rail at 5.25).
  *
  * Staff run the titipan side themselves, so they never send a request: they
- * get the incoming queue where buyers get the CTA. Signed out and buyer
- * sessions render exactly the fallback above, with no flash.
+ * get quick links where buyers get the CTA. Signed out and buyer sessions
+ * render exactly the fallback above, with no flash.
  */
-export async function TitipanRoleView() {
+export async function TitipanRail() {
   const profile = await getProfile();
 
   if (profile?.role !== "staff") return <BuyerCTA />;
 
   return (
-    <section aria-labelledby="kelola">
+    <nav aria-label="Kelola titipan">
+      <p className="font-display text-lg font-semibold text-ink">Kelola</p>
+      <ul className="mt-4 space-y-3 text-sm">
+        <li>
+          <a href="#kelola" className="font-semibold text-plum hover:underline">
+            Permintaan masuk →
+          </a>
+        </li>
+        <li>
+          <Link
+            href="/titipan/request"
+            className="text-[#6c6870] hover:text-plum hover:underline"
+          >
+            Lihat form buyer
+          </Link>
+        </li>
+      </ul>
+    </nav>
+  );
+}
+
+/**
+ * Staff dashboard for the titipan page: the incoming queue, full width
+ * below the content. Buyers resolve to nothing.
+ */
+export async function TitipanDashboard() {
+  const profile = await getProfile();
+
+  if (profile?.role !== "staff") return null;
+
+  return (
+    <section
+      aria-labelledby="kelola"
+      className="mt-14 border-t border-[#eeeae5] pt-8"
+    >
       <h2
         id="kelola"
         className="font-display text-xl font-semibold text-ink"

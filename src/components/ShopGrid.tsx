@@ -122,7 +122,12 @@ export default async function ShopGrid({
     <div>
       <p className="text-sm text-[#6c6870]">{items.length} Produk</p>
 
-      <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-8 lg:grid-cols-4">
+      {/* Commission-side pieces read bigger three-up; everything else stays
+          four-up. Driven purely by the showcase filter, so /shop, searches
+          and the titipan side keep the denser grid. */}
+      <div
+        className={`mt-4 grid grid-cols-2 gap-x-4 gap-y-8 ${showcase === "commission" ? "lg:grid-cols-3" : "lg:grid-cols-4"}`}
+      >
         {items.map((item) => {
           const thumb = pickThumb(item.consignment_images);
           const left = remainingStock(item);
