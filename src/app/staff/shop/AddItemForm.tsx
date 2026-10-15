@@ -12,11 +12,15 @@ import { compressAndUploadShopImages } from "./shopImages";
  * only the image path changed: files are compressed to WebP in the browser
  * and uploaded straight to Storage, so the Server Action receives path
  * strings and never hits the 1 MB body limit.
+ *
+ * On success the form resets and the catalogue list refreshes in place, so
+ * staff can immediately enter the next product with no manual reload.
  */
 export default function AddItemForm() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -34,6 +38,7 @@ export default function AddItemForm() {
 
     setSaving(true);
     setError(null);
+    setSuccess(null);
 
     try {
       const paths = await compressAndUploadShopImages(picked);
@@ -42,14 +47,17 @@ export default function AddItemForm() {
       data.delete("images");
       for (const path of paths) data.append("image_path", path);
 
-      // addItem redirects, which throws NEXT_REDIRECT. Expected — the
-      // redirect carries ?saved=1 or ?error=…. Same pattern as DeliveryUpload.
-      try {
-        await addItem(data);
-      } catch {
-        // Navigation handles the result.
+      const result = await addItem(data);
+
+      if (!result.ok) {
+        setError(result.message);
+        setSaving(false);
+        return;
       }
 
+      form.reset();
+      setSuccess("Produk ditambah ke katalog.");
+      setSaving(false);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal mengunggah gambar.");
@@ -185,6 +193,7 @@ export default function AddItemForm() {
       </label>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
+      {success && <p className="text-sm text-green-700">{success}</p>}
 
       <button
         type="submit"

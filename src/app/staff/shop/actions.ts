@@ -37,31 +37,46 @@ const PUBLIC_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/pu
  *
  * A server action rather than a route handler, so there is no URL to bookmark
  * and no way to reach it with a GET.
+ *
+ * Returns a result instead of redirecting, so the client form can reset
+ * itself and refresh the list without a full page navigation. Auth failures
+ * still redirect to /login or /.
  */
 
-function wholeRupiah(formData: FormData, key: string, label: string, path: string) {
+function wholeRupiah(
+  formData: FormData,
+  key: string,
+  label: string,
+): { ok: true; amount: number } | { ok: false; message: string } {
   const raw = formData.get(key);
 
   if (typeof raw !== "string" || !WHOLE_RUPIAH.test(raw.trim())) {
-    redirect(
-      `${path}?error=${label} harus angka bulat, tanpa pemisah ribuan atau desimal.`,
-    );
+    return {
+      ok: false,
+      message: `${label} harus angka bulat, tanpa pemisah ribuan atau desimal.`,
+    };
   }
 
   const trimmed = raw.trim();
   const amount = Number(trimmed);
 
   if (!Number.isSafeInteger(amount)) {
-    redirect(`${path}?error=${label} terlalu besar.`);
+    return { ok: false, message: `${label} terlalu besar.` };
   }
 
-  return amount;
+  return { ok: true, amount };
 }
 
-export async function addItem(formData: FormData): Promise<void> {
+export type AddItemResult = { ok: true } | { ok: false; message: string };
+
+export async function addItem(formData: FormData): Promise<AddItemResult> {
+  const priceParsed = wholeRupiah(formData, "price", "Harga");
+  if (!priceParsed.ok) return priceParsed;
+  const stockParsed = wholeRupiah(formData, "stock", "Stok");
+  if (!stockParsed.ok) return stockParsed;
+  const price = priceParsed.amount;
+  const stock = stockParsed.amount;
   const name = formData.get("name");
-  const price = wholeRupiah(formData, "price", "Harga", "/staff/shop");
-  const stock = wholeRupiah(formData, "stock", "Stok", "/staff/shop");
   const condition = formData.get("condition");
   const showcase = formData.get("showcase");
   const description = formData.get("description");
@@ -75,15 +90,15 @@ export async function addItem(formData: FormData): Promise<void> {
     .map((p) => p.trim());
 
   if (typeof name !== "string" || !name.trim()) {
-    redirect("/staff/shop?error=Nama produk wajib diisi.");
+    return { ok: false, message: "Nama produk wajib diisi." };
   }
 
   if (stock < 0) {
-    redirect("/staff/shop?error=Stok tidak boleh negatif.");
+    return { ok: false, message: "Stok tidak boleh negatif." };
   }
 
   if (condition !== "baru" && condition !== "bekas") {
-    redirect("/staff/shop?error=Kondisi tidak valid.");
+    return { ok: false, message: "Kondisi tidak valid." };
   }
 
   if (
@@ -91,15 +106,15 @@ export async function addItem(formData: FormData): Promise<void> {
     showcase !== "titipan" &&
     showcase !== "keduanya"
   ) {
-    redirect("/staff/shop?error=Pilihan tampil tidak valid.");
+    return { ok: false, message: "Pilihan tampil tidak valid." };
   }
 
   if (imagePaths.length === 0) {
-    redirect("/staff/shop?error=Minimal satu gambar wajib diunggah.");
+    return { ok: false, message: "Minimal satu gambar wajib diunggah." };
   }
 
   if (imagePaths.length > 10 || imagePaths.some((p) => !isValidShopImagePath(p))) {
-    redirect("/staff/shop?error=Path gambar tidak valid.");
+    return { ok: false, message: "Path gambar tidak valid." };
   }
 
   const supabase = await createClient();
@@ -169,9 +184,10 @@ export async function addItem(formData: FormData): Promise<void> {
 
   if (insertError || !item) {
     await supabase.storage.from(BUCKET).remove(uploadedPaths);
-    redirect(
-      `/staff/shop?error=Gagal menyimpan produk: ${insertError?.message ?? "tidak diketahui"}`,
-    );
+    return {
+      ok: false,
+      message: `Gagal menyimpan produk: ${insertError?.message ?? "tidak diketahui"}`,
+    };
   }
 
   // Insert image rows. The first image is the thumbnail.
@@ -188,9 +204,10 @@ export async function addItem(formData: FormData): Promise<void> {
   if (imageError) {
     await supabase.storage.from(BUCKET).remove(uploadedPaths);
     await supabase.from("consignment_items").delete().eq("id", item.id);
-    redirect(
-      `/staff/shop?error=Gagal menyimpan gambar: ${imageError.message}`,
-    );
+    return {
+      ok: false,
+      message: `Gagal menyimpan gambar: ${imageError.message}`,
+    };
   }
 
   // Insert size variants for Fashion items if provided.
@@ -213,11 +230,12 @@ export async function addItem(formData: FormData): Promise<void> {
     await supabase.from("product_sizes").insert(sizesToInsert);
   }
 
+  revalidatePath("/staff/shop");
   revalidatePath("/shop");
   revalidatePath(`/shop/${item.id}`);
   revalidatePath("/shop/commission");
   revalidatePath("/shop/titipan");
-  redirect("/staff/shop?saved=1");
+  return { ok: true };
 }
 
 /**
@@ -240,8 +258,12 @@ export async function updateItem(formData: FormData): Promise<void> {
   const path = `/staff/shop/${id}`;
 
   const name = formData.get("name");
-  const price = wholeRupiah(formData, "price", "Harga", path);
-  const stock = wholeRupiah(formData, "stock", "Stok", path);
+  const priceParsed = wholeRupiah(formData, "price", "Harga");
+  if (!priceParsed.ok) redirect(`${path}?error=${priceParsed.message}`);
+  const stockParsed = wholeRupiah(formData, "stock", "Stok");
+  if (!stockParsed.ok) redirect(`${path}?error=${stockParsed.message}`);
+  const price = priceParsed.amount;
+  const stock = stockParsed.amount;
   const condition = formData.get("condition");
   const status = formData.get("status");
   const showcase = formData.get("showcase");
