@@ -110,3 +110,77 @@ export async function markAsArrived(formData: FormData): Promise<void> {
 
   redirect("/titipan/mine?saved=1");
 }
+
+/**
+ * Buyer rates a delivered titipan (roadmap 5.3).
+ *
+ * Gate: status must be 'arrived' — the parcel has reached the buyer. The row
+ * is read first and checked; the update policy from 0028 already restricts
+ * writes to the buyer's own row, and the column grant from 0042 covers rating
+ * and rating_note.
+ *
+ * rating is 1-5 whole number or nothing. Blank note stores null, not "".
+ */
+export async function saveRating(formData: FormData): Promise<void> {
+  const id = formData.get("id");
+  const rating = formData.get("rating");
+  const note = formData.get("note");
+
+  if (typeof id !== "string" || !UUID.test(id)) {
+    redirect("/titipan/mine?error=Permintaan tidak valid.");
+  }
+
+  if (rating !== null && rating !== undefined && rating !== "") {
+    const ratingStr = String(rating).trim();
+    if (!/^[1-5]$/.test(ratingStr)) {
+      redirect(`/titipan/mine?error=Rating harus 1 sampai 5.`);
+    }
+  }
+
+  const ratingNum =
+    rating === null || rating === undefined || rating === ""
+      ? null
+      : Number(String(rating).trim());
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: request } = await supabase
+    .from("titipan_requests")
+    .select("status")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!request) {
+    redirect("/titipan/mine?error=Permintaan tidak ditemukan.");
+  }
+
+  if (request.status !== "arrived") {
+    redirect(`/titipan/mine?error=Permintaan ini belum sampai.`);
+  }
+
+  const trimmedNote = typeof note === "string" ? note.trim() : "";
+
+  const { error } = await supabase
+    .from("titipan_requests")
+    .update({
+      rating: ratingNum,
+      rating_note: trimmedNote || null,
+    })
+    .eq("id", id);
+
+  if (error) {
+    redirect(
+      `/titipan/mine?error=${encodeURIComponent(error.message)}`,
+    );
+  }
+
+  redirect("/titipan/mine?saved=1");
+}

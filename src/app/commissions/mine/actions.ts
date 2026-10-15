@@ -86,3 +86,79 @@ export async function respondToQuote(formData: FormData): Promise<void> {
 
   redirect("/commissions/mine?saved=1");
 }
+
+/**
+ * Buyer rates a delivered commission (roadmap 5.3).
+ *
+ * Gate: delivery_image must be set — the drawing has been delivered. Without
+ * this a buyer could rate before staff finished. The row is read first and
+ * checked; the update policy from 0020 already restricts writes to the buyer's
+ * own row, and the column grant from 0042 covers rating and rating_note.
+ *
+ * rating is 1-5 whole number or nothing. Blank note stores null, not "".
+ */
+export async function saveRating(formData: FormData): Promise<void> {
+  const id = formData.get("id");
+  const rating = formData.get("rating");
+  const note = formData.get("note");
+
+  if (typeof id !== "string" || !UUID.test(id)) {
+    redirect("/commissions/mine?error=Permintaan tidak valid.");
+  }
+
+  if (rating !== null && rating !== undefined && rating !== "") {
+    const ratingStr = String(rating).trim();
+    if (!/^[1-5]$/.test(ratingStr)) {
+      redirect(`/commissions/mine?error=Rating harus 1 sampai 5.`);
+    }
+  }
+
+  const ratingNum =
+    rating === null || rating === undefined || rating === ""
+      ? null
+      : Number(String(rating).trim());
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: commission } = await supabase
+    .from("commissions")
+    .select("delivery_image")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!commission) {
+    redirect("/commissions/mine?error=Permintaan tidak ditemukan.");
+  }
+
+  if (!commission.delivery_image) {
+    redirect(
+      `/commissions/mine?error=Permintaan ini belum selesai dikerjakan.`,
+    );
+  }
+
+  const trimmedNote = typeof note === "string" ? note.trim() : "";
+
+  const { error } = await supabase
+    .from("commissions")
+    .update({
+      rating: ratingNum,
+      rating_note: trimmedNote || null,
+    })
+    .eq("id", id);
+
+  if (error) {
+    redirect(
+      `/commissions/mine?error=${encodeURIComponent(error.message)}`,
+    );
+  }
+
+  redirect("/commissions/mine?saved=1");
+}

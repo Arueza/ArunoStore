@@ -9,7 +9,8 @@ import { STATUS_ORDER, statusLabel } from "@/lib/commissionStatus";
 import { quoteTotal } from "@/lib/quote";
 import { likePattern } from "@/lib/shop";
 import ListFilter from "@/components/ListFilter";
-import { markAsArrived, respondToQuote } from "./actions";
+import RatingForm from "@/components/RatingForm";
+import { markAsArrived, respondToQuote, saveRating } from "./actions";
 
 export const metadata: Metadata = {
   title: "Titipan Saya — Aruno Store",
@@ -35,6 +36,8 @@ type TitipanRequest = {
   quote_note: string | null;
   courier: string | null;
   tracking_number: string | null;
+  rating: number | null;
+  rating_note: string | null;
   created_at: string;
 };
 
@@ -76,7 +79,7 @@ export async function MyTitipanRequests({
   const dbQuery = supabase
     .from("titipan_requests")
     .select(
-      "id, product_link, size, color, quantity, status, quote_item_price, quote_shipping, quote_service_fee, quote_note, courier, tracking_number, created_at",
+      "id, product_link, size, color, quantity, status, quote_item_price, quote_shipping, quote_service_fee, quote_note, courier, tracking_number, rating, rating_note, created_at",
     )
     .eq("buyer_id", claims.sub);
 
@@ -272,6 +275,18 @@ export async function MyTitipanRequests({
                   Tandai sudah sampai
                 </button>
               </form>
+            )}
+
+            {/* 5.3: rating form appears once the parcel has arrived. The action
+                re-checks status='arrived', so a forged form cannot rate a
+                parcel still in transit. */}
+            {row.status === "arrived" && (
+              <RatingForm
+                action={saveRating}
+                id={row.id}
+                existingRating={row.rating}
+                existingNote={row.rating_note}
+              />
             )}
           </li>
         );

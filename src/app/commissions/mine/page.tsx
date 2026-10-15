@@ -8,7 +8,8 @@ import { formatDate, formatRupiah } from "@/lib/format";
 import { STATUS_ORDER, statusLabel } from "@/lib/commissionStatus";
 import { likePattern } from "@/lib/shop";
 import ListFilter from "@/components/ListFilter";
-import { respondToQuote } from "./actions";
+import RatingForm from "@/components/RatingForm";
+import { respondToQuote, saveRating } from "./actions";
 
 export const metadata: Metadata = {
   title: "Commissions Saya — Aruno Store",
@@ -57,7 +58,7 @@ export async function MyCommissions({
   const filtered = Boolean(search || statusFilter);
   const dbQuery = supabase
     .from("commissions")
-    .select("id, service_id, brief, status, quote_price, quote_note, delivery_image, created_at")
+    .select("id, service_id, brief, status, quote_price, quote_note, delivery_image, rating, rating_note, created_at")
     .eq("buyer_id", claims.sub);
 
   if (statusFilter) {
@@ -225,6 +226,18 @@ export async function MyCommissions({
               src={deliveryUrls.get(row.delivery_image)!}
               alt="Hasil gambar"
               className="mt-4 w-full border border-[#eeeae5]"
+            />
+          )}
+
+          {/* 5.3: rating form appears once the drawing has been delivered.
+              The action re-checks delivery_image, so a forged form cannot
+              rate an unfinished commission. */}
+          {row.delivery_image && (
+            <RatingForm
+              action={saveRating}
+              id={row.id}
+              existingRating={row.rating}
+              existingNote={row.rating_note}
             />
           )}
         </li>
