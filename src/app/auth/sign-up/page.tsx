@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { Spinner } from "@/components/SubmitButton";
 import { signUp, type SignUpState } from "./actions";
 
 const initialState: SignUpState = {
@@ -93,9 +94,16 @@ export default function SignUpPage() {
           <button
             type="submit"
             disabled={pending}
-            className="w-full rounded bg-plum px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#8f4f67] disabled:opacity-50 transition-colors"
+            className="w-full rounded bg-plum px-4 py-2.5 text-sm font-semibold text-white transition-all duration-150 hover:bg-[#8f4f67] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {pending ? "Memproses..." : "Daftar"}
+            {pending ? (
+              <>
+                <Spinner />
+                Memproses...
+              </>
+            ) : (
+              "Daftar"
+            )}
           </button>
         </form>
 

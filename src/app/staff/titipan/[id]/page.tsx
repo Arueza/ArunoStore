@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatDate, formatRupiah } from "@/lib/format";
 import { statusLabel } from "@/lib/commissionStatus";
 import QuoteBox from "./QuoteBox";
+import SubmitButton from "@/components/SubmitButton";
 import { markAsPurchased, saveShipping } from "./actions";
 
 export const metadata: Metadata = {
@@ -173,12 +174,12 @@ async function RequestDetail({ params }: { params: Promise<{ id: string }> }) {
           <div className="mt-6 border-t border-[#eeeae5] pt-6">
             <form action={markAsPurchased}>
               <input type="hidden" name="id" value={request.id} />
-              <button
-                type="submit"
-                className="bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+              <SubmitButton
+                pendingLabel="Menyimpan…"
+                className="bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white hover:opacity-90 disabled:opacity-50"
               >
                 Tandai sudah dibeli
-              </button>
+              </SubmitButton>
             </form>
             <p className="mt-2 text-xs leading-relaxed text-[#6c6870]">
               Konfirmasi bahwa barang sudah dibeli dari toko di Jepang.
@@ -220,12 +221,12 @@ async function RequestDetail({ params }: { params: Promise<{ id: string }> }) {
                   className="mt-2 w-full border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink focus:border-plum focus:outline-none"
                 />
               </div>
-              <button
-                type="submit"
-                className="bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+              <SubmitButton
+                pendingLabel="Menyimpan…"
+                className="bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white hover:opacity-90 disabled:opacity-50"
               >
                 Tandai dikirim
-              </button>
+              </SubmitButton>
             </form>
           </div>
         )}

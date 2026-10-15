@@ -7,6 +7,7 @@ import {
   removeFromCart,
   updateCartQty,
 } from "@/app/shop/actions";
+import SubmitButton from "@/components/SubmitButton";
 
 type CartLine = {
   itemId: string;
@@ -109,13 +110,12 @@ export default async function CartItems() {
                     aria-label="Jumlah"
                     className="w-12 border border-[#e2ddd7] px-1.5 py-1 text-center text-xs text-ink focus:border-plum focus:outline-none"
                   />
-                  <button
-                    type="submit"
-                    className="text-xs text-[#6c6870] hover:text-plum"
+                  <SubmitButton
                     title="Simpan jumlah"
+                    className="text-xs text-[#6c6870] hover:text-plum disabled:opacity-50"
                   >
                     ✓
-                  </button>
+                  </SubmitButton>
                 </form>
 
                 <form action={removeFromCart}>
@@ -125,12 +125,9 @@ export default async function CartItems() {
                     name="size"
                     value={line.size ?? ""}
                   />
-                  <button
-                    type="submit"
-                    className="text-xs text-[#6c6870] hover:text-plum hover:underline"
-                  >
+                  <SubmitButton className="text-xs text-[#6c6870] hover:text-plum hover:underline disabled:opacity-50">
                     Hapus
-                  </button>
+                  </SubmitButton>
                 </form>
               </div>
             </div>
@@ -147,12 +144,12 @@ export default async function CartItems() {
         </div>
 
         <form action={createShopOrder} className="mt-4">
-          <button
-            type="submit"
-            className="w-full bg-plum px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+          <SubmitButton
+            pendingLabel="Memproses…"
+            className="w-full bg-plum px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
           >
             Bayar
-          </button>
+          </SubmitButton>
         </form>
       </div>
     </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Spinner } from "@/components/SubmitButton";
 
 declare global {
   interface Window {
@@ -112,9 +113,16 @@ export function SnapButton({
       <button
         onClick={handlePay}
         disabled={loading}
-        className="bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+        className="bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-all duration-150 hover:opacity-90 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {loading ? "Memuat…" : "Bayar sekarang"}
+        {loading ? (
+          <>
+            <Spinner />
+            Memuat…
+          </>
+        ) : (
+          "Bayar sekarang"
+        )}
       </button>
       {error && (
         <p className="mt-3 text-sm text-plum" role="alert">

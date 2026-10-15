@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatRupiah } from "@/lib/format";
 import { deleteImage, deleteItem, setThumbnail, updateItem } from "../actions";
+import SubmitButton from "@/components/SubmitButton";
 import AddImagesForm from "./AddImagesForm";
 import { FASHION_SIZES } from "@/lib/shop";
 
@@ -182,25 +183,21 @@ async function ProductDetail({ id }: { id: string }) {
                   <form action={setThumbnail}>
                     <input type="hidden" name="image_id" value={image.id} />
                     <input type="hidden" name="item_id" value={product.id} />
-                    <button
-                      type="submit"
-                      className="text-xs text-plum hover:underline"
-                    >
+                    <SubmitButton className="text-xs text-plum hover:underline disabled:opacity-50">
                       Jadikan utama
-                    </button>
+                    </SubmitButton>
                   </form>
                 )}
 
                 <form action={deleteImage}>
                   <input type="hidden" name="image_id" value={image.id} />
                   <input type="hidden" name="item_id" value={product.id} />
-                  <button
-                    type="submit"
+                  <SubmitButton
                     disabled={sortedImages.length <= 1}
                     className="text-xs text-red-600 hover:underline disabled:opacity-50"
                   >
                     Hapus
-                  </button>
+                  </SubmitButton>
                 </form>
               </div>
             </div>
@@ -347,12 +344,12 @@ async function ProductDetail({ id }: { id: string }) {
           />
         </label>
 
-        <button
-          type="submit"
-          className="mt-6 bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+        <SubmitButton
+          pendingLabel="Menyimpan…"
+          className="mt-6 bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white hover:opacity-90 disabled:opacity-50"
         >
           Simpan perubahan
-        </button>
+        </SubmitButton>
       </form>
 
       <div className="border border-red-200 bg-red-50 p-5">
@@ -366,12 +363,12 @@ async function ProductDetail({ id }: { id: string }) {
 
         <form action={deleteItem} className="mt-4">
           <input type="hidden" name="id" value={product.id} />
-          <button
-            type="submit"
-            className="bg-red-600 px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+          <SubmitButton
+            pendingLabel="Menghapus…"
+            className="bg-red-600 px-6 py-3 text-xs uppercase tracking-[0.18em] text-white hover:opacity-90 disabled:opacity-50"
           >
             Hapus produk ini
-          </button>
+          </SubmitButton>
         </form>
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Spinner } from "@/components/SubmitButton";
 import { updateName, updatePassword, type EditAccountState } from "./actions";
 
 const empty: EditAccountState = { message: "" };
@@ -44,9 +45,16 @@ export function NameForm({ initialName }: { initialName: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded bg-plum px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#8f4f67] disabled:opacity-50 transition-colors"
+        className="w-full rounded bg-plum px-4 py-2.5 text-sm font-semibold text-white transition-all duration-150 hover:bg-[#8f4f67] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {pending ? "Menyimpan..." : "Simpan nama"}
+        {pending ? (
+          <>
+            <Spinner />
+            Menyimpan...
+          </>
+        ) : (
+          "Simpan nama"
+        )}
       </button>
     </form>
   );
@@ -114,9 +122,16 @@ export function PasswordForm() {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded bg-plum px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#8f4f67] disabled:opacity-50 transition-colors"
+        className="w-full rounded bg-plum px-4 py-2.5 text-sm font-semibold text-white transition-all duration-150 hover:bg-[#8f4f67] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {pending ? "Menyimpan..." : "Ganti password"}
+        {pending ? (
+          <>
+            <Spinner />
+            Menyimpan...
+          </>
+        ) : (
+          "Ganti password"
+        )}
       </button>
     </form>
   );

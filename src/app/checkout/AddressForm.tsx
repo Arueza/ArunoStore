@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Spinner } from "@/components/SubmitButton";
 import { saveShopOrderAddress } from "../shop/actions";
 import { saveAddress } from "./actions";
 
@@ -168,9 +169,16 @@ export default function AddressForm({
       <button
         type="submit"
         disabled={saving}
-        className="bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+        className="bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-all duration-150 hover:opacity-90 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {saving ? "Menyimpan…" : "Simpan alamat"}
+        {saving ? (
+          <>
+            <Spinner />
+            Menyimpan…
+          </>
+        ) : (
+          "Simpan alamat"
+        )}
       </button>
     </form>
   );

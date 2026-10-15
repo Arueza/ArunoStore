@@ -7,6 +7,8 @@
  *
  * Shared by both buyer lists so the two cannot drift into different wordings.
  */
+import SubmitButton from "./SubmitButton";
+
 export default function RatingForm({
   action,
   id,
@@ -59,12 +61,12 @@ export default function RatingForm({
         className="mt-2 w-full border border-[#e2ddd7] bg-white px-3 py-2 text-sm leading-relaxed text-ink focus:border-plum focus:outline-none"
       />
 
-      <button
-        type="submit"
-        className="mt-3 bg-plum px-5 py-2 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+      <SubmitButton
+        pendingLabel="Mengirim…"
+        className="mt-3 bg-plum px-5 py-2 text-xs uppercase tracking-[0.18em] text-white hover:opacity-90 disabled:opacity-50"
       >
         {existingRating ? "Perbarui rating" : "Kirim rating"}
-      </button>
+      </SubmitButton>
     </form>
   );
 }

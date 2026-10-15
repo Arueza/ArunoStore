@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
+import { Spinner } from "@/components/SubmitButton";
 
 type Props = {
   artworkId: string;
@@ -37,7 +38,14 @@ export default function DeleteArtwork({ artworkId, storagePath }: Props) {
       disabled={deleting}
       className="mt-1 text-xs text-plum hover:underline disabled:opacity-50"
     >
-      {deleting ? "Menghapus..." : "Hapus"}
+      {deleting ? (
+        <>
+          <Spinner />
+          Menghapus...
+        </>
+      ) : (
+        "Hapus"
+      )}
     </button>
   );
 }

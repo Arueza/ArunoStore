@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
+import { Spinner } from "@/components/SubmitButton";
 import { submitRequest, type RequestState } from "./actions";
 import { formatRupiah } from "@/lib/format";
 
@@ -137,9 +138,16 @@ export default function CommissionRequestForm({
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded bg-plum px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#8f4f67] disabled:opacity-50 transition-colors sm:w-auto"
+        className="w-full rounded bg-plum px-4 py-2.5 text-sm font-semibold text-white transition-all duration-150 hover:bg-[#8f4f67] active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
       >
-        {pending ? "Mengirim..." : "Kirim permintaan"}
+        {pending ? (
+          <>
+            <Spinner />
+            Mengirim...
+          </>
+        ) : (
+          "Kirim permintaan"
+        )}
       </button>
     </form>
   );

@@ -7,6 +7,7 @@ import { formatDate, formatRupiah } from "@/lib/format";
 import { statusLabel } from "@/lib/commissionStatus";
 import { saveQuote } from "./actions";
 import DeliveryUpload from "./DeliveryUpload";
+import SubmitButton from "@/components/SubmitButton";
 
 export const metadata: Metadata = {
   title: "Permintaan — Ruang Staf",
@@ -285,12 +286,12 @@ function QuoteBox({
         className="mt-2 w-full border border-[#e2ddd7] bg-white px-3 py-2 text-sm leading-relaxed text-ink focus:border-plum focus:outline-none"
       />
 
-      <button
-        type="submit"
-        className="mt-6 w-full bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+      <SubmitButton
+        pendingLabel="Menyimpan…"
+        className="mt-6 w-full bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white hover:opacity-90 disabled:opacity-50"
       >
         {status === "quoted" ? "Perbarui kutipan" : "Kirim kutipan"}
-      </button>
+      </SubmitButton>
 
       {status === "quoted" && (
         <p className="mt-3 text-xs leading-relaxed text-[#6c6870]">

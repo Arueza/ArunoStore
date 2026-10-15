@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { addImages } from "../actions";
+import { Spinner } from "@/components/SubmitButton";
 import { compressAndUploadShopImages } from "../shopImages";
 
 /**
@@ -68,9 +69,16 @@ export default function AddImagesForm({ id }: { id: string }) {
       <button
         type="submit"
         disabled={files.length === 0 || saving}
-        className="bg-plum px-4 py-2 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+        className="bg-plum px-4 py-2 text-xs uppercase tracking-[0.18em] text-white transition-all duration-150 hover:opacity-90 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {saving ? "Mengunggah..." : "Unggah"}
+        {saving ? (
+          <>
+            <Spinner />
+            Mengunggah...
+          </>
+        ) : (
+          "Unggah"
+        )}
       </button>
     </form>
   );

@@ -26,3 +26,89 @@
     }
   }
 }
+
+/* Global tactile feedback (roadmap 5.22). One press rule for every button:
+   the press itself is instant here on purpose — a caller's
+   transition-opacity / transition-colors utility overrides this layer's
+   property list, so smoothness is owned per-button by SubmitButton and the
+   converted async buttons (transition-all) instead. See NOTES.md. */
+@layer base {
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  button:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  button:focus-visible,
+  a:focus-visible {
+    outline: 2px solid var(--color-plum);
+    outline-offset: 2px;
+  }
+}
+
+/* Ring spinner for async buttons. currentColor inherits the button's text
+   colour, so plum, outline and danger buttons share it. Rotation is
+   transform-only: no layout work, negligible cost, and it mounts only while
+   the action runs. */
+.btn-spinner {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  margin-right: 0.5em;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 9999px;
+  vertical-align: -0.15em;
+  animation: aruno-spin 0.7s linear infinite;
+}
+
+@keyframes aruno-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Top navigation progress bar: an indeterminate third-width strip sliding
+   across while the next route streams in. */
+.route-bar {
+  animation: route-bar 1s ease-in-out infinite;
+}
+
+@keyframes route-bar {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+/* Page-enter: a short fade-up replayed per route by PageEnter. */
+.page-enter {
+  animation: page-enter 180ms ease-out;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-spinner,
+  .route-bar,
+  .page-enter {
+    animation: none;
+  }
+  button:active:not(:disabled) {
+    transform: none;
+  }
+}

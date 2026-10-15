@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
+import { Spinner } from "@/components/SubmitButton";
 
 /**
  * Upload form for staff to add artworks to the gallery.
@@ -92,9 +93,16 @@ export default function ArtworkUpload() {
         <button
           type="submit"
           disabled={!title.trim() || !file || uploading}
-          className="self-start bg-plum px-4 py-2 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="self-start bg-plum px-4 py-2 text-xs uppercase tracking-[0.18em] text-white transition-all duration-150 hover:opacity-90 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {uploading ? "Mengupload..." : "Upload"}
+          {uploading ? (
+            <>
+              <Spinner />
+              Mengupload...
+            </>
+          ) : (
+            "Upload"
+          )}
         </button>
       </div>
     </form>

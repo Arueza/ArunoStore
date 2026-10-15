@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import CategorySelect from "@/components/CategorySelect";
+import { Spinner } from "@/components/SubmitButton";
 import { FASHION_SIZES } from "@/lib/shop";
 import { addItem } from "./actions";
 import { compressAndUploadShopImages } from "./shopImages";
@@ -198,9 +199,16 @@ export default function AddItemForm() {
       <button
         type="submit"
         disabled={saving}
-        className="bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+        className="bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-all duration-150 hover:opacity-90 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {saving ? "Mengunggah..." : "Tambah produk"}
+        {saving ? (
+          <>
+            <Spinner />
+            Mengunggah...
+          </>
+        ) : (
+          "Tambah produk"
+        )}
       </button>
     </form>
   );

@@ -9,6 +9,7 @@ import { STATUS_ORDER, statusLabel } from "@/lib/commissionStatus";
 import { likePattern } from "@/lib/shop";
 import ListFilter from "@/components/ListFilter";
 import RatingForm from "@/components/RatingForm";
+import SubmitButton from "@/components/SubmitButton";
 import { respondToQuote, saveRating } from "./actions";
 
 export const metadata: Metadata = {
@@ -185,22 +186,22 @@ export async function MyCommissions({
               <form action={respondToQuote}>
                 <input type="hidden" name="id" value={row.id} />
                 <input type="hidden" name="decision" value="accept" />
-                <button
-                  type="submit"
-                  className="bg-plum px-5 py-2 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+                <SubmitButton
+                  pendingLabel="Memproses…"
+                  className="bg-plum px-5 py-2 text-xs uppercase tracking-[0.18em] text-white hover:opacity-90 disabled:opacity-50"
                 >
                   Terima
-                </button>
+                </SubmitButton>
               </form>
               <form action={respondToQuote}>
                 <input type="hidden" name="id" value={row.id} />
                 <input type="hidden" name="decision" value="decline" />
-                <button
-                  type="submit"
-                  className="border border-[#e2ddd7] px-5 py-2 text-xs uppercase tracking-[0.18em] text-ink transition-colors hover:border-plum"
+                <SubmitButton
+                  pendingLabel="Memproses…"
+                  className="border border-[#e2ddd7] px-5 py-2 text-xs uppercase tracking-[0.18em] text-ink hover:border-plum disabled:opacity-50"
                 >
                   Tolak
-                </button>
+                </SubmitButton>
               </form>
             </div>
           )}

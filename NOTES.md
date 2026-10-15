@@ -85,6 +85,7 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
 - **Nothing signed in has been seen against real rows.** 2.8–2.11 shipped as one
   commit (`c34914b`), proved only signed-out (queue, quote box and buyer list
   all 307 to `/login`) plus 104 tests. 6.2 is where that gets signed off.
+- **Async buttons own their transition.** A caller's `transition-opacity` / `transition-colors` utility overrides the base press rule's property list, so the press snaps instead of easing. `SubmitButton` appends `transition-all` itself and converted buttons drop their `transition-*` class; never put both on one button.
 
 ## Data and money
 
