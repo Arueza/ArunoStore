@@ -5,7 +5,7 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
 
 ## Migrations
 
-- **Number with `000N_name.sql`.** `0001`–`0042` taken (`0009` gap, `0016` policies, `0017` artworks, `0018` staff update, `0019` staff profiles, `0020` accept/decline, `0021` delivery bucket, `0022` titipan quote, `0023` commission trigger, `0024` seed, `0025` admins→profiles, `0026` drop admins, `0027` reseed, `0028` titipan accept, `0029`–`0031` titipan status, `0032` shop images, `0033` payments, `0034` payment check, `0035` paid trigger, `0036` showcase, `0037` shop orders+sizes, `0038` payments shop, `0039` paid trigger service-role, `0040` profile name update, `0041` shop order address+buyer update, `0042` ratings+buyer update grant); `0043` next free. Supabase's own files share the directory, not the count.
+- **Number with `000N_name.sql`.** `0001`–`0042` taken (`0009` gap, `0016` policies, `0017` artworks, `0018` staff update, `0019` staff profiles, `0020` accept/decline, `0021` delivery bucket, `0022` titipan quote, `0023` commission trigger, `0024` seed, `0025` admins→profiles, `0026` drop admins, `0027` reseed, `0028` titipan accept, `0029`–`0031` titipan status, `0032` shop images, `0033` payments, `0034` payment check, `0035` paid trigger, `0036` showcase, `0037` shop orders+sizes, `0038` payments shop, `0039` paid trigger service-role, `0040` profile name update, `0041` shop order address+buyer update, `0042` ratings+buyer update grant, `0043` defect fixes: drop broken commission-order trigger, add missing indexes, stock status restore); `0044` next free. Supabase's own files share the directory, not the count.
 - **Check the number is free before writing one.** `0017` was issued twice (2.4 storage, then 2.8 staff reads, renamed `0019`) and only git noticed: the SQL editor never sees a filename, so a duplicate applies cleanly then disagrees with the repo.
 - **Paste one statement at a time.** `0003` went in as a batch and aborted silently. Verify after: `select policyname, qual from pg_policies where tablename = 'profiles';`
 - **`drop policy if exists "name"` can silently do nothing.** Read names as hex
@@ -131,20 +131,6 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
 
 ## Known defects — not yet tasks
 
-- **`handle_commission_order_confirmed()` is broken.** It updates `commissions`
-  columns `used_slots` / `max_slots`, which do not exist, and sets
-  `status='closed'`, which is not in `request_status`; the AFTER UPDATE trigger
-  rolls the whole thing back. Blocked on the overlap decision.
-- **Commission orders cannot be inserted.** `notify_commission_order()` looks up `store_role='art_commission'` but the column defaults to `'consignment'`; the null address then violates `recipient_email not null` and takes the insert with it.
 - **`overlap: commission_orders` / `commission_categories` duplicate `commissions` / `services`.** P1 captured both; choosing one is undecided. Their money columns are `numeric`, against the whole-rupee rule.
-- **`consignment_items.stock` can go negative and never returns to `'tersedia'`.** No `check (stock >= 0)`, and `handle_consignment_order_confirmed()` decrements it.
-- **Midtrans `signature_key` is plain SHA512, not HMAC, and `fraud_status` is lowercase.** `route.ts` used `createHmac` with `"ACCEPT"` so every real notification 401/400'd while the tests signed the same wrong way; `route.test.ts` now signs Midtrans-style (`createHash`, `accept`).
-- **No index on any FK, status or `created_at`.** The staff queue's "newest
-  first" is a sequential scan until one exists.
-- **Nothing measured since 1.12 / 1.13.** No Lighthouse run against the live
-  site, and whether Supabase and Vercel functions share a region is unknown.
-  Measure both after the next deploy.
-- **`admins` table dropped.** 0025 migrated `consignment_items.admin_id` to
-  `profiles(id)`, replaced all admin policies with `is_staff()`, and rewrote
-  notify functions to read from `profiles`. 0026 dropped the table entirely.
-- **Shop images bypass the Action body.** Staff forms compress to WebP (2000px, q0.82) in the browser and upload straight to `shop-images`; `addItem`/`addImages` take `image_path` strings only, validated by `isValidShopImagePath()` — files through an Action trip the 1 MB limit.
+- **Nothing measured since 1.12 / 1.13.** No Lighthouse run, and whether Supabase and Vercel functions share a region is unknown. Measure after next deploy.
+- **Shop images bypass the Action body.** Staff forms compress to WebP in the browser and upload straight to `shop-images`; files through an Action trip the 1 MB limit.

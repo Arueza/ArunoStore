@@ -279,9 +279,10 @@ export async function createShopOrder(): Promise<void> {
         .maybeSingle();
 
       if (dbItem) {
+        const newStock = Math.max(dbItem.stock - l.qty, 0);
         await serviceClient
           .from("consignment_items")
-          .update({ stock: Math.max(dbItem.stock - l.qty, 0) })
+          .update({ stock: newStock, status: newStock > 0 ? "tersedia" : "terjual" })
           .eq("id", l.itemId);
       }
     }
