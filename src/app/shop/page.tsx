@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import ShopGrid from "@/components/ShopGrid";
 import ShopFilter from "@/components/ShopFilter";
+import ShopSideToggle, { parseSide } from "@/components/ShopSideToggle";
 import { createPublicClient } from "@/lib/supabase/public";
 
 export const metadata: Metadata = {
@@ -16,8 +17,9 @@ export const metadata: Metadata = {
  * titipan catalogues filter by their own column. Reads no session so the
  * shell prerenders under cacheComponents.
  *
- * ?q= filters the grid by product name (the header search lands here). The
- * query string is a request read, so it is awaited inside ShopGridFromQuery
+ * ?q= filters the grid by product name (the header search lands here) and
+ * ?side= narrows it to one half of the store (the toggle above the form).
+ * The query string is a request read, so it is awaited inside ShopGridFromQuery
  * behind its own boundary — never in this body, and never under "use cache",
  * which forbids dynamic request data even in nested children. The grid itself
  * carries "use cache", so the unfiltered catalogue keeps the exact cache it
@@ -32,6 +34,7 @@ export default async function ShopPage({
     cond?: string;
     min?: string;
     max?: string;
+    side?: string;
   }>;
 }) {
   return (
@@ -95,14 +98,16 @@ async function ShopGridFromQuery({
     cond?: string;
     min?: string;
     max?: string;
+    side?: string;
   }>;
 }) {
-  const { q, cat, cond, min, max } = await searchParams;
+  const { q, cat, cond, min, max, side: sideParam } = await searchParams;
   const search = q?.trim();
   const categoryId = cat?.trim() || undefined;
   const condition = cond?.trim() || undefined;
   const minPrice = min?.trim() || undefined;
   const maxPrice = max?.trim() || undefined;
+  const side = parseSide(sideParam?.trim());
 
   // Fetch categories for the dropdown. Only real ids reach the query; a
   // forged value falls back to unfiltered rather than to zero rows.
@@ -113,11 +118,21 @@ async function ShopGridFromQuery({
     .order("name");
 
   const filtered = Boolean(
-    search || categoryId || condition || minPrice || maxPrice,
+    search || categoryId || condition || minPrice || maxPrice || side,
   );
 
   return (
     <>
+      <ShopSideToggle
+        params={{
+          q: search,
+          cat: categoryId,
+          cond: condition,
+          min: minPrice,
+          max: maxPrice,
+          side,
+        }}
+      />
       <ShopFilter
         categories={(categories ?? []).map((c) => ({
           id: c.id,
@@ -146,6 +161,15 @@ async function ShopGridFromQuery({
               </span>
             </>
           )}
+          {side && (
+            <>
+              {" "}
+              · sisi{" "}
+              <span className="font-semibold text-ink">
+                {side === "commission" ? "Commission" : "Titipan"}
+              </span>
+            </>
+          )}
         </p>
       )}
       <ShopGrid
@@ -154,6 +178,7 @@ async function ShopGridFromQuery({
         condition={condition}
         minPrice={minPrice}
         maxPrice={maxPrice}
+        showcase={side}
       />
     </>
   );
