@@ -96,7 +96,8 @@ export default async function ShopGrid({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+    <div className="mt-10">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
       {items.map((item: ShopItem) => {
         const thumb = pickThumb(item.consignment_images);
 
@@ -141,6 +142,7 @@ export default async function ShopGrid({
           </Link>
         );
       })}
+      </div>
     </div>
   );
 }

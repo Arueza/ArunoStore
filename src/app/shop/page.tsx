@@ -131,7 +131,7 @@ async function ShopGridFromQuery({
         baseHref="/shop"
       />
       {filtered && (
-        <p className="mb-6 text-sm text-[#6c6870]">
+        <p className="mt-8 text-sm text-[#6c6870]">
           Hasil untuk{" "}
           <span className="font-semibold text-ink">
             {search || "semua barang"}
