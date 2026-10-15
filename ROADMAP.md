@@ -141,7 +141,7 @@ its own enum migration for accept/decline; 3.10 needs `purchased|shipped|arrived
 - [x] **5.26** Catalog management in sections + `/shop` Kelola tab: shared manager, `/staff/shop` retired with redirect *(`3dc16d7`)*
 - [ ] **5.27** Seed commission merch: 18 prints × A4/A5 + 2 standees, `Print`/`Standee` categories (migration `0046`)
 - [x] **5.28** Full-size commission images on `/shop/[id]`: no-crop portrait stage + full-resolution link *(`17c99fd`)*
-- [ ] **5.29** Full-width commission detail: page + gallery box widened, sharper image
+- [x] **5.29** Full-width commission detail: page + gallery box widened, sharper image *(`bed1418`)*
 
 **5.5 was built ahead of 5.4**, using the table that was already live; the page renders its empty state until 6.1 seeds rows.
 
