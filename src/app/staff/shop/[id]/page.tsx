@@ -45,7 +45,7 @@ type Category = {
   name: string;
 };
 
-async function ProductDetail({ id, from }: { id: string; from: string }) {
+async function ProductDetail({ id }: { id: string }) {
   if (!UUID.test(id)) {
     notFound();
   }
@@ -84,13 +84,7 @@ async function ProductDetail({ id, from }: { id: string; from: string }) {
   return (
     <div className="mt-8 space-y-10">
       <Link
-        href={
-          from === "commissions"
-            ? "/commissions#kelola-katalog"
-            : from === "titipan"
-              ? "/titipan#kelola-katalog"
-              : "/shop?tab=kelola"
-        }
+        href="/shop?tab=kelola"
         className="text-sm font-semibold text-plum hover:underline"
       >
         ← Semua produk
@@ -383,23 +377,18 @@ async function ProductDetail({ id, from }: { id: string; from: string }) {
 
 async function ProductLoader({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ from?: string }>;
 }) {
   const { id } = await params;
-  const { from } = await searchParams;
 
-  return <ProductDetail id={id} from={from === "commissions" || from === "titipan" ? from : "shop"} />;
+  return <ProductDetail id={id} />;
 }
 
 export default function StaffShopProductPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ from?: string }>;
 }) {
   return (
     <main className="mx-auto w-full max-w-5xl px-5 py-14 sm:px-[6%] sm:py-20">
@@ -408,7 +397,7 @@ export default function StaffShopProductPage({
       </h1>
 
       <Suspense>
-        <ProductLoader params={params} searchParams={searchParams} />
+        <ProductLoader params={params} />
       </Suspense>
     </main>
   );

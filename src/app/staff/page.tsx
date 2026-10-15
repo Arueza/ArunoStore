@@ -10,9 +10,8 @@ export const metadata: Metadata = {
  * at 5.26).
  *
  * Every management surface now lives where its readers are: request queues
- * and catalogue blocks on /commissions and /titipan, the full catalogue on
- * the /shop Kelola tab. This page is only the jump-off the navbar Staff
- * link lands on.
+ * on /commissions and /titipan, the full catalogue on the /shop Kelola tab.
+ * This page is only the jump-off the navbar Staff link lands on.
  */
 export default function StaffPage() {
   return (

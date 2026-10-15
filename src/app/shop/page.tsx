@@ -304,7 +304,6 @@ export async function ShopRoleView({
           {tab === "kelola" ? (
             <Suspense>
               <CatalogManager
-                from="shop"
                 baseHref="/shop?tab=kelola"
                 searchParams={filterParams}
               />

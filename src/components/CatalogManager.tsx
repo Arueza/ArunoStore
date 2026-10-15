@@ -5,23 +5,19 @@ import StaffShopList, { STATUS_OPTIONS } from "@/components/StaffShopList";
 import type { Side } from "@/components/ShopSideToggle";
 
 /**
- * Catalogue management block shared by the three staff surfaces (5.26):
- * the Kelola tab on /shop (no side — everything) and the Kelola katalog
- * blocks on /commissions and /titipan (their side plus `keduanya`).
+ * Catalogue management block for the Kelola tab on /shop (roadmap 5.26).
  *
  * Add form on top, the same filter row the staff list always had, then the
  * all-statuses list into the per-item edit pages. Awaits its own query
- * string, so each embedding page renders this behind a boundary and keeps
+ * string, so the embedding page renders this behind a boundary and keeps
  * its static shell — the same rule the /shop grid follows.
  */
 export default async function CatalogManager({
   side,
-  from,
   baseHref,
   searchParams,
 }: {
   side?: Side;
-  from: "shop" | "commissions" | "titipan";
   baseHref: string;
   searchParams: Promise<{
     cat?: string;
@@ -81,7 +77,6 @@ export default async function CatalogManager({
 
       <StaffShopList
         side={side}
-        from={from}
         categoryId={categoryId}
         condition={condition}
         minPrice={minPrice}

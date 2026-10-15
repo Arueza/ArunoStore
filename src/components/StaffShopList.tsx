@@ -30,18 +30,11 @@ export const STATUS_OPTIONS = [
 /**
  * Staff catalogue list: every status, newest first (roadmap 5.26).
  *
- * Shared by the three management surfaces: the Kelola tab on /shop (no
- * side — everything) and the Kelola katalog blocks on /commissions and
- * /titipan (their side plus `keduanya`, the same rule the public grid uses).
- * Reads through the staff session, so it only ever renders behind a
- * staff-gated boundary.
- *
- * `from` tags the detail links so the edit page's back-link returns to the
- * surface staff came from rather than guessing by showcase.
+ * Renders on the Kelola tab on /shop (no side — everything). Reads through
+ * the staff session, so it only ever renders behind a staff-gated boundary.
  */
 export default async function StaffShopList({
   side,
-  from,
   categoryId,
   condition,
   minPrice,
@@ -49,7 +42,6 @@ export default async function StaffShopList({
   status,
 }: {
   side?: Side;
-  from: "shop" | "commissions" | "titipan";
   categoryId?: string;
   condition?: string;
   minPrice?: string;
@@ -111,7 +103,7 @@ export default async function StaffShopList({
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
               <p className="text-sm font-medium text-ink">
                 <Link
-                  href={`/staff/shop/${item.id}?from=${from}`}
+                  href={`/staff/shop/${item.id}`}
                   className="hover:underline"
                 >
                   {item.name}

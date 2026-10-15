@@ -14,9 +14,7 @@ import { compressAndUploadShopImages } from "@/app/staff/shop/shopImages";
  * and uploaded straight to Storage, so the Server Action receives path
  * strings and never hits the 1 MB body limit.
  *
- * Shared by the three management surfaces (roadmap 5.26): the Kelola tab on
- * /shop and the Kelola katalog blocks on /commissions and /titipan.
- * `defaultShowcase` preselects the embedding page's side; every option stays
+ * Used on the Kelola tab on /shop. `defaultShowcase` preselects the embedding page's side; every option stays
  * choosable, because `keduanya` items need a home somewhere.
  *
  * On success the form resets and the catalogue list refreshes in place, so

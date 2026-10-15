@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
 import { formatRupiah } from "@/lib/format";
 import { CommissionQueue } from "@/components/CommissionQueue";
-import CatalogManager from "@/components/CatalogManager";
 
 export const metadata: Metadata = {
   title: "Commissions — Aruno Store",
@@ -61,17 +60,7 @@ async function ServicesList() {
   );
 }
 
-export default function CommissionsPage({
-  searchParams,
-}: {
-  searchParams?: Promise<{
-    cat?: string;
-    cond?: string;
-    min?: string;
-    max?: string;
-    status?: string;
-  }>;
-}) {
+export default function CommissionsPage() {
   return (
     <main className="mx-auto w-full max-w-6xl px-5 py-14 sm:px-[6%] sm:py-20">
       <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
@@ -134,7 +123,7 @@ export default function CommissionsPage({
       {/* Staff-only dashboard below the content. Buyers resolve to nothing,
           so there is no fallback markup and no flash for them. */}
       <Suspense fallback={null}>
-        <CommissionDashboard searchParams={searchParams ?? Promise.resolve({})} />
+        <CommissionDashboard />
       </Suspense>
     </main>
   );
@@ -162,11 +151,6 @@ export async function CommissionRail() {
           </a>
         </li>
         <li>
-          <a href="#kelola-katalog" className="font-semibold text-plum hover:underline">
-            Kelola katalog →
-          </a>
-        </li>
-        <li>
           <Link
             href="/commissions/request"
             className="text-[#6c6870] hover:text-plum hover:underline"
@@ -180,65 +164,31 @@ export async function CommissionRail() {
 }
 
 /**
- * Staff dashboard for the commissions page: the incoming queue plus catalogue
- * management, full width below the content. Buyers resolve to nothing.
+ * Staff dashboard for the commissions page: the incoming queue, full width
+ * below the content. Catalogue management lives on the /shop Kelola tab.
+ * Buyers resolve to nothing.
  */
-export async function CommissionDashboard({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    cat?: string;
-    cond?: string;
-    min?: string;
-    max?: string;
-    status?: string;
-  }>;
-}) {
+export async function CommissionDashboard() {
   const profile = await getProfile();
 
   if (profile?.role !== "staff") return null;
 
   return (
-    <>
-      <section
-        aria-labelledby="kelola"
-        className="mt-14 border-t border-[#eeeae5] pt-8"
+    <section
+      aria-labelledby="kelola"
+      className="mt-14 border-t border-[#eeeae5] pt-8"
+    >
+      <h2
+        id="kelola"
+        className="font-display text-xl font-semibold text-ink"
       >
-        <h2
-          id="kelola"
-          className="font-display text-xl font-semibold text-ink"
-        >
-          Kelola permintaan
-        </h2>
+        Kelola permintaan
+      </h2>
 
-        <Suspense>
-          <CommissionQueue />
-        </Suspense>
-      </section>
-
-      <section
-        aria-labelledby="kelola-katalog"
-        className="mt-14 border-t border-[#eeeae5] pt-8"
-      >
-        <h2
-          id="kelola-katalog"
-          className="font-display text-xl font-semibold text-ink"
-        >
-          Kelola katalog
-        </h2>
-
-        <div className="mt-6">
-          <Suspense>
-            <CatalogManager
-              side="commission"
-              from="commissions"
-              baseHref="/commissions"
-              searchParams={searchParams}
-            />
-          </Suspense>
-        </div>
-      </section>
-    </>
+      <Suspense>
+        <CommissionQueue />
+      </Suspense>
+    </section>
   );
 }
 

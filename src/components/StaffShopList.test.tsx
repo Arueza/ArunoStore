@@ -38,18 +38,18 @@ describe("StaffShopList", () => {
   test("lists rows into the tagged edit pages", async () => {
     mocks.items = [ITEM];
 
-    render(await StaffShopList({ from: "commissions" }));
+    render(await StaffShopList({}));
 
     expect(screen.getByRole("link", { name: "Figma Jinx" })).toHaveAttribute(
       "href",
-      "/staff/shop/i1?from=commissions",
+      "/staff/shop/i1",
     );
   });
 
   test("every list link has a page or is declared pending", async () => {
     mocks.items = [ITEM];
 
-    render(await StaffShopList({ from: "shop" }));
+    render(await StaffShopList({}));
 
     const hrefs = screen
       .getAllByRole("link")
