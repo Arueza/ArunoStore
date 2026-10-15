@@ -132,7 +132,7 @@ Do this after both halves can reach "buyer accepts a quote".
 - [x] **5.15** Staff shop uploads compress to WebP in browser, direct to Storage (fixes 1 MB Action limit) *(`f5be95a`)*
 - [x] **5.16** Header search finds catalog items by name, results on `/shop?q=` *(`d600b47`)*
 - [x] **5.17** Buyer shipping address on shop checkout: form before Snap, 7 columns on `shop_orders` (migration `0041`) *(`a3fdb2c`)*
-- [ ] **5.21** Side toggle on `/shop`: Semua / Commission / Titipan segmented control, filters preserved across switches
+- [x] **5.21** Side toggle on `/shop`: Semua / Commission / Titipan segmented control, filters preserved across switches *(`4070c28`)*
 - [x] **5.20** Catalogues live under their sections: `/commissions/catalog` + `/titipan/catalog`, nav points at the explainers, old `/shop/*` paths redirect *(`7a63d90`)*
 - [x] **5.19** Sticky zoom hero on `/`: Belanja card removed, Commission + Titipan side by side *(`c04e899`)*
 - [x] **5.18** Shop catalogue filter: category, condition, price range on `/shop`; same + status on `/staff/shop` *(`572514b`)*
