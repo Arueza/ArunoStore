@@ -33,9 +33,17 @@ type ShopItem = {
 export default async function ShopGrid({
   showcase,
   query,
+  categoryId,
+  condition,
+  minPrice,
+  maxPrice,
 }: {
   showcase?: Showcase;
   query?: string;
+  categoryId?: string;
+  condition?: string;
+  minPrice?: string;
+  maxPrice?: string;
 }) {
   "use cache";
 
@@ -44,7 +52,7 @@ export default async function ShopGrid({
   const dbQuery = supabase
     .from("consignment_items")
     .select(
-      "id, name, price, condition, consignment_categories(name), consignment_images(image_url, is_thumbnail)",
+      "id, name, price, condition, category_id, consignment_categories(name), consignment_images(image_url, is_thumbnail)",
     )
     .eq("status", "tersedia")
     .order("created_at", { ascending: false });
@@ -57,6 +65,24 @@ export default async function ShopGrid({
 
   if (search) {
     dbQuery.ilike("name", likePattern(search));
+  }
+
+  // 5.18: category, condition and price range narrow the same query. All
+  // three are optional and compose with each other and with the search.
+  if (categoryId) {
+    dbQuery.eq("category_id", categoryId);
+  }
+
+  if (condition) {
+    dbQuery.eq("condition", condition);
+  }
+
+  if (minPrice) {
+    dbQuery.gte("price", Number(minPrice));
+  }
+
+  if (maxPrice) {
+    dbQuery.lte("price", Number(maxPrice));
   }
 
   const { data: items } = await dbQuery;

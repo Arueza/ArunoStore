@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import ShopGrid from "@/components/ShopGrid";
+import ShopFilter from "@/components/ShopFilter";
+import { createPublicClient } from "@/lib/supabase/public";
 
 export const metadata: Metadata = {
   title: "Belanja — Aruno Store",
@@ -24,7 +26,13 @@ export const metadata: Metadata = {
 export default async function ShopPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    cat?: string;
+    cond?: string;
+    min?: string;
+    max?: string;
+  }>;
 }) {
   return (
     <main className="mx-auto w-full max-w-5xl px-5 py-14 sm:px-[6%] sm:py-20">
@@ -67,34 +75,86 @@ export default async function ShopPage({
 }
 
 /**
- * Awaits ?q=, then hands the grid a name filter plus a result heading.
+ * Awaits the filter query string, then hands the grid its filters plus a
+ * result heading.
  *
  * Separate from the page body because awaiting here, inside a boundary, is
  * what keeps /shop's shell prerendered — the same rule 1.12 and 1.13 rest on
  * for the rest of the site. A blank query renders the plain grid, so clearing
- * the search and reloading differ in nothing.
+ * the form and reloading differ in nothing.
+ *
+ * Category options come from consignment_categories via the same public
+ * client — cookie-less, no session read, so the shell still prerenders.
  */
 async function ShopGridFromQuery({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    cat?: string;
+    cond?: string;
+    min?: string;
+    max?: string;
+  }>;
 }) {
-  const { q } = await searchParams;
+  const { q, cat, cond, min, max } = await searchParams;
   const search = q?.trim();
+  const categoryId = cat?.trim() || undefined;
+  const condition = cond?.trim() || undefined;
+  const minPrice = min?.trim() || undefined;
+  const maxPrice = max?.trim() || undefined;
 
-  if (!search) {
-    return <ShopGrid />;
-  }
+  // Fetch categories for the dropdown. Only real ids reach the query; a
+  // forged value falls back to unfiltered rather than to zero rows.
+  const supabase = createPublicClient();
+  const { data: categories } = await supabase
+    .from("consignment_categories")
+    .select("id, name")
+    .order("name");
+
+  const filtered = Boolean(
+    search || categoryId || condition || minPrice || maxPrice,
+  );
 
   return (
     <>
-      <p className="mb-6 text-sm text-[#6c6870]">
-        Hasil untuk <span className="font-semibold text-ink">{search}</span>{" "}
-        <Link href="/shop" className="font-semibold text-plum hover:underline">
-          Lihat semua
-        </Link>
-      </p>
-      <ShopGrid query={search} />
+      <ShopFilter
+        categories={(categories ?? []).map((c) => ({
+          id: c.id,
+          name: c.name,
+        }))}
+        search={search}
+        categoryId={categoryId}
+        condition={condition}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+        baseHref="/shop"
+      />
+      {filtered && (
+        <p className="mb-6 text-sm text-[#6c6870]">
+          Hasil untuk{" "}
+          <span className="font-semibold text-ink">
+            {search || "semua barang"}
+          </span>
+          {categoryId && (
+            <>
+              {" "}
+              di kategori{" "}
+              <span className="font-semibold text-ink">
+                {(categories ?? []).find((c) => c.id === categoryId)?.name ??
+                  categoryId}
+              </span>
+            </>
+          )}
+        </p>
+      )}
+      <ShopGrid
+        query={search}
+        categoryId={categoryId}
+        condition={condition}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+      />
     </>
   );
 }

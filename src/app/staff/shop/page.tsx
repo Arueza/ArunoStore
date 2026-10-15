@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatRupiah } from "@/lib/format";
+import ShopFilter from "@/components/ShopFilter";
 import AddItemForm from "./AddItemForm";
 
 export const metadata: Metadata = {
@@ -26,15 +27,57 @@ const SHOWCASE_LABEL: Record<string, string> = {
   keduanya: "Keduanya",
 };
 
-async function ShopList() {
+const STATUS_OPTIONS = [
+  { value: "tersedia", label: "Tersedia" },
+  { value: "terjual", label: "Terjual" },
+  { value: "ditarik", label: "Ditarik" },
+];
+
+async function ShopList({
+  categoryId,
+  condition,
+  minPrice,
+  maxPrice,
+  status,
+}: {
+  categoryId?: string;
+  condition?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  status?: string;
+}) {
   const supabase = await createClient();
 
-  const { data: items } = await supabase
+  // 5.18: category, condition, price range and status narrow the same query.
+  // All four are optional and compose with each other.
+  const dbQuery = supabase
     .from("consignment_items")
     .select(
-      "id, name, price, condition, status, showcase, consignment_categories(name), consignment_images(image_url, is_thumbnail)",
+      "id, name, price, condition, status, showcase, category_id, consignment_categories(name), consignment_images(image_url, is_thumbnail)",
     )
     .order("created_at", { ascending: false });
+
+  if (categoryId) {
+    dbQuery.eq("category_id", categoryId);
+  }
+
+  if (condition) {
+    dbQuery.eq("condition", condition);
+  }
+
+  if (minPrice) {
+    dbQuery.gte("price", Number(minPrice));
+  }
+
+  if (maxPrice) {
+    dbQuery.lte("price", Number(maxPrice));
+  }
+
+  if (status) {
+    dbQuery.eq("status", status);
+  }
+
+  const { data: items } = await dbQuery;
 
   const rows = items ?? [];
 
@@ -103,7 +146,17 @@ async function ShopList() {
   );
 }
 
-export default function StaffShopPage() {
+export default function StaffShopPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    cat?: string;
+    cond?: string;
+    min?: string;
+    max?: string;
+    status?: string;
+  }>;
+}) {
   return (
     <main className="mx-auto w-full max-w-5xl px-5 py-14 sm:px-[6%] sm:py-20">
       <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
@@ -136,11 +189,73 @@ export default function StaffShopPage() {
       </div>
 
       <div className="mt-10">
+        {/* 5.18: reads filter params behind its own boundary — same rule as
+            /shop. Staff sees all statuses, so no status filter by default. */}
         <Suspense>
-          <ShopList />
+          <FilteredList searchParams={searchParams} />
         </Suspense>
       </div>
     </main>
+  );
+}
+
+/**
+ * Awaits the filter query string, fetches categories, then hands the list
+ * its filters. Same boundary rule as /shop: searchParams is a request read.
+ */
+async function FilteredList({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    cat?: string;
+    cond?: string;
+    min?: string;
+    max?: string;
+    status?: string;
+  }>;
+}) {
+  const { cat, cond, min, max, status } = await searchParams;
+  const categoryId = cat?.trim() || undefined;
+  const condition = cond?.trim() || undefined;
+  const minPrice = min?.trim() || undefined;
+  const maxPrice = max?.trim() || undefined;
+  const statusFilter = status?.trim() || undefined;
+
+  // Only real statuses reach the query — a forged value falls back to
+  // unfiltered rather than to zero rows.
+  const safeStatus = STATUS_OPTIONS.some((s) => s.value === statusFilter)
+    ? statusFilter
+    : undefined;
+
+  const supabase = await createClient();
+  const { data: categories } = await supabase
+    .from("consignment_categories")
+    .select("id, name")
+    .order("name");
+
+  return (
+    <>
+      <ShopFilter
+        categories={(categories ?? []).map((c) => ({
+          id: c.id,
+          name: c.name,
+        }))}
+        categoryId={categoryId}
+        condition={condition}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+        status={safeStatus}
+        statuses={STATUS_OPTIONS}
+        baseHref="/staff/shop"
+      />
+      <ShopList
+        categoryId={categoryId}
+        condition={condition}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+        status={safeStatus}
+      />
+    </>
   );
 }
 
