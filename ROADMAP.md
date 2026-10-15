@@ -132,7 +132,7 @@ Do this after both halves can reach "buyer accepts a quote".
 - [x] **5.15** Staff shop uploads compress to WebP in browser, direct to Storage (fixes 1 MB Action limit) *(`f5be95a`)*
 - [x] **5.16** Header search finds catalog items by name, results on `/shop?q=` *(`d600b47`)*
 - [x] **5.17** Buyer shipping address on shop checkout: form before Snap, 7 columns on `shop_orders` (migration `0041`) *(`a3fdb2c`)*
-- [ ] **5.19** Sticky zoom hero on `/`: Belanja card removed, Commission + Titipan side by side
+- [x] **5.19** Sticky zoom hero on `/`: Belanja card removed, Commission + Titipan side by side *(`c04e899`)*
 - [x] **5.18** Shop catalogue filter: category, condition, price range on `/shop`; same + status on `/staff/shop` *(`572514b`)*
 
 **5.5 was built ahead of 5.4**, using the table that was already live; the page
