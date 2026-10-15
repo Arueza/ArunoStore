@@ -5,12 +5,21 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getClaims } from "@/lib/auth";
 import { formatDate, formatRupiah } from "@/lib/format";
-import { statusLabel } from "@/lib/commissionStatus";
+import { STATUS_ORDER, statusLabel } from "@/lib/commissionStatus";
+import { likePattern } from "@/lib/shop";
+import ListFilter from "@/components/ListFilter";
 import { respondToQuote } from "./actions";
 
 export const metadata: Metadata = {
   title: "Commissions Saya — Aruno Store",
 };
+
+// The statuses a buyer can filter by. request_status holds more values on the
+// titipan side (purchased, shipped, arrived), so the list is per page rather
+// than shared: a commission row can never carry those.
+const STATUS_VALUES = STATUS_ORDER.filter((status) =>
+  ["requested", "quoted", "accepted", "declined", "paid"].includes(status),
+);
 
 /**
  * A buyer's own requests and where each one has got to.
@@ -24,7 +33,13 @@ export const metadata: Metadata = {
  * RLS alone would hand one buyer every commission in the table, and nothing would
  * look wrong. With the .eq() the worst case is an empty list.
  */
-async function MyCommissions() {
+export async function MyCommissions({
+  search,
+  statusFilter,
+}: {
+  search?: string;
+  statusFilter?: string;
+} = {}) {
   // The proxy already sent a signed-out visitor to /login. This is the same
   // check a page can rely on without: getClaims() reads the verified token and
   // answers null for signed out, rather than trusting the route being guarded.
@@ -36,11 +51,26 @@ async function MyCommissions() {
 
   const supabase = await createClient();
 
-  const { data: commissions } = await supabase
+  // 5.2: search matches the brief, filter matches the status. Both narrow the
+  // same query the list already ran; the .eq("buyer_id") stays first so a
+  // dropped policy still cannot hand one buyer everybody's rows.
+  const filtered = Boolean(search || statusFilter);
+  const dbQuery = supabase
     .from("commissions")
     .select("id, service_id, brief, status, quote_price, quote_note, delivery_image, created_at")
-    .eq("buyer_id", claims.sub)
-    .order("created_at", { ascending: false });
+    .eq("buyer_id", claims.sub);
+
+  if (statusFilter) {
+    dbQuery.eq("status", statusFilter);
+  }
+
+  if (search) {
+    dbQuery.ilike("brief", likePattern(search));
+  }
+
+  const { data: commissions } = await dbQuery.order("created_at", {
+    ascending: false,
+  });
 
   const rows = commissions ?? [];
 
@@ -83,14 +113,29 @@ async function MyCommissions() {
   if (rows.length === 0) {
     return (
       <p className="mt-8 text-sm leading-relaxed text-[#6c6870]">
-        Kamu belum mengirim permintaan.{" "}
-        <Link
-          href="/commissions/request"
-          className="font-semibold text-plum hover:underline"
-        >
-          Kirim yang pertama
-        </Link>
-        .
+        {filtered ? (
+          <>
+            Tidak ada yang cocok.{" "}
+            <Link
+              href="/commissions/mine"
+              className="font-semibold text-plum hover:underline"
+            >
+              Lihat semua
+            </Link>
+            .
+          </>
+        ) : (
+          <>
+            Kamu belum mengirim permintaan.{" "}
+            <Link
+              href="/commissions/request"
+              className="font-semibold text-plum hover:underline"
+            >
+              Kirim yang pertama
+            </Link>
+            .
+          </>
+        )}
       </p>
     );
   }
@@ -191,7 +236,12 @@ async function MyCommissions() {
 export default function MyCommissionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ saved?: string; error?: string }>;
+  searchParams: Promise<{
+    saved?: string;
+    error?: string;
+    q?: string;
+    status?: string;
+  }>;
 }) {
   return (
     <main className="mx-auto w-full max-w-3xl px-5 py-14 sm:px-[6%] sm:py-20">
@@ -207,8 +257,11 @@ export default function MyCommissionsPage({
         <SaveNotice searchParams={searchParams} />
       </Suspense>
 
+      {/* 5.2: reads ?q= and ?status= behind its own boundary — same rule as
+          /shop's search, and for the same reason: searchParams is a request
+          read, and awaiting it in the page body breaks the static shell. */}
       <Suspense>
-        <MyCommissions />
+        <FilteredList searchParams={searchParams} />
       </Suspense>
 
       <div className="mt-14 border-t border-[#eeeae5] pt-8">
@@ -220,6 +273,44 @@ export default function MyCommissionsPage({
         </Link>
       </div>
     </main>
+  );
+}
+
+/**
+ * Awaits the filter query string, then hands the list its search and status.
+ *
+ * Separated from the page body because the page shell must prerender without
+ * reading the request — /shop's ShopGridFromQuery for the same reason. A blank
+ * query and no status render the plain list, so clearing the form and reloading
+ * differ in nothing.
+ */
+async function FilteredList({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; status?: string }>;
+}) {
+  const { q, status } = await searchParams;
+  const search = q?.trim() || undefined;
+  const statusFilter = status?.trim() || undefined;
+
+  // Only real statuses reach the query — a forged value would otherwise match
+  // nothing and read as an empty list rather than as a bad filter. Unknown
+  // values fall back to unfiltered rather than to zero rows.
+  const safeStatus = STATUS_VALUES.includes(statusFilter ?? "")
+    ? statusFilter
+    : undefined;
+
+  return (
+    <>
+      <ListFilter
+        search={search}
+        statusFilter={safeStatus}
+        statuses={STATUS_VALUES}
+        searchPlaceholder="Cari brief…"
+        baseHref="/commissions/mine"
+      />
+      <MyCommissions search={search} statusFilter={safeStatus} />
+    </>
   );
 }
 

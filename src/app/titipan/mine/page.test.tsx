@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   claims: { sub: "buyer-1" } as { sub: string } | null,
   requests: [] as unknown[],
   eq: vi.fn(),
+  ilike: vi.fn(),
   order: vi.fn(),
 }));
 
@@ -27,24 +28,44 @@ vi.mock("next/navigation", () => ({
   },
 }));
 
-// The list is the only thing here that talks to Supabase. eq() and order() are
-// recorded as well as returned, because "only this buyer's rows, newest first"
-// are the two claims 3.8 makes and neither is visible on screen — the rows
-// would all be there either way.
+// The list is the only thing here that talks to Supabase. eq(), ilike() and
+// order() are recorded as well as returned, because "only this buyer's rows,
+// newest first" are the two claims 3.8 makes and neither is visible on
+// screen — the rows would all be there either way. ilike records the search,
+// which narrows rather than replaces the same chain.
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
     from: () => ({
-      select: () => ({
-        eq: (column: string, value: string) => {
-          mocks.eq(column, value);
-          return {
-            order: (...args: unknown[]) => {
-              mocks.order(...args);
-              return Promise.resolve({ data: mocks.requests });
-            },
-          };
-        },
-      }),
+      select: () => {
+        const chain: {
+          eq: (column: string, value: string) => typeof chain;
+          ilike: (column: string, pattern: string) => typeof chain;
+          order: (...args: unknown[]) => Promise<{ data: unknown[] }>;
+        } = {
+          eq: (column: string, value: string) => {
+            mocks.eq(column, value);
+            return chain;
+          },
+          ilike: (column: string, pattern: string) => {
+            mocks.ilike(column, pattern);
+            return chain;
+          },
+          order: (...args: unknown[]) => {
+            mocks.order(...args);
+            return Promise.resolve({ data: mocks.requests });
+          },
+        };
+        return {
+          eq: (column: string, value: string) => {
+            mocks.eq(column, value);
+            return {
+              eq: chain.eq,
+              ilike: chain.ilike,
+              order: chain.order,
+            };
+          },
+        };
+      },
     }),
   })),
 }));
@@ -113,6 +134,7 @@ describe("MyTitipanRequests", () => {
     mocks.claims = { sub: "buyer-1" };
     mocks.requests = [];
     mocks.eq.mockReset();
+    mocks.ilike.mockReset();
     mocks.order.mockReset();
   });
 
@@ -139,6 +161,35 @@ describe("MyTitipanRequests", () => {
     await renderList([REQUEST]);
 
     expect(mocks.order).toHaveBeenCalledWith("created_at", { ascending: false });
+  });
+
+  // 5.2: a search term narrows the product link; no term means no ilike call.
+  test("searches the product link only when given a term", async () => {
+    await renderList([REQUEST]);
+
+    expect(mocks.ilike).not.toHaveBeenCalled();
+
+    await render(
+      await MyTitipanRequests({ search: "uniqlo", statusFilter: undefined }),
+    );
+
+    expect(mocks.ilike).toHaveBeenCalledWith(
+      "product_link",
+      expect.stringContaining("uniqlo"),
+    );
+  });
+
+  // 5.2: a status narrows the query; no status means no status call.
+  test("filters by status only when given one", async () => {
+    await renderList([REQUEST]);
+
+    expect(mocks.eq).not.toHaveBeenCalledWith("status", expect.anything());
+
+    await render(
+      await MyTitipanRequests({ search: undefined, statusFilter: "quoted" }),
+    );
+
+    expect(mocks.eq).toHaveBeenCalledWith("status", "quoted");
   });
 
   test("shows what the buyer sent, with the status in plain language", async () => {

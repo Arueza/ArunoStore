@@ -5,13 +5,19 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getClaims } from "@/lib/auth";
 import { formatDate, formatRupiah } from "@/lib/format";
-import { statusLabel } from "@/lib/commissionStatus";
+import { STATUS_ORDER, statusLabel } from "@/lib/commissionStatus";
 import { quoteTotal } from "@/lib/quote";
+import { likePattern } from "@/lib/shop";
+import ListFilter from "@/components/ListFilter";
 import { markAsArrived, respondToQuote } from "./actions";
 
 export const metadata: Metadata = {
   title: "Titipan Saya — Aruno Store",
 };
+
+// Every value request_status can hold on this side. Shared with the commissions
+// list's STATUS_ORDER so both dropdowns read in the same order.
+const STATUS_VALUES = STATUS_ORDER;
 
 // Spelled out because Supabase has no generated types for this project, so a
 // select() string is the only description of the row. Matches 0006's columns the
@@ -45,7 +51,13 @@ type TitipanRequest = {
  * in the table and nothing would look wrong. With the .eq() the worst case is an
  * empty list.
  */
-export async function MyTitipanRequests() {
+export async function MyTitipanRequests({
+  search,
+  statusFilter,
+}: {
+  search?: string;
+  statusFilter?: string;
+} = {}) {
   // The proxy already sent a signed-out visitor to /login. This is the check a
   // page can rely on without: getClaims() reads the verified token and answers
   // null when signed out, rather than trusting the route being guarded.
@@ -57,27 +69,57 @@ export async function MyTitipanRequests() {
 
   const supabase = await createClient();
 
-  const { data: requests } = await supabase
+  // 5.2: search matches the product link, filter matches the status. Same shape
+  // as the commissions list: .eq("buyer_id") stays first so a dropped policy
+  // still cannot hand one buyer everybody's parcels.
+  const filtered = Boolean(search || statusFilter);
+  const dbQuery = supabase
     .from("titipan_requests")
     .select(
       "id, product_link, size, color, quantity, status, quote_item_price, quote_shipping, quote_service_fee, quote_note, courier, tracking_number, created_at",
     )
-    .eq("buyer_id", claims.sub)
-    .order("created_at", { ascending: false });
+    .eq("buyer_id", claims.sub);
+
+  if (statusFilter) {
+    dbQuery.eq("status", statusFilter);
+  }
+
+  if (search) {
+    dbQuery.ilike("product_link", likePattern(search));
+  }
+
+  const { data: requests } = await dbQuery.order("created_at", {
+    ascending: false,
+  });
 
   const rows: TitipanRequest[] = requests ?? [];
 
   if (rows.length === 0) {
     return (
       <p className="mt-8 text-sm leading-relaxed text-[#6c6870]">
-        Kamu belum mengirim permintaan titipan.{" "}
-        <Link
-          href="/titipan/request"
-          className="font-semibold text-plum hover:underline"
-        >
-          Kirim yang pertama
-        </Link>
-        .
+        {filtered ? (
+          <>
+            Tidak ada yang cocok.{" "}
+            <Link
+              href="/titipan/mine"
+              className="font-semibold text-plum hover:underline"
+            >
+              Lihat semua
+            </Link>
+            .
+          </>
+        ) : (
+          <>
+            Kamu belum mengirim permintaan titipan.{" "}
+            <Link
+              href="/titipan/request"
+              className="font-semibold text-plum hover:underline"
+            >
+              Kirim yang pertama
+            </Link>
+            .
+          </>
+        )}
       </p>
     );
   }
@@ -241,7 +283,12 @@ export async function MyTitipanRequests() {
 export default function MyTitipanRequestsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ saved?: string; error?: string }>;
+  searchParams: Promise<{
+    saved?: string;
+    error?: string;
+    q?: string;
+    status?: string;
+  }>;
 }) {
   return (
     <main className="mx-auto w-full max-w-3xl px-5 py-14 sm:px-[6%] sm:py-20">
@@ -257,8 +304,11 @@ export default function MyTitipanRequestsPage({
         <SaveNotice searchParams={searchParams} />
       </Suspense>
 
+      {/* 5.2: reads ?q= and ?status= behind its own boundary — same rule as the
+          commissions list, and for the same reason: searchParams is a request
+          read, and awaiting it in the page body breaks the static shell. */}
       <Suspense>
-        <MyTitipanRequests />
+        <FilteredList searchParams={searchParams} />
       </Suspense>
 
       <div className="mt-14 border-t border-[#eeeae5] pt-8">
@@ -270,6 +320,40 @@ export default function MyTitipanRequestsPage({
         </Link>
       </div>
     </main>
+  );
+}
+
+/**
+ * Awaits the filter query string, then hands the list its search and status.
+ *
+ * A blank query and no status render the plain list, so clearing the form and
+ * reloading differ in nothing.
+ */
+async function FilteredList({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; status?: string }>;
+}) {
+  const { q, status } = await searchParams;
+  const search = q?.trim() || undefined;
+  const statusFilter = status?.trim() || undefined;
+
+  // Only real statuses reach the query — same reason as the commissions list.
+  const safeStatus = STATUS_VALUES.includes(statusFilter ?? "")
+    ? statusFilter
+    : undefined;
+
+  return (
+    <>
+      <ListFilter
+        search={search}
+        statusFilter={safeStatus}
+        statuses={STATUS_VALUES}
+        searchPlaceholder="Cari link produk…"
+        baseHref="/titipan/mine"
+      />
+      <MyTitipanRequests search={search} statusFilter={safeStatus} />
+    </>
   );
 }
 
