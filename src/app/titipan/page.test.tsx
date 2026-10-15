@@ -14,6 +14,15 @@ describe("Titipan page", () => {
     expect(page).toContain("tautan produk dari Jepang");
   });
 
+  // The catalogue lives under this section now, not in the nav — the
+  // explainer is the front door and the button is the way in.
+  test("links into the titipan catalogue", () => {
+    const page = renderToStaticMarkup(<TitipanPage />);
+
+    expect(page).toContain('href="/titipan/catalog"');
+    expect(page).toContain("Lihat katalog");
+  });
+
   // The four steps of the README loop, in order. A buyer reads this page before
   // the form arrives at 3.3, so losing or reordering a step quietly changes what
   // they expect to happen after they send a link.

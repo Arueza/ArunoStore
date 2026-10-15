@@ -33,6 +33,16 @@ const nextConfig: NextConfig = {
         destination: "/checkout?type=shop&id=:id",
         permanent: true,
       },
+      {
+        source: "/shop/commission",
+        destination: "/commissions/catalog",
+        permanent: true,
+      },
+      {
+        source: "/shop/titipan",
+        destination: "/titipan/catalog",
+        permanent: true,
+      },
     ];
   },
 };

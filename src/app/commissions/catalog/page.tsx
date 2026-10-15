@@ -10,7 +10,8 @@ export const metadata: Metadata = {
  * Commission catalogue — items staff marked showcase = commission or keduanya.
  *
  * Reads no session so the page prerenders under cacheComponents. The request
- * flow itself lives on /commissions; this page is the browsable grid.
+ * flow itself lives on /commissions; this page is the browsable grid, reached
+ * from the Katalog section of that page rather than from the nav.
  */
 export default async function ShopCommissionPage() {
   "use cache";

@@ -10,7 +10,8 @@ export const metadata: Metadata = {
  * Titipan catalogue — items staff marked showcase = titipan or keduanya.
  *
  * Reads no session so the page prerenders under cacheComponents. The request
- * flow itself lives on /titipan; this page is the browsable grid.
+ * flow itself lives on /titipan; this page is the browsable grid, reached
+ * from the Katalog section of that page rather than from the nav.
  */
 export default async function ShopTitipanPage() {
   "use cache";

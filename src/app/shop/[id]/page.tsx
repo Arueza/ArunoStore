@@ -88,7 +88,11 @@ async function ProductLoader({ id }: { id: string }) {
       {/* Info: name, price, size, qty, Add to Cart. */}
       <div className="flex flex-col">
         <Link
-          href={item.showcase === "titipan" ? "/shop/titipan" : "/shop/commission"}
+          href={
+            item.showcase === "titipan"
+              ? "/titipan/catalog"
+              : "/commissions/catalog"
+          }
           className="text-xs uppercase tracking-[0.14em] text-[#6c6870] hover:text-plum"
         >
           {item.showcase === "titipan" ? "Katalog Titipan" : "Katalog Commission"}

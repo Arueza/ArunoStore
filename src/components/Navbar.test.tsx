@@ -42,8 +42,8 @@ describe("Navbar", () => {
     const shell = renderToStaticMarkup(<Navbar />);
 
     expect(shell).toContain('href="/shop"');
-    expect(shell).toContain('href="/shop/commission"');
-    expect(shell).toContain('href="/shop/titipan"');
+    expect(shell).toContain('href="/commissions"');
+    expect(shell).toContain('href="/titipan"');
   });
 
   // Cottonink split: the drawer serves mobile, the visible row serves desktop.
@@ -74,7 +74,7 @@ describe("Navbar", () => {
   // the shell carries it an odd number of times and this fails.
   test("the drawer and the desktop row carry the same links", () => {
     const shell = renderToStaticMarkup(<Navbar />);
-    const hrefs = shell.match(/href="\/(?:shop(?:\/(?:commission|titipan))?)"/g) ?? [];
+    const hrefs = shell.match(/href="\/(?:shop|commissions|titipan)"/g) ?? [];
 
     expect(hrefs.length).toBe(NAV_LINKS.length * 2);
   });

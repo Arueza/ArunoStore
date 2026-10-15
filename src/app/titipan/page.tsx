@@ -149,6 +149,27 @@ export default function TitipanPage() {
         </ul>
       </section>
 
+      <section aria-labelledby="katalog" className="mt-14">
+        <h2
+          id="katalog"
+          className="font-display text-xl font-semibold text-ink"
+        >
+          Katalog
+        </h2>
+
+        <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#6c6870]">
+          Barang dari Jepang yang sudah jadi dan siap kirim. Kalau tidak ada
+          yang cocok, kirim tautan produk dan kami belikan untukmu.
+        </p>
+
+        <Link
+          href="/titipan/catalog"
+          className="mt-6 inline-block bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+        >
+          Lihat katalog
+        </Link>
+      </section>
+
       {/* /titipan/request exists as of 3.3 and /titipan/mine as of 3.8, and
           both are guarded, so a signed-out visitor lands on the login page
           instead of a page they cannot use. Both destinations are held by the

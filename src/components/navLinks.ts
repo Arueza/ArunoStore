@@ -5,6 +5,6 @@
 // fails at prerender with "NAV_LINKS.map is not a function".
 export const NAV_LINKS = [
   { href: "/shop", label: "Belanja" },
-  { href: "/shop/commission", label: "Commissions" },
-  { href: "/shop/titipan", label: "Titipan" },
+  { href: "/commissions", label: "Commissions" },
+  { href: "/titipan", label: "Titipan" },
 ];

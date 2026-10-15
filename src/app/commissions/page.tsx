@@ -83,6 +83,27 @@ export default function CommissionsPage() {
         </Suspense>
       </section>
 
+      <section aria-labelledby="katalog" className="mt-14">
+        <h2
+          id="katalog"
+          className="font-display text-xl font-semibold text-ink"
+        >
+          Katalog
+        </h2>
+
+        <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#6c6870]">
+          Merchandise seni dan karya endorse yang siap kirim. Kalau tidak ada
+          yang cocok, minta karya custom lewat commission.
+        </p>
+
+        <Link
+          href="/commissions/catalog"
+          className="mt-6 inline-block bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+        >
+          Lihat katalog
+        </Link>
+      </section>
+
       <div className="mt-14 border-t border-[#eeeae5] pt-8">
         <Link
           href="/commissions/request"

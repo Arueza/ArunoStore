@@ -17,8 +17,9 @@ type ShopItem = {
  * Grid of available catalogue items, optionally filtered by showcase and by a
  * name search from /shop?q=.
  *
- * Used by /shop (no filter — everything), /shop/commission and /shop/titipan
- * (filtered). Cookie-less public client so each page prerenders under
+ * Used by /shop (no filter — everything), /commissions/catalog and
+ * /titipan/catalog (filtered by the staff-set showcase column).
+ * Cookie-less public client so each page prerenders under
  * cacheComponents with no session read and no <Suspense>.
  *
  * Cached per argument set, so one search term never serves another term's
