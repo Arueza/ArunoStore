@@ -80,6 +80,16 @@ describe("saveShopOrderAddress", () => {
     expect(mocks.updateEq).toHaveBeenCalledWith("id", ORDER_ID);
   });
 
+  // Regression: 0041 grants buyers UPDATE on the seven address columns
+  // only. Any extra key (updated_at once did) fails the whole update with
+  // "permission denied for table shop_orders".
+  test("writes only the seven granted address columns", async () => {
+    await saveShopOrderAddress(ORDER_ID, formData());
+
+    expect(Object.keys(written()).sort()).toEqual(
+      ["address", "city", "note", "phone", "postal_code", "province", "recipient_name"],
+    );
+  });
   // Blank note is no note, not an empty string staff must distinguish from one.
   test("stores a filled note", async () => {
     await saveShopOrderAddress(ORDER_ID, formData({ note: " Titip di satpam " }));

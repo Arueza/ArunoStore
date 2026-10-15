@@ -406,6 +406,9 @@ export async function saveShopOrderAddress(
     return { ok: false, message: "Pesanan ini sudah tidak bisa diubah." };
   }
 
+  // No updated_at: 0041 grants buyers UPDATE on the seven address columns
+  // only, and touching an ungranted column fails the whole update with
+  // "permission denied". Nothing reads shop_orders.updated_at anyway.
   const { error } = await supabase
     .from("shop_orders")
     .update({
@@ -416,7 +419,6 @@ export async function saveShopOrderAddress(
       province,
       postal_code: postalCode,
       note: note || null,
-      updated_at: new Date().toISOString(),
     })
     .eq("id", orderId);
 
