@@ -233,8 +233,6 @@ export async function addItem(formData: FormData): Promise<AddItemResult> {
   revalidatePath("/staff/shop");
   revalidatePath("/shop");
   revalidatePath(`/shop/${item.id}`);
-  revalidatePath("/commissions/catalog");
-  revalidatePath("/titipan/catalog");
   return { ok: true };
 }
 
@@ -385,8 +383,6 @@ export async function updateItem(formData: FormData): Promise<void> {
 
   revalidatePath("/shop");
   revalidatePath(`/shop/${id}`);
-  revalidatePath("/commissions/catalog");
-  revalidatePath("/titipan/catalog");
   redirect(`${path}?saved=1`);
 }
 
@@ -460,8 +456,6 @@ export async function deleteItem(formData: FormData): Promise<void> {
 
   revalidatePath("/shop");
   revalidatePath(`/shop/${id}`);
-  revalidatePath("/commissions/catalog");
-  revalidatePath("/titipan/catalog");
   redirect("/staff/shop?saved=1");
 }
 

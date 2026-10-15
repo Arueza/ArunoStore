@@ -2,34 +2,43 @@ import Image from "next/image";
 import Link from "next/link";
 import { createPublicClient } from "@/lib/supabase/public";
 import { formatRupiah } from "@/lib/format";
-import { likePattern, pickThumb, type Showcase } from "@/lib/shop";
+import {
+  likePattern,
+  pickThumb,
+  remainingStock,
+  type Showcase,
+  type SortKey,
+} from "@/lib/shop";
 
 type ShopItem = {
   id: string;
   name: string;
   price: number;
   condition: "baru" | "bekas" | null;
+  stock: number | null;
+  product_sizes: { stock: number }[] | null;
   consignment_categories: { name: string }[] | null;
   consignment_images: { image_url: string; is_thumbnail: boolean | null }[] | null;
 };
 
+// "Almost gone" emphasis. The Sisa line itself shows on every card; at or
+// below this the number turns plum so a nearly-empty shelf reads as urgent.
+const LOW_STOCK = 5;
+
 /**
- * Grid of available catalogue items, optionally filtered by showcase and by a
- * name search from /shop?q=.
+ * Catalogue grid for /shop, with name search, showcase side, filters and
+ * sort from the query string.
  *
- * Used by /shop (no filter — everything), /commissions/catalog and
- * /titipan/catalog (filtered by the staff-set showcase column).
- * Cookie-less public client so each page prerenders under
- * cacheComponents with no session read and no <Suspense>.
+ * Cookie-less public client so the page prerenders under cacheComponents
+ * with no session read. Cached per argument set, so one filter set never
+ * serves another's rows. The search match is a literal contains on the
+ * name, case insensitive — likePattern() keeps a typed % or _ from becoming
+ * a wildcard.
  *
- * Cached per argument set, so one search term never serves another term's
- * rows and the unfiltered grid keeps the exact cache it had before search
- * existed. The search match is a literal contains on the name, case
- * insensitive — likePattern() keeps a typed % or _ from becoming a wildcard.
- *
- * ponytail: no description on the card, no category filter, no
- * detail page, no cart button. Price is shown but not purchasable; buying
- * needs the quote flow in Phase 4.
+ * Stock comes from the same rows checkout decrements: per-size sums for
+ * fashion items, the item row otherwise. Rows with nothing left are dropped
+ * here — a sized item can sit at status tersedia with every size at zero,
+ * because only the sizeless path flips the status at checkout.
  */
 export default async function ShopGrid({
   showcase,
@@ -38,6 +47,7 @@ export default async function ShopGrid({
   condition,
   minPrice,
   maxPrice,
+  sort = "terbaru",
 }: {
   showcase?: Showcase;
   query?: string;
@@ -45,6 +55,7 @@ export default async function ShopGrid({
   condition?: string;
   minPrice?: string;
   maxPrice?: string;
+  sort?: SortKey;
 }) {
   "use cache";
 
@@ -53,13 +64,12 @@ export default async function ShopGrid({
   const dbQuery = supabase
     .from("consignment_items")
     .select(
-      "id, name, price, condition, category_id, consignment_categories(name), consignment_images(image_url, is_thumbnail)",
+      "id, name, price, condition, stock, category_id, product_sizes(stock), consignment_categories(name), consignment_images(image_url, is_thumbnail)",
     )
-    .eq("status", "tersedia")
-    .order("created_at", { ascending: false });
+    .eq("status", "tersedia");
 
   // PostgREST `in` with an empty list matches nothing; keduanya lands in both
-  // catalogues, so the filter is showcase = commission OR keduanya.
+  // sides, so the filter is showcase = commission OR keduanya.
   if (showcase) {
     dbQuery.in("showcase", [showcase, "keduanya"]);
   }
@@ -68,8 +78,6 @@ export default async function ShopGrid({
     dbQuery.ilike("name", likePattern(search));
   }
 
-  // 5.18: category, condition and price range narrow the same query. All
-  // three are optional and compose with each other and with the search.
   if (categoryId) {
     dbQuery.eq("category_id", categoryId);
   }
@@ -86,9 +94,23 @@ export default async function ShopGrid({
     dbQuery.lte("price", Number(maxPrice));
   }
 
-  const { data: items } = await dbQuery;
+  if (sort === "termurah") {
+    dbQuery.order("price", { ascending: true });
+  } else if (sort === "termahal") {
+    dbQuery.order("price", { ascending: false });
+  } else if (sort === "nama") {
+    dbQuery.order("name", { ascending: true });
+  } else {
+    dbQuery.order("created_at", { ascending: false });
+  }
 
-  if (!items || items.length === 0) {
+  const { data } = await dbQuery;
+
+  const items = ((data ?? []) as ShopItem[]).filter(
+    (item) => remainingStock(item) !== 0,
+  );
+
+  if (items.length === 0) {
     return (
       <p className="text-sm text-[#6c6870]">
         Belum ada barang. Kembali lagi nanti.
@@ -97,52 +119,71 @@ export default async function ShopGrid({
   }
 
   return (
-    <div className="mt-10">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-      {items.map((item: ShopItem) => {
-        const thumb = pickThumb(item.consignment_images);
+    <div>
+      <p className="text-sm text-[#6c6870]">{items.length} Produk</p>
 
-        return (
-          <Link key={item.id} href={`/shop/${item.id}`} className="group">
-            <div className="relative aspect-[4/3] overflow-hidden border border-[#eeeae5] bg-cream">
-              {thumb ? (
-                <Image
-                  src={thumb}
-                  alt={item.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 640px) 50vw, 33vw"
-                />
-              ) : (
-                <span className="absolute inset-0 flex items-center justify-center text-xs text-[#b0acb5]">
-                  Tanpa gambar
-                </span>
-              )}
-            </div>
+      <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-8 lg:grid-cols-4">
+        {items.map((item) => {
+          const thumb = pickThumb(item.consignment_images);
+          const left = remainingStock(item);
+          const low = left !== null && left <= LOW_STOCK;
 
-            <div className="mt-2 flex items-start justify-between gap-2">
-              <p className="text-sm font-medium text-ink group-hover:text-plum">
+          return (
+            <Link key={item.id} href={`/shop/${item.id}`} className="group">
+              <div className="relative aspect-[3/4] overflow-hidden border border-[#eeeae5] bg-white">
+                {thumb ? (
+                  <Image
+                    src={thumb}
+                    alt={item.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 50vw, 25vw"
+                  />
+                ) : (
+                  <span className="absolute inset-0 flex items-center justify-center text-xs text-[#b0acb5]">
+                    Tanpa gambar
+                  </span>
+                )}
+                {(low || item.condition === "bekas") && (
+                  <div className="absolute left-2 top-2 flex gap-1.5">
+                    {low && (
+                      <span className="bg-plum px-2 py-1 text-[10px] uppercase tracking-wider text-white">
+                        Sisa {left}
+                      </span>
+                    )}
+                    {item.condition === "bekas" && (
+                      <span className="bg-ink/70 px-2 py-1 text-[10px] uppercase tracking-wider text-white">
+                        Bekas
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <p className="mt-2 text-sm font-medium text-ink group-hover:text-plum">
                 {item.name}
               </p>
-              {item.condition === "bekas" && (
-                <span className="shrink-0 text-[10px] uppercase tracking-wider text-[#b0acb5]">
-                  Bekas
-                </span>
-              )}
-            </div>
 
-            <p className="mt-0.5 text-sm text-plum">
-              {formatRupiah(item.price)}
-            </p>
-
-            {item.consignment_categories?.[0] && (
-              <p className="mt-1 text-xs text-[#b0acb5]">
-                {item.consignment_categories[0].name}
+              <p className="mt-0.5 text-sm text-plum">
+                {formatRupiah(item.price)}
               </p>
-            )}
-          </Link>
-        );
-      })}
+
+              {left !== null && (
+                <p
+                  className={`mt-0.5 text-xs ${low ? "font-medium text-plum" : "text-[#b0acb5]"}`}
+                >
+                  Sisa {left}
+                </p>
+              )}
+
+              {item.consignment_categories?.[0] && (
+                <p className="mt-1 text-xs text-[#b0acb5]">
+                  {item.consignment_categories[0].name}
+                </p>
+              )}
+            </Link>
+          );
+        })}
       </div>
     </div>
   );

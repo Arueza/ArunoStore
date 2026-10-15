@@ -163,7 +163,7 @@ export default function TitipanPage() {
         </p>
 
         <Link
-          href="/titipan/catalog"
+          href="/shop?side=titipan"
           className="mt-6 inline-block bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
         >
           Lihat katalog

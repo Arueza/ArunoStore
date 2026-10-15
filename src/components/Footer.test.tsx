@@ -41,4 +41,12 @@ describe("pendingPages", () => {
       expect(pageExists(href), `${href} is built, take it off PENDING`).toBe(false);
     }
   });
+
+  // Filtered shop links carry a query string; the route answering them is
+  // still the bare page, so the query must not fail the lookup.
+  test("a query string never names a route", () => {
+    expect(pageExists("/shop?side=commission")).toBe(true);
+    expect(pageExists("/shop?side=titipan")).toBe(true);
+    expect(pageExists("/nowhere?side=commission")).toBe(false);
+  });
 });

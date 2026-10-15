@@ -35,12 +35,24 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/shop/commission",
-        destination: "/commissions/catalog",
+        destination: "/shop?side=commission",
         permanent: true,
       },
       {
         source: "/shop/titipan",
-        destination: "/titipan/catalog",
+        destination: "/shop?side=titipan",
+        permanent: true,
+      },
+      // 5.23 retired the section catalogues into the filtered global shop;
+      // bookmarks and habits aimed at the old pages land on their filter.
+      {
+        source: "/commissions/catalog",
+        destination: "/shop?side=commission",
+        permanent: true,
+      },
+      {
+        source: "/titipan/catalog",
+        destination: "/shop?side=titipan",
         permanent: true,
       },
     ];

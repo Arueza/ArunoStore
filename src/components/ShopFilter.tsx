@@ -1,14 +1,21 @@
+import { SORT_LABEL, type SortKey } from "@/lib/shop";
+
 /**
  * Filter form for the shop catalogue (roadmap 5.18).
  *
  * A plain GET form — no client component, no state. Submitting reloads the
- * page with ?cat=, ?cond=, ?min=, ?max= and optionally ?status=, which the
- * list reads server-side. Shared by /shop and /staff/shop so the two cannot
- * drift into different wordings.
+ * page with ?cat=, ?cond=, ?min=, ?max= and optionally ?status= / ?sort=,
+ * which the list reads server-side. Shared by /shop and /staff/shop so the
+ * two cannot drift into different wordings.
  *
  * Price inputs use inputMode numeric, same as quote boxes. The action's
  * whole-number check is the real validation; this just puts the right keyboard
  * on a phone.
+ *
+ * Layout "column" stacks the fields full-width for the /shop sidebar; the
+ * default row keeps /staff/shop exactly as it was. `side` is carried as a
+ * hidden field so submitting never drops the visitor's Commission/Titipan
+ * choice — the toggle preserves filters, and the form returns the favour.
  */
 export default function ShopFilter({
   categories,
@@ -20,6 +27,10 @@ export default function ShopFilter({
   status,
   statuses,
   baseHref,
+  side,
+  sort,
+  showSort = false,
+  layout = "row",
 }: {
   categories: { id: string; name: string }[];
   search?: string;
@@ -30,16 +41,38 @@ export default function ShopFilter({
   status?: string;
   statuses?: { value: string; label: string }[];
   baseHref: string;
+  side?: string;
+  sort?: SortKey;
+  showSort?: boolean;
+  layout?: "row" | "column";
 }) {
+  const column = layout === "column";
   const filtered = Boolean(
-    search || categoryId || condition || minPrice || maxPrice || status,
+    search ||
+      categoryId ||
+      condition ||
+      minPrice ||
+      maxPrice ||
+      status ||
+      (sort && sort !== "terbaru"),
   );
 
-  return (
-    <form method="get" className="mt-8 flex flex-wrap items-end gap-3">
-      <input type="hidden" name="q" value={search ?? ""} />
+  const fieldWrap = column ? "w-full" : undefined;
+  const selectClass = column
+    ? "mt-2 w-full border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink focus:border-plum focus:outline-none"
+    : undefined;
 
-      <div className="min-w-44 flex-1">
+  return (
+    <form
+      method="get"
+      className={
+        column ? "flex flex-col gap-4" : "mt-8 flex flex-wrap items-end gap-3"
+      }
+    >
+      <input type="hidden" name="q" value={search ?? ""} />
+      {side && <input type="hidden" name="side" value={side} />}
+
+      <div className={column ? "w-full" : "min-w-44 flex-1"}>
         <label
           htmlFor="cat"
           className="block text-xs uppercase tracking-[0.14em] text-[#6c6870]"
@@ -50,7 +83,10 @@ export default function ShopFilter({
           id="cat"
           name="cat"
           defaultValue={categoryId ?? ""}
-          className="mt-2 w-full border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink focus:border-plum focus:outline-none"
+          className={
+            selectClass ??
+            "mt-2 w-full border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink focus:border-plum focus:outline-none"
+          }
         >
           <option value="">Semua kategori</option>
           {categories.map((cat) => (
@@ -61,7 +97,7 @@ export default function ShopFilter({
         </select>
       </div>
 
-      <div>
+      <div className={fieldWrap}>
         <label
           htmlFor="cond"
           className="block text-xs uppercase tracking-[0.14em] text-[#6c6870]"
@@ -72,7 +108,10 @@ export default function ShopFilter({
           id="cond"
           name="cond"
           defaultValue={condition ?? ""}
-          className="mt-2 border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink focus:border-plum focus:outline-none"
+          className={
+            selectClass ??
+            "mt-2 border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink focus:border-plum focus:outline-none"
+          }
         >
           <option value="">Semua kondisi</option>
           <option value="baru">Baru</option>
@@ -80,7 +119,7 @@ export default function ShopFilter({
         </select>
       </div>
 
-      <div>
+      <div className={fieldWrap}>
         <label
           htmlFor="min"
           className="block text-xs uppercase tracking-[0.14em] text-[#6c6870]"
@@ -94,11 +133,15 @@ export default function ShopFilter({
           inputMode="numeric"
           defaultValue={minPrice ?? ""}
           placeholder="0"
-          className="mt-2 w-28 border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink focus:border-plum focus:outline-none"
+          className={
+            column
+              ? "mt-2 w-full border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink focus:border-plum focus:outline-none"
+              : "mt-2 w-28 border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink focus:border-plum focus:outline-none"
+          }
         />
       </div>
 
-      <div>
+      <div className={fieldWrap}>
         <label
           htmlFor="max"
           className="block text-xs uppercase tracking-[0.14em] text-[#6c6870]"
@@ -112,12 +155,42 @@ export default function ShopFilter({
           inputMode="numeric"
           defaultValue={maxPrice ?? ""}
           placeholder="1000000"
-          className="mt-2 w-28 border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink focus:border-plum focus:outline-none"
+          className={
+            column
+              ? "mt-2 w-full border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink focus:border-plum focus:outline-none"
+              : "mt-2 w-28 border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink focus:border-plum focus:outline-none"
+          }
         />
       </div>
 
+      {showSort && (
+        <div className={fieldWrap}>
+          <label
+            htmlFor="sort"
+            className="block text-xs uppercase tracking-[0.14em] text-[#6c6870]"
+          >
+            Urutan
+          </label>
+          <select
+            id="sort"
+            name="sort"
+            defaultValue={sort ?? "terbaru"}
+            className={
+              selectClass ??
+              "mt-2 border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink focus:border-plum focus:outline-none"
+            }
+          >
+            {(Object.keys(SORT_LABEL) as SortKey[]).map((key) => (
+              <option key={key} value={key}>
+                {SORT_LABEL[key]}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {statuses && (
-        <div>
+        <div className={fieldWrap}>
           <label
             htmlFor="status"
             className="block text-xs uppercase tracking-[0.14em] text-[#6c6870]"
@@ -128,7 +201,10 @@ export default function ShopFilter({
             id="status"
             name="status"
             defaultValue={status ?? ""}
-            className="mt-2 border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink focus:border-plum focus:outline-none"
+            className={
+              selectClass ??
+              "mt-2 border border-[#e2ddd7] bg-white px-3 py-2 text-sm text-ink focus:border-plum focus:outline-none"
+            }
           >
             <option value="">Semua status</option>
             {statuses.map((s) => (
@@ -142,7 +218,7 @@ export default function ShopFilter({
 
       <button
         type="submit"
-        className="bg-plum px-5 py-2 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+        className={`bg-plum px-5 py-2 text-xs uppercase tracking-[0.18em] text-white transition-all duration-150 hover:opacity-90 active:scale-[0.97] disabled:cursor-not-allowed${column ? " w-full" : ""}`}
       >
         Filter
       </button>

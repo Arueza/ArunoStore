@@ -5,6 +5,7 @@ import ShopGrid from "@/components/ShopGrid";
 import ShopFilter from "@/components/ShopFilter";
 import ShopSideToggle, { parseSide } from "@/components/ShopSideToggle";
 import { createPublicClient } from "@/lib/supabase/public";
+import { parseSort } from "@/lib/shop";
 
 export const metadata: Metadata = {
   title: "Belanja — Aruno Store",
@@ -13,17 +14,17 @@ export const metadata: Metadata = {
 /**
  * Ready-made goods from both sides of the store.
  *
- * Shows every available item regardless of showcase — the commission and
- * titipan catalogues filter by their own column. Reads no session so the
- * shell prerenders under cacheComponents.
+ * Full-width catalogue in the Cottonink shape: filters in a left sidebar,
+ * the grid on the right. Reads no session so the shell prerenders under
+ * cacheComponents.
  *
- * ?q= filters the grid by product name (the header search lands here) and
- * ?side= narrows it to one half of the store (the toggle above the form).
- * The query string is a request read, so it is awaited inside ShopGridFromQuery
- * behind its own boundary — never in this body, and never under "use cache",
- * which forbids dynamic request data even in nested children. The grid itself
- * carries "use cache", so the unfiltered catalogue keeps the exact cache it
- * had before search existed.
+ * ?q= filters the grid by product name (the header search lands here),
+ * ?side= narrows it to one half of the store (the toggle in the sidebar),
+ * and ?sort= orders it. The query string is a request read, so it is
+ * awaited inside ShopGridFromQuery behind its own boundary — never in this
+ * body, and never under "use cache", which forbids dynamic request data
+ * even in nested children. The grid itself carries "use cache", so the
+ * unfiltered catalogue keeps the exact cache it had before search existed.
  */
 export default async function ShopPage({
   searchParams,
@@ -35,18 +36,14 @@ export default async function ShopPage({
     min?: string;
     max?: string;
     side?: string;
+    sort?: string;
   }>;
 }) {
   return (
-    <main className="mx-auto w-full max-w-5xl px-5 py-14 sm:px-[6%] sm:py-20">
+    <main className="w-full px-5 py-14 sm:px-[6%] sm:py-20">
       <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
         Belanja
       </h1>
-
-      <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#6c6870] sm:text-base">
-        Barang siap kirim dari endorse kami — merchandise seni dan barang dari
-        Jepang yang bisa dibeli langsung.
-      </p>
 
       <div className="mt-10">
         <Suspense>
@@ -54,7 +51,7 @@ export default async function ShopPage({
         </Suspense>
       </div>
 
-      <div className="mt-14 border-t border-[#eeeae5] pt-8">
+      <div className="mx-auto mt-14 w-full max-w-5xl border-t border-[#eeeae5] pt-8">
         <p className="text-sm text-[#6c6870]">
           Ingin sesuatu yang belum ada di daftar?{" "}
           <Link
@@ -78,8 +75,8 @@ export default async function ShopPage({
 }
 
 /**
- * Awaits the filter query string, then hands the grid its filters plus a
- * result heading.
+ * Awaits the filter query string, then hands the sidebar and grid their
+ * filters plus a result heading.
  *
  * Separate from the page body because awaiting here, inside a boundary, is
  * what keeps /shop's shell prerendered — the same rule 1.12 and 1.13 rest on
@@ -88,6 +85,8 @@ export default async function ShopPage({
  *
  * Category options come from consignment_categories via the same public
  * client — cookie-less, no session read, so the shell still prerenders.
+ * On mobile the sidebar stacks above the grid; the single filter instance
+ * keeps every label's htmlFor unique.
  */
 async function ShopGridFromQuery({
   searchParams,
@@ -99,16 +98,17 @@ async function ShopGridFromQuery({
     min?: string;
     max?: string;
     side?: string;
+    sort?: string;
   }>;
 }) {
-  const { q, cat, cond, min, max, side: sideParam } = await searchParams;
+  const { q, cat, cond, min, max, side: sideParam, sort: sortParam } = await searchParams;
   const search = q?.trim();
   const categoryId = cat?.trim() || undefined;
   const condition = cond?.trim() || undefined;
   const minPrice = min?.trim() || undefined;
   const maxPrice = max?.trim() || undefined;
   const side = parseSide(sideParam?.trim());
-
+  const sort = parseSort(sortParam?.trim());
   // Fetch categories for the dropdown. Only real ids reach the query; a
   // forged value falls back to unfiltered rather than to zero rows.
   const supabase = createPublicClient();
@@ -121,65 +121,80 @@ async function ShopGridFromQuery({
     search || categoryId || condition || minPrice || maxPrice || side,
   );
 
+  const toggleParams = {
+    q: search,
+    cat: categoryId,
+    cond: condition,
+    min: minPrice,
+    max: maxPrice,
+    side,
+    // The default sort stays off the URL: ?sort=terbaru behaves exactly
+    // like no sort, so toggle links keep the address bar clean.
+    sort: sort === "terbaru" ? undefined : sort,
+  };
+
   return (
-    <>
-      <ShopSideToggle
-        params={{
-          q: search,
-          cat: categoryId,
-          cond: condition,
-          min: minPrice,
-          max: maxPrice,
-          side,
-        }}
-      />
-      <ShopFilter
-        categories={(categories ?? []).map((c) => ({
-          id: c.id,
-          name: c.name,
-        }))}
-        search={search}
-        categoryId={categoryId}
-        condition={condition}
-        minPrice={minPrice}
-        maxPrice={maxPrice}
-        baseHref="/shop"
-      />
-      {filtered && (
-        <p className="mt-8 text-sm text-[#6c6870]">
-          Hasil untuk{" "}
-          <span className="font-semibold text-ink">
-            {search || "semua barang"}
-          </span>
-          {categoryId && (
-            <>
-              {" "}
-              di kategori{" "}
-              <span className="font-semibold text-ink">
-                {(categories ?? []).find((c) => c.id === categoryId)?.name ??
-                  categoryId}
-              </span>
-            </>
-          )}
-          {side && (
-            <>
-              {" "}
-              · sisi{" "}
-              <span className="font-semibold text-ink">
-                {side === "commission" ? "Commission" : "Titipan"}
-              </span>
-            </>
-          )}
-        </p>
-      )}
-      <ShopGrid
-        query={search}
-        categoryId={categoryId}
-        condition={condition}
-        minPrice={minPrice}
-        maxPrice={maxPrice}
-        showcase={side}
-      />
-    </>
+    <div className="grid gap-10 lg:grid-cols-[230px_1fr]">
+      <aside aria-label="Filter katalog" className="lg:sticky lg:top-24 lg:self-start">
+        <ShopSideToggle params={toggleParams} layout="column" />
+        <div className="mt-6">
+          <ShopFilter
+            categories={(categories ?? []).map((c) => ({
+              id: c.id,
+              name: c.name,
+            }))}
+            search={search}
+            categoryId={categoryId}
+            condition={condition}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            baseHref="/shop"
+            side={side}
+            sort={sort}
+            showSort
+            layout="column"
+          />
+        </div>
+      </aside>
+
+      <div>
+        {filtered && (
+          <p className="mb-6 text-sm text-[#6c6870]">
+            Hasil untuk{" "}
+            <span className="font-semibold text-ink">
+              {search || "semua barang"}
+            </span>
+            {categoryId && (
+              <>
+                {" "}
+                di kategori{" "}
+                <span className="font-semibold text-ink">
+                  {(categories ?? []).find((c) => c.id === categoryId)?.name ??
+                    categoryId}
+                </span>
+              </>
+            )}
+            {side && (
+              <>
+                {" "}
+                · sisi{" "}
+                <span className="font-semibold text-ink">
+                  {side === "commission" ? "Commission" : "Titipan"}
+                </span>
+              </>
+            )}
+          </p>
+        )}
+        <ShopGrid
+          query={search}
+          categoryId={categoryId}
+          condition={condition}
+          minPrice={minPrice}
+          maxPrice={maxPrice}
+          showcase={side}
+          sort={sort}
+        />
+      </div>
+    </div>
   );
 }

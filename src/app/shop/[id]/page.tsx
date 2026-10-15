@@ -90,8 +90,8 @@ async function ProductLoader({ id }: { id: string }) {
         <Link
           href={
             item.showcase === "titipan"
-              ? "/titipan/catalog"
-              : "/commissions/catalog"
+              ? "/shop?side=titipan"
+              : "/shop?side=commission"
           }
           className="text-xs uppercase tracking-[0.14em] text-[#6c6870] hover:text-plum"
         >

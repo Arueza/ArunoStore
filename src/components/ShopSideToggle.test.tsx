@@ -49,4 +49,13 @@ describe("ShopSideToggle", () => {
 
     expect(shell).toContain('href="/shop"');
   });
+
+  test("carries the sort across side switches", () => {
+    const shell = renderToStaticMarkup(
+      <ShopSideToggle params={{ sort: "termurah", side: "commission" }} />,
+    );
+
+    expect(shell).toContain('href="/shop?sort=termurah&amp;side=titipan"');
+    expect(shell).toContain('href="/shop?sort=termurah"');
+  });
 });

@@ -14,12 +14,12 @@ describe("Titipan page", () => {
     expect(page).toContain("tautan produk dari Jepang");
   });
 
-  // The catalogue lives under this section now, not in the nav — the
-  // explainer is the front door and the button is the way in.
-  test("links into the titipan catalogue", () => {
+  // The catalogue lives in the global shop now (5.23), pre-filtered to this
+  // side — the explainer is the front door and the button is the way in.
+  test("links into the titipan side of the shop", () => {
     const page = renderToStaticMarkup(<TitipanPage />);
 
-    expect(page).toContain('href="/titipan/catalog"');
+    expect(page).toContain('href="/shop?side=titipan"');
     expect(page).toContain("Lihat katalog");
   });
 

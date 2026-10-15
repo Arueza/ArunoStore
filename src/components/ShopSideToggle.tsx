@@ -23,16 +23,24 @@ export type SideParams = {
   min?: string;
   max?: string;
   side?: Side;
+  sort?: string;
 };
 
 /**
  * Segmented Commission/Titipan toggle for the /shop catalogue.
  *
  * Plain links, no client component — each href carries the current filters
- * so switching sides never clears the visitor's search, category, condition
- * or price range. /shop only; /staff/shop never imports this.
+ * and sort so switching sides never clears them. /shop only; /staff/shop
+ * never imports this. In the sidebar it stacks full-width (layout
+ * "column"); anywhere else it stays a row.
  */
-export default function ShopSideToggle({ params }: { params: SideParams }) {
+export default function ShopSideToggle({
+  params,
+  layout = "row",
+}: {
+  params: SideParams;
+  layout?: "row" | "column";
+}) {
   const hrefFor = (side: Side | undefined) => {
     const query = new URLSearchParams();
     if (params.q) query.set("q", params.q);
@@ -40,6 +48,7 @@ export default function ShopSideToggle({ params }: { params: SideParams }) {
     if (params.cond) query.set("cond", params.cond);
     if (params.min) query.set("min", params.min);
     if (params.max) query.set("max", params.max);
+    if (params.sort) query.set("sort", params.sort);
     if (side) query.set("side", side);
     const queryString = query.toString();
     return queryString ? `/shop?${queryString}` : "/shop";
@@ -50,16 +59,18 @@ export default function ShopSideToggle({ params }: { params: SideParams }) {
       ? "bg-plum px-5 py-2 text-xs uppercase tracking-[0.18em] text-white"
       : "border border-[#e2ddd7] bg-white px-5 py-2 text-xs uppercase tracking-[0.18em] text-[#6c6870] transition-colors hover:border-plum hover:text-plum";
 
+  const column = layout === "column";
+
   return (
     <div
       role="group"
       aria-label="Sisi toko"
-      className="flex flex-wrap gap-2"
+      className={column ? "flex flex-col gap-2" : "flex flex-wrap gap-2"}
     >
       <Link
         href={hrefFor(undefined)}
         aria-current={params.side === undefined ? "true" : undefined}
-        className={linkClass(params.side === undefined)}
+        className={`${linkClass(params.side === undefined)}${column ? " block text-center" : ""}`}
       >
         Semua
       </Link>
@@ -68,7 +79,7 @@ export default function ShopSideToggle({ params }: { params: SideParams }) {
           key={side}
           href={hrefFor(side)}
           aria-current={params.side === side ? "true" : undefined}
-          className={linkClass(params.side === side)}
+          className={`${linkClass(params.side === side)}${column ? " block text-center" : ""}`}
         >
           {SHOWCASE_LABEL[side]}
         </Link>

@@ -92,9 +92,6 @@ export async function addToCart(
 
   revalidatePath("/");
   revalidatePath(`/shop/${itemId}`);
-  revalidatePath("/commissions/catalog");
-  revalidatePath("/titipan/catalog");
-  revalidatePath(`/shop/${itemId}`);
   return { ok: true };
 }
 

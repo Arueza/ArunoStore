@@ -10,7 +10,21 @@ import path from "node:path";
 export const PENDING: string[] = [];
 
 export const pageFile = (href: string) =>
-  path.resolve("src", "app", href === "/" ? "" : href.slice(1), "page.tsx");
+  path.resolve(
+    "src",
+    "app",
+    href === "/" ? "" : stripQuery(href).slice(1),
+    "page.tsx",
+  );
+
+/**
+ * A query string never names a route: /shop?side=commission is answered by
+ * /shop's page, so the helpers below ignore everything from the ? on.
+ */
+function stripQuery(href: string): string {
+  const at = href.indexOf("?");
+  return at === -1 ? href : href.slice(0, at);
+}
 
 /**
  * Whether a dynamic route would answer this href.
@@ -27,7 +41,7 @@ export const pageFile = (href: string) =>
  * answering.
  */
 function dynamicPageExists(href: string) {
-  const segments = href.split("/").filter(Boolean);
+  const segments = stripQuery(href).split("/").filter(Boolean);
 
   // Nothing to sit under, so there is no dynamic route to find either.
   if (segments.length < 2) return false;
