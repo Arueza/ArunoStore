@@ -90,12 +90,14 @@ describe("ProductGallery", () => {
     const full = screen.getByRole("link", { name: "Lihat gambar penuh" });
     expect(full).toHaveAttribute("href", "https://example.com/a.jpg");
     expect(full).toHaveAttribute("target", "_blank");
+    expect(mainImage().getAttribute("sizes")).toContain("55vw");
   });
 
   test("default variant keeps the square crop with no full-resolution link", () => {
     render(<ProductGallery images={IMAGES} name="Boneka" />);
 
     expect(mainImage().getAttribute("class")).toContain("object-cover");
+    expect(mainImage().getAttribute("sizes")).toContain("50vw");
     expect(
       screen
         .getByRole("region", { name: /galeri/i })

@@ -80,15 +80,28 @@ async function ProductLoader({ id }: { id: string }) {
     Array.isArray(item.product_sizes) &&
     item.product_sizes.length > 0;
 
+  // Commission goods are portrait artwork: full-width page, wider gallery
+  // column. Everything else keeps the constrained two-column detail.
+  const isArtwork = item.showcase === "commission";
+
   return (
-    <div className="grid gap-10 lg:grid-cols-2">
+    <main
+      className={
+        isArtwork
+          ? "w-full px-5 py-14 sm:px-[6%] sm:py-20"
+          : "mx-auto w-full max-w-5xl px-5 py-14 sm:px-[6%] sm:py-20"
+      }
+    >
+    <div
+      className={
+        isArtwork
+          ? "grid gap-10 lg:grid-cols-[3fr_2fr]"
+          : "grid gap-10 lg:grid-cols-2"
+      }
+    >
       {/* Gallery: carousel with arrows, thumbnails and a counter. Commission
           goods render uncropped with a full-resolution link. */}
-      <ProductGallery
-        images={images}
-        name={item.name}
-        artwork={item.showcase === "commission"}
-      />
+      <ProductGallery images={images} name={item.name} artwork={isArtwork} />
 
       {/* Info: name, price, size, qty, Add to Cart. */}
       <div className="flex flex-col">
@@ -140,6 +153,7 @@ async function ProductLoader({ id }: { id: string }) {
         )}
       </div>
     </div>
+    </main>
   );
 }
 
@@ -157,11 +171,11 @@ export default function ShopProductPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  // The width constraint lives in ProductLoader, which knows the showcase:
+  // commission goods go full width, everything else stays constrained.
   return (
-    <main className="mx-auto w-full max-w-5xl px-5 py-14 sm:px-[6%] sm:py-20">
-      <Suspense>
-        <ProductContent params={params} />
-      </Suspense>
-    </main>
+    <Suspense>
+      <ProductContent params={params} />
+    </Suspense>
   );
 }

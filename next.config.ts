@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
 
   images: {
+    // 75 is the default everywhere; 90 serves the commission artwork stage
+    // (5.29). Unlisted values silently fall back to 75, so this list is the
+    // switch that makes quality={90} real.
+    qualities: [75, 90],
     remotePatterns: [
       {
         protocol: "https",

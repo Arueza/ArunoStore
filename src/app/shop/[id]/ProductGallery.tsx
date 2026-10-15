@@ -71,8 +71,9 @@ export default function ProductGallery({
               alt={name}
               fill
               priority
+              quality={90}
               className="object-contain"
-              sizes="(max-width: 1024px) 100vw, 50vw"
+              sizes="(max-width: 1024px) 100vw, 55vw"
             />
           </a>
         ) : (
