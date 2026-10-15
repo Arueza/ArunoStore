@@ -28,5 +28,10 @@ describe("next.config redirects", () => {
       destination: "/shop?side=titipan",
       permanent: true,
     });
+    expect(redirects).toContainEqual({
+      source: "/staff/titipan",
+      destination: "/titipan",
+      permanent: true,
+    });
   });
 });

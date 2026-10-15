@@ -77,4 +77,40 @@ describe("AuthSlot", () => {
     expect(screen.getByText(/buyer@example.com/)).toBeInTheDocument();
     expect(screen.queryByText(/Halo,  *!/)).not.toBeInTheDocument();
   });
+
+  // Staff run the shop halves, so buyer-only destinations stay out of their
+  // menu. The routes themselves are unchanged — this is convenience, and the
+  // proxy remains the guard.
+  test("hides the buyer links for a staff session", async () => {
+    getClaims.mockResolvedValue({ sub: "s1", email: "staff@example.com" });
+    getProfile.mockResolvedValue({ full_name: "Verrel", role: "staff" });
+
+    render(
+      <PanelProvider>
+        {await AuthSlot()}
+      </PanelProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Akun" }));
+
+    expect(screen.queryByRole("link", { name: "Commissions saya" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Titipan saya" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Riwayat transaksi" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Akun saya" })).toBeInTheDocument();
+  });
+
+  test("keeps the buyer links for a buyer session", async () => {
+    getClaims.mockResolvedValue({ sub: "u1", email: "buyer@example.com" });
+    getProfile.mockResolvedValue({ full_name: "Siti", role: "buyer" });
+
+    render(
+      <PanelProvider>
+        {await AuthSlot()}
+      </PanelProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Akun" }));
+
+    expect(screen.getByRole("link", { name: "Commissions saya" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Titipan saya" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Riwayat transaksi" })).toBeInTheDocument();
+  });
 });

@@ -1,7 +1,35 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { PENDING, pageExists } from "@/components/pendingPages";
-import TitipanPage from "./page";
+import TitipanPage, { TitipanRoleView } from "./page";
+
+const getProfile = vi.fn();
+
+vi.mock("@/lib/auth", () => ({
+  getProfile: () => getProfile(),
+}));
+
+// The Kelola block reads the queue, which is the only Supabase touch here.
+// Empty rows keep the assertion on the role switch, not on the queue itself.
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: vi.fn(async () => ({
+    from: (table: string) => {
+      if (table === "titipan_requests") {
+        return {
+          select: () => ({
+            order: () => Promise.resolve({ data: [] }),
+          }),
+        };
+      }
+      return {
+        select: () => ({
+          in: () => Promise.resolve({ data: [] }),
+        }),
+      };
+    },
+  })),
+}));
 
 // ICU puts a non-breaking space after "Rp" in Indonesian, not a normal space.
 const nbsp = "\u00a0";
@@ -82,5 +110,30 @@ describe("Titipan page", () => {
         `${href} has no page`,
       ).toBe(true);
     }
+  });
+});
+
+describe("TitipanRoleView", () => {
+  test("buyers and visitors get the call to action, never the dashboard", async () => {
+    for (const profile of [null, { full_name: "Siti", role: "buyer" }]) {
+      getProfile.mockResolvedValue(profile);
+
+      const { unmount } = render(await TitipanRoleView());
+
+      expect(
+        screen.getByRole("link", { name: "Mulai titipan" }),
+      ).toHaveAttribute("href", "/titipan/request");
+      expect(screen.queryByText("Kelola permintaan")).toBeNull();
+      unmount();
+    }
+  });
+
+  test("staff get the Kelola dashboard instead of the call to action", async () => {
+    getProfile.mockResolvedValue({ full_name: "Alfreza", role: "staff" });
+
+    render(await TitipanRoleView());
+
+    expect(screen.getByText("Kelola permintaan")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Mulai titipan" })).toBeNull();
   });
 });

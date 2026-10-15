@@ -1,13 +1,7 @@
-import type { Metadata } from "next";
-import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate, formatRupiah } from "@/lib/format";
 import { countByStatus, statusLabel } from "@/lib/commissionStatus";
-
-export const metadata: Metadata = {
-  title: "Titipan — Ruang Staf",
-};
 
 // Spelled out because Supabase has no generated types for this project, so a
 // select() string is the only description of the row. Matches 0006's columns and
@@ -28,10 +22,8 @@ type TitipanRequest = {
  * The titipan queue: every request, newest first, for both sellers.
  *
  * Roadmap 3.5, and Alfreza's half of what 1.8's guard was built to protect.
- *
- * Access is decided entirely by the proxy, never here. This component renders
- * only after the guard has let the request through, so a role check in this file
- * would be a second, weaker copy of the same decision.
+ * Rendered for staff inside the Kelola block on /titipan — never for buyers.
+ * The proxy's staff gate is the access control; this component only reads.
  *
  * The buyer's name is fetched separately and joined in JavaScript rather than
  * asked for as a PostgREST embed, for the reason 2.8 gives: titipan_requests
@@ -177,35 +169,5 @@ function StatusSummary({
       {total} permintaan —{" "}
       {counts.map((entry) => `${statusLabel(entry.status)} (${entry.count})`).join(" · ")}
     </p>
-  );
-}
-
-export default function StaffTitipanPage() {
-  return (
-    <main className="mx-auto w-full max-w-3xl px-5 py-14 sm:px-[6%] sm:py-20">
-      <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
-        Permintaan titipan
-      </h1>
-
-      <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#6c6870] sm:text-base">
-        Permintaan titipan yang masuk, terbaru lebih dulu.
-      </p>
-
-      <nav aria-label="Menu staf" className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-        <Link href="/staff" className="font-semibold text-plum hover:underline">
-          Permintaan commission
-        </Link>
-        <Link href="/staff/artworks" className="font-semibold text-plum hover:underline">
-          Galeri karya
-        </Link>
-      </nav>
-
-      {/* The queue reads cookies through createClient(), so it cannot be
-          prerendered. The boundary is what lets the heading above ship in the
-          static shell while the list streams in behind it. */}
-      <Suspense>
-        <TitipanQueue />
-      </Suspense>
-    </main>
   );
 }

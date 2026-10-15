@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { renderToStaticMarkup } from "react-dom/server";
-import { PENDING, pageExists } from "@/components/pendingPages";
+import { PENDING, pageExists } from "./pendingPages";
 
 // The queue is the only thing here that talks to Supabase. The mock records the
 // order() call as well, because "newest first" is the claim 3.5 makes and a
@@ -35,7 +34,7 @@ vi.mock("@/lib/supabase/server", () => ({
   })),
 }));
 
-import StaffTitipanPage, { TitipanQueue } from "./page";
+import { TitipanQueue } from "./TitipanQueue";
 
 // ICU puts a non-breaking space after "Rp" in Indonesian, not a normal space.
 const nbsp = "\u00a0";
@@ -51,25 +50,6 @@ const REQUEST = {
   status: "requested",
   created_at: "2026-10-09T23:30:00Z",
 };
-
-describe("StaffTitipanPage", () => {
-  test("the heading is in the static shell", () => {
-    expect(renderToStaticMarkup(<StaffTitipanPage />)).toContain(
-      "Permintaan titipan",
-    );
-  });
-
-  // If the session read moves back up into the page, the route stops prerendering
-  // and `next build` fails. Same regression 1.12 fixed in the navbar, and the
-  // reason the queue sits behind its own boundary.
-  test("the queue is not in the static shell", () => {
-    mocks.requests = [REQUEST];
-
-    expect(renderToStaticMarkup(<StaffTitipanPage />)).not.toContain(
-      "store.example",
-    );
-  });
-});
 
 describe("TitipanQueue", () => {
   beforeEach(() => {

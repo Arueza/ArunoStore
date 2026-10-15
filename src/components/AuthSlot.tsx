@@ -40,6 +40,7 @@ export default async function AuthSlot() {
     <AccountDropdown
       userName={profile?.full_name ?? ""}
       userEmail={claims.email ?? ""}
+      isStaff={profile?.role === "staff"}
     />
   );
 }

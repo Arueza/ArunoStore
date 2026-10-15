@@ -55,6 +55,14 @@ const nextConfig: NextConfig = {
         destination: "/shop?side=titipan",
         permanent: true,
       },
+      // 5.24 moved the titipan queue onto /titipan; a bookmarked staff list
+      // lands on the dashboard instead of a 404. Exact path only, so
+      // /staff/titipan/[id] detail pages are untouched.
+      {
+        source: "/staff/titipan",
+        destination: "/titipan",
+        permanent: true,
+      },
     ];
   },
 };

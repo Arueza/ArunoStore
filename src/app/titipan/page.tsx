@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
+import { getProfile } from "@/lib/auth";
 import { formatRupiah } from "@/lib/format";
 import { quoteTotal } from "@/lib/quote";
+import { TitipanQueue } from "@/components/TitipanQueue";
 
 export const metadata: Metadata = {
   title: "Titipan dari Jepang — Aruno Store",
@@ -173,45 +176,84 @@ export default function TitipanPage() {
       {/* /titipan/request exists as of 3.3 and /titipan/mine as of 3.8, and
           both are guarded, so a signed-out visitor lands on the login page
           instead of a page they cannot use. Both destinations are held by the
-          nav link tests. */}
+          nav link tests. Staff get the Kelola dashboard here instead of the
+          CTA, by the same island pattern as /commissions. */}
       <div className="mt-14 border-t border-[#eeeae5] pt-8">
-        <Link
-          href="/titipan/request"
-          className="inline-block bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
-        >
-          Mulai titipan
-        </Link>
-
-        {/* The page a buyer lands on to answer "what happened to the parcel I
-            sent". It is the one link here that only makes sense to somebody who
-            has already sent something, so it sits under the call to action
-            rather than beside it. */}
-        <p className="mt-4 text-xs text-[#6c6870]">
-          Sudah pernah mengirim?{" "}
-          <Link
-            href="/titipan/mine"
-            className="font-semibold text-plum hover:underline"
-          >
-            Lihat permintaanmu
-          </Link>
-          .
-        </p>
-
-        <p className="mt-4 text-xs text-[#6c6870]">
-          Belum punya akun?{" "}
-          <Link
-            href="/auth/sign-up"
-            className="font-semibold text-plum hover:underline"
-          >
-            Daftar
-          </Link>{" "}
-          dulu, atau{" "}
-          <Link href="/login" className="font-semibold text-plum hover:underline">
-            masuk
-          </Link>
-          .
-        </p>
+        <Suspense fallback={<BuyerCTA />}>
+          <TitipanRoleView />
+        </Suspense>
       </div>
     </main>
+  );
+}
+
+/**
+ * Buyer or manager view of the titipan page (roadmap 5.24).
+ *
+ * Staff run the titipan side themselves, so they never send a request: they
+ * get the incoming queue where buyers get the CTA. Signed out and buyer
+ * sessions render exactly the fallback above, with no flash.
+ */
+export async function TitipanRoleView() {
+  const profile = await getProfile();
+
+  if (profile?.role !== "staff") return <BuyerCTA />;
+
+  return (
+    <section aria-labelledby="kelola">
+      <h2
+        id="kelola"
+        className="font-display text-xl font-semibold text-ink"
+      >
+        Kelola permintaan
+      </h2>
+
+      <Suspense>
+        <TitipanQueue />
+      </Suspense>
+    </section>
+  );
+}
+
+function BuyerCTA() {
+  return (
+    <>
+      <Link
+        href="/titipan/request"
+        className="inline-block bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+      >
+        Mulai titipan
+      </Link>
+
+      {/* The page a buyer lands on to answer "what happened to the parcel I
+          sent". It is the one link here that only makes sense to somebody who
+          has already sent something, so it sits under the call to action
+          rather than beside it. */}
+      <p className="mt-4 text-xs text-[#6c6870]">
+        Sudah pernah mengirim?{" "}
+        <Link
+          href="/titipan/mine"
+          className="font-semibold text-plum hover:underline"
+        >
+          Lihat permintaanmu
+        </Link>
+        .
+      </p>
+
+      <p className="mt-4 text-xs text-[#6c6870]">
+        Belum punya akun?{" "}
+        <Link
+          href="/auth/sign-up"
+          className="font-semibold text-plum hover:underline"
+        >
+          Daftar
+        </Link>{" "}
+        dulu, atau{" "}
+        <Link href="/login" className="font-semibold text-plum hover:underline">
+          masuk
+        </Link>
+        .
+      </p>
+    </>
   );
 }

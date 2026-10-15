@@ -83,7 +83,7 @@ async function RequestDetail({ params }: { params: Promise<{ id: string }> }) {
     <div className="mt-8 grid gap-12 lg:grid-cols-[1fr_20rem]">
       <div>
         <Link
-          href="/staff/titipan"
+          href="/titipan"
           className="text-sm font-semibold text-plum hover:underline"
         >
           ← Semua permintaan titipan

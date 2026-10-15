@@ -9,6 +9,8 @@ const ID = "account";
 type Props = {
   userName: string;
   userEmail: string;
+  /** Staff run the shop halves themselves, so buyer-only links stay hidden. */
+  isStaff?: boolean;
 };
 
 /**
@@ -21,7 +23,7 @@ type Props = {
  * menu instead because logging out has to live somewhere, and a dedicated page
  * for one button is not worth the route.
  */
-export default function AccountDropdown({ userName, userEmail }: Props) {
+export default function AccountDropdown({ userName, userEmail, isStaff = false }: Props) {
   const { open, toggle, close } = usePanels();
   const isOpen = open === ID;
 
@@ -79,40 +81,48 @@ export default function AccountDropdown({ userName, userEmail }: Props) {
               </li>
               {/* Where a buyer goes to see whether a quote has arrived. The menu
                   only renders signed in, and the page is guarded anyway, so no
-                  signed-out link is created by this. */}
-              <li>
-                <Link
-                  href="/commissions/mine"
-                  onClick={close}
-                  className="flex items-center gap-3 px-5 py-2.5 text-sm transition-colors hover:bg-[#f3f0ec]"
-                >
-                  <CommissionsIcon />
-                  Commissions saya
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/titipan/mine"
-                  onClick={close}
-                  className="flex items-center gap-3 px-5 py-2.5 text-sm transition-colors hover:bg-[#f3f0ec]"
-                >
-                  <TitipanIcon />
-                  Titipan saya
-                </Link>
-              </li>
+                  signed-out link is created by this. Hidden for staff: they
+                  run these halves and never hold a buyer row. */}
+              {!isStaff && (
+                <li>
+                  <Link
+                    href="/commissions/mine"
+                    onClick={close}
+                    className="flex items-center gap-3 px-5 py-2.5 text-sm transition-colors hover:bg-[#f3f0ec]"
+                  >
+                    <CommissionsIcon />
+                    Commissions saya
+                  </Link>
+                </li>
+              )}
+              {!isStaff && (
+                <li>
+                  <Link
+                    href="/titipan/mine"
+                    onClick={close}
+                    className="flex items-center gap-3 px-5 py-2.5 text-sm transition-colors hover:bg-[#f3f0ec]"
+                  >
+                    <TitipanIcon />
+                    Titipan saya
+                  </Link>
+                </li>
+              )}
               {/* One history for every payment, whichever half it belongs to.
                   The menu only renders signed in, and the page is guarded
-                  anyway, so no signed-out link is created by this. */}
-              <li>
-                <Link
-                  href="/payments"
-                  onClick={close}
-                  className="flex items-center gap-3 px-5 py-2.5 text-sm transition-colors hover:bg-[#f3f0ec]"
-                >
-                  <ReceiptIcon />
-                  Riwayat transaksi
-                </Link>
-              </li>
+                  anyway, so no signed-out link is created by this. Buyers
+                  only: staff rows never exist, so there is nothing to list. */}
+              {!isStaff && (
+                <li>
+                  <Link
+                    href="/payments"
+                    onClick={close}
+                    className="flex items-center gap-3 px-5 py-2.5 text-sm transition-colors hover:bg-[#f3f0ec]"
+                  >
+                    <ReceiptIcon />
+                    Riwayat transaksi
+                  </Link>
+                </li>
+              )}
             </ul>
 
             <div className="border-t border-[#eeeae5] py-2">

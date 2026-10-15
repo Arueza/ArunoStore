@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getProfile } from "@/lib/auth";
 import { formatRupiah } from "@/lib/format";
+import { CommissionQueue } from "@/components/CommissionQueue";
 
 export const metadata: Metadata = {
   title: "Commissions — Aruno Store",
@@ -105,25 +107,67 @@ export default function CommissionsPage() {
       </section>
 
       <div className="mt-14 border-t border-[#eeeae5] pt-8">
-        <Link
-          href="/commissions/request"
-          className="inline-block bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
-        >
-          Mulai commission
-        </Link>
-
-        <p className="mt-4 text-xs text-[#6c6870]">
-          Belum punya akun?{" "}
-          <Link href="/auth/sign-up" className="font-semibold text-plum hover:underline">
-            Daftar
-          </Link>{" "}
-          atau{" "}
-          <Link href="/login" className="font-semibold text-plum hover:underline">
-            masuk
-          </Link>
-          .
-        </p>
+        {/* The call to action for buyers ships in the static shell; staff get
+            the Kelola dashboard once the session resolves. Same island pattern
+            as AuthSlot: no session read in the page body, so the route keeps
+            prerendering. */}
+        <Suspense fallback={<BuyerCTA />}>
+          <CommissionRoleView />
+        </Suspense>
       </div>
     </main>
+  );
+}
+
+/**
+ * Buyer or manager view of the commissions page (roadmap 5.24).
+ *
+ * Staff are the commissioner side themselves, so they never start a request:
+ * they get the incoming queue where buyers get the CTA. Signed out and buyer
+ * sessions render exactly the fallback above, with no flash.
+ */
+export async function CommissionRoleView() {
+  const profile = await getProfile();
+
+  if (profile?.role !== "staff") return <BuyerCTA />;
+
+  return (
+    <section aria-labelledby="kelola">
+      <h2
+        id="kelola"
+        className="font-display text-xl font-semibold text-ink"
+      >
+        Kelola permintaan
+      </h2>
+
+      <Suspense>
+        <CommissionQueue />
+      </Suspense>
+    </section>
+  );
+}
+
+function BuyerCTA() {
+  return (
+    <>
+      <Link
+        href="/commissions/request"
+        className="inline-block bg-plum px-6 py-3 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+      >
+        Mulai commission
+      </Link>
+
+      <p className="mt-4 text-xs text-[#6c6870]">
+        Belum punya akun?{" "}
+        <Link href="/auth/sign-up" className="font-semibold text-plum hover:underline">
+          Daftar
+        </Link>{" "}
+        atau{" "}
+        <Link href="/login" className="font-semibold text-plum hover:underline">
+          masuk
+        </Link>
+        .
+      </p>
+    </>
   );
 }
