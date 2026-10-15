@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import HeroSlideshow from "./HeroSlideshow";
+import HeroSlideshow, { zoomForScroll } from "./HeroSlideshow";
 
 describe("HeroSlideshow", () => {
   // All five photos render server-side, so the hero is never an empty box —
@@ -19,5 +19,19 @@ describe("HeroSlideshow", () => {
 
     expect(visible.length).toBe(1);
     expect(hidden.length).toBe(4);
+  });
+
+  // The scroll zoom runs from 1x at the top to 1.12x after one viewport of
+  // scrolling, then holds — clamped so overscroll never blows the photo up.
+  test("zoom curve starts at 1, grows with scroll, clamps at one viewport", () => {
+    expect(zoomForScroll(0, 800)).toBe(1);
+    expect(zoomForScroll(400, 800)).toBeCloseTo(1.06, 5);
+    expect(zoomForScroll(800, 800)).toBeCloseTo(1.12, 5);
+    expect(zoomForScroll(5000, 800)).toBeCloseTo(1.12, 5);
+  });
+
+  test("zoom curve ignores negative scroll and zero viewport", () => {
+    expect(zoomForScroll(-100, 800)).toBe(1);
+    expect(zoomForScroll(400, 0)).toBe(1);
   });
 });

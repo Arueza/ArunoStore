@@ -16,6 +16,15 @@ describe("Home", () => {
     expect(shell).toContain('href="/titipan"');
   });
 
+  // The Belanja service card is gone — /shop lives on in the hero button and
+  // the nav only. The h2 check keeps "Mulai Belanja" on the button passing.
+  test("has no Belanja service card", () => {
+    const shell = renderToStaticMarkup(<Home />);
+
+    expect(shell).toContain("Mulai Belanja");
+    expect(shell).not.toContain(">Belanja</h2>");
+  });
+
   // Same guarantee task 1.11 gave the footer. Both services are unbuilt until
   // Phase 2 and 3, so this only holds while they are declared pending.
   test("every link on the page has a page or is declared pending", () => {
