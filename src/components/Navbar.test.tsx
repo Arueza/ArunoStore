@@ -8,6 +8,12 @@ vi.mock("@/lib/auth", () => ({
   getProfile: () => getProfile(),
 }));
 
+// SearchPanel routes client-side with useRouter, which throws without a
+// mounted app router. The shell never navigates, so a stub push is enough.
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn() }),
+}));
+
 import { renderToStaticMarkup } from "react-dom/server";
 import Navbar from "./Navbar";
 import { NAV_LINKS } from "./navLinks";

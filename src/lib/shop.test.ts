@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { pickThumb } from "./shop";
+import { likePattern, pickThumb } from "./shop";
 
 describe("pickThumb", () => {
   test("takes the flagged thumbnail", () => {
@@ -25,5 +25,17 @@ describe("pickThumb", () => {
   test("has no image to offer", () => {
     expect(pickThumb([])).toBeNull();
     expect(pickThumb(null)).toBeNull();
+  });
+});
+
+describe("likePattern", () => {
+  test("wraps the term for a contains match", () => {
+    expect(likePattern("kimono")).toBe("%kimono%");
+  });
+
+  // Without escaping, a buyer typing % or _ would match rows they never
+  // asked for — LIKE reads them as wildcards, not letters.
+  test("escapes LIKE wildcards and the escape character", () => {
+    expect(likePattern("100%_\\")).toBe("%100\\%\\_\\\\%");
   });
 });

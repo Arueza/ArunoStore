@@ -28,3 +28,14 @@ export const SHOWCASE_LABEL: Record<Showcase, string> = {
 
 export const FASHION_SIZES = ["S", "M", "L", "XL", "XXL"] as const;
 export type FashionSize = (typeof FASHION_SIZES)[number];
+
+/**
+ * Wraps a search term as a PostgREST `ilike` pattern.
+ *
+ * `%` and `_` are wildcards in LIKE and `\` is the escape character, so a
+ * buyer typing any of them would otherwise match rows they never asked for.
+ * Escaping keeps the search literal: what they typed is what is matched.
+ */
+export function likePattern(term: string): string {
+  return `%${term.replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
+}

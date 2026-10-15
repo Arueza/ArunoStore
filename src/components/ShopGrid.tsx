@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { createPublicClient } from "@/lib/supabase/public";
 import { formatRupiah } from "@/lib/format";
-import { pickThumb, type Showcase } from "@/lib/shop";
+import { likePattern, pickThumb, type Showcase } from "@/lib/shop";
 
 type ShopItem = {
   id: string;
@@ -14,19 +14,34 @@ type ShopItem = {
 };
 
 /**
- * Grid of available catalogue items, optionally filtered by showcase.
+ * Grid of available catalogue items, optionally filtered by showcase and by a
+ * name search from /shop?q=.
  *
  * Used by /shop (no filter — everything), /shop/commission and /shop/titipan
  * (filtered). Cookie-less public client so each page prerenders under
  * cacheComponents with no session read and no <Suspense>.
  *
- * ponytail: no description on the card, no category filter, no search, no
+ * Cached per argument set, so one search term never serves another term's
+ * rows and the unfiltered grid keeps the exact cache it had before search
+ * existed. The search match is a literal contains on the name, case
+ * insensitive — likePattern() keeps a typed % or _ from becoming a wildcard.
+ *
+ * ponytail: no description on the card, no category filter, no
  * detail page, no cart button. Price is shown but not purchasable; buying
  * needs the quote flow in Phase 4.
  */
-export default async function ShopGrid({ showcase }: { showcase?: Showcase }) {
+export default async function ShopGrid({
+  showcase,
+  query,
+}: {
+  showcase?: Showcase;
+  query?: string;
+}) {
+  "use cache";
+
   const supabase = createPublicClient();
-  const query = supabase
+  const search = query?.trim();
+  const dbQuery = supabase
     .from("consignment_items")
     .select(
       "id, name, price, condition, consignment_categories(name), consignment_images(image_url, is_thumbnail)",
@@ -37,10 +52,14 @@ export default async function ShopGrid({ showcase }: { showcase?: Showcase }) {
   // PostgREST `in` with an empty list matches nothing; keduanya lands in both
   // catalogues, so the filter is showcase = commission OR keduanya.
   if (showcase) {
-    query.in("showcase", [showcase, "keduanya"]);
+    dbQuery.in("showcase", [showcase, "keduanya"]);
   }
 
-  const { data: items } = await query;
+  if (search) {
+    dbQuery.ilike("name", likePattern(search));
+  }
+
+  const { data: items } = await dbQuery;
 
   if (!items || items.length === 0) {
     return (

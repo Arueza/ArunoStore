@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { usePanels } from "@/components/Panels";
 
 const ID = "search";
@@ -14,15 +15,32 @@ const ID = "search";
  *
  * Its open state comes from Panels.tsx, like the cart and the account menu, so
  * opening one closes the others.
+ *
+ * Submitting navigates to /shop?q=, which filters the catalogue grid by
+ * product name — one results page covers every showcase, so a search from any
+ * page finds belanja, commission and titipan items alike. The plain form
+ * action keeps it working without JavaScript; with it, the submit handler
+ * routes client-side and shuts the panel.
  */
 export default function SearchPanel() {
-  const { open, toggle } = usePanels();
+  const { open, toggle, close } = usePanels();
   const isOpen = open === ID;
   const inputRef = useRef<HTMLInputElement>(null);
+  const [term, setTerm] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     if (isOpen) inputRef.current?.focus();
   }, [isOpen]);
+
+  const submit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const search = term.trim();
+    close();
+    if (search) {
+      router.push(`/shop?q=${encodeURIComponent(search)}`);
+    }
+  };
 
   return (
     <>
@@ -38,7 +56,12 @@ export default function SearchPanel() {
 
       {isOpen && (
         <div className="absolute inset-x-0 top-full z-40 border-b border-[#eeeae5] bg-cream shadow-sm">
-          <div className="mx-auto flex max-w-xl items-center gap-3 px-5 py-4 sm:px-[6%]">
+          <form
+            action="/shop"
+            method="get"
+            onSubmit={submit}
+            className="mx-auto flex max-w-xl items-center gap-3 px-5 py-4 sm:px-[6%]"
+          >
             <svg
               width="18"
               height="18"
@@ -57,7 +80,11 @@ export default function SearchPanel() {
             <input
               ref={inputRef}
               type="search"
+              name="q"
+              value={term}
+              onChange={(event) => setTerm(event.target.value)}
               placeholder="Cari produk..."
+              aria-label="Cari produk"
               className="flex-1 bg-transparent text-sm outline-none placeholder:text-[#b0acb5]"
             />
 
@@ -69,12 +96,7 @@ export default function SearchPanel() {
             >
               Tutup
             </button>
-          </div>
-
-          {/* ponytail: no results yet. The catalogue arrives with Phase 2. */}
-          <p className="mx-auto max-w-xl px-5 pb-4 text-center text-sm text-[#b0acb5]">
-            Belum ada produk tersedia.
-          </p>
+          </form>
         </div>
       )}
     </>
