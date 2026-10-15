@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate, formatRupiah } from "@/lib/format";
-import { statusLabel } from "@/lib/commissionStatus";
+import { countByStatus, statusLabel } from "@/lib/commissionStatus";
 
 export const metadata: Metadata = {
   title: "Permintaan — Ruang Staf",
@@ -79,36 +79,62 @@ async function CommissionQueue() {
   }
 
   return (
-    <ul className="mt-8 divide-y divide-[#eeeae5] border-y border-[#eeeae5]">
-      {rows.map((row) => (
-        <li key={row.id}>
-          <Link
-            href={`/staff/commissions/${row.id}`}
-            className="block py-5 transition-opacity hover:opacity-80"
-          >
-            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <p className="text-sm font-medium text-ink">
-                {buyerNames.get(row.buyer_id) ?? "Pembeli tanpa profil"}
-              </p>
-              <p className="text-xs text-[#6c6870]">
-                {statusLabel(row.status)} · {formatDate(row.created_at)}
-              </p>
-            </div>
+    <>
+      <StatusSummary
+        counts={countByStatus(rows.map((row) => ({ status: row.status })))}
+      />
+      <ul className="mt-8 divide-y divide-[#eeeae5] border-y border-[#eeeae5]">
+        {rows.map((row) => (
+          <li key={row.id}>
+            <Link
+              href={`/staff/commissions/${row.id}`}
+              className="block py-5 transition-opacity hover:opacity-80"
+            >
+              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <p className="text-sm font-medium text-ink">
+                  {buyerNames.get(row.buyer_id) ?? "Pembeli tanpa profil"}
+                </p>
+                <p className="text-xs text-[#6c6870]">
+                  {statusLabel(row.status)} · {formatDate(row.created_at)}
+                </p>
+              </div>
 
-            <p className="mt-1 text-xs text-[#6c6870]">
-              {serviceNames.get(row.service_id) ?? "Layanan tidak tersedia"}
-              {row.quote_price !== null && ` · ${formatRupiah(row.quote_price)}`}
-            </p>
+              <p className="mt-1 text-xs text-[#6c6870]">
+                {serviceNames.get(row.service_id) ?? "Layanan tidak tersedia"}
+                {row.quote_price !== null && ` · ${formatRupiah(row.quote_price)}`}
+              </p>
 
-            {/* line-clamp keeps a long brief from pushing the queue's rhythm
-                apart. The full text is one click away on the detail page. */}
-            <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[#6c6870]">
-              {row.brief}
-            </p>
-          </Link>
-        </li>
-      ))}
-    </ul>
+              {/* line-clamp keeps a long brief from pushing the queue's rhythm
+                  apart. The full text is one click away on the detail page. */}
+              <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[#6c6870]">
+                {row.brief}
+              </p>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
+/**
+ * Counts of open requests per status (roadmap 5.1).
+ *
+ * No extra query: the queue already read every row, so this groups the same
+ * statuses in JavaScript. Renders `{label} ({count})` lines; nothing to click.
+ */
+function StatusSummary({
+  counts,
+}: {
+  counts: Array<{ status: string; count: number }>;
+}) {
+  const total = counts.reduce((sum, entry) => sum + entry.count, 0);
+
+  return (
+    <p className="mt-6 text-sm text-[#6c6870]">
+      {total} permintaan —{" "}
+      {counts.map((entry) => `${statusLabel(entry.status)} (${entry.count})`).join(" · ")}
+    </p>
   );
 }
 

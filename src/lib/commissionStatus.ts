@@ -24,3 +24,48 @@ const LABELS: Record<string, string> = {
 export function statusLabel(status: string): string {
   return LABELS[status] ?? status;
 }
+
+/**
+ * Every status in the order a queue summary reads in.
+ *
+ * Both staff queues count rows per status (roadmap 5.1). One order here so
+ * the two summaries cannot list the same states in different orders.
+ */
+export const STATUS_ORDER = [
+  "requested",
+  "quoted",
+  "accepted",
+  "declined",
+  "paid",
+  "purchased",
+  "shipped",
+  "arrived",
+];
+
+/**
+ * Rows grouped per status, nonzero only, in STATUS_ORDER.
+ *
+ * Unknown values append alphabetically after the known ones — same rule as
+ * statusLabel(): visible but wrong beats a missing count that reads as zero.
+ */
+export function countByStatus(
+  rows: Array<{ status: string }>,
+): Array<{ status: string; count: number }> {
+  const counts = new Map<string, number>();
+
+  for (const row of rows) {
+    counts.set(row.status, (counts.get(row.status) ?? 0) + 1);
+  }
+
+  const known = STATUS_ORDER.flatMap((status) => {
+    const count = counts.get(status);
+    return count === undefined ? [] : [{ status, count }];
+  });
+
+  const extra = [...counts.keys()]
+    .filter((status) => !STATUS_ORDER.includes(status))
+    .sort()
+    .map((status) => ({ status, count: counts.get(status) ?? 0 }));
+
+  return [...known, ...extra];
+}

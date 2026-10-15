@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { statusLabel } from "@/lib/commissionStatus";
+import { countByStatus, statusLabel } from "@/lib/commissionStatus";
 
 describe("statusLabel", () => {
   // Nobody sees a database word. request_status holds requested, quoted,
@@ -26,5 +26,21 @@ describe("statusLabel", () => {
     for (const status of ["requested", "quoted", "in_progress", "declined"]) {
       expect(statusLabel(status).length).toBeGreaterThan(0);
     }
+  });
+
+  test("counts rows per status in queue order, extras last", () => {
+    expect(
+      countByStatus([
+        { status: "quoted" },
+        { status: "requested" },
+        { status: "quoted" },
+        { status: "mystery" },
+      ]),
+    ).toEqual([
+      { status: "requested", count: 1 },
+      { status: "quoted", count: 2 },
+      { status: "mystery", count: 1 },
+    ]);
+    expect(countByStatus([])).toEqual([]);
   });
 });

@@ -104,7 +104,8 @@ describe("TitipanQueue", () => {
   });
 
   // A quantity of one is what most rows will say, so it is left out rather than
-  // printed on every line of the queue.
+  // printed on every line of the queue. The summary counts rows, not items, so
+  // it cannot contain the word "barang" either.
   test("leaves out a quantity of one", async () => {
     mocks.requests = [{ ...REQUEST, quantity: 1 }];
 
@@ -136,7 +137,7 @@ describe("TitipanQueue", () => {
 
     render(await TitipanQueue());
 
-    expect(screen.getByText(/Sudah dikutip/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Sudah dikutip/).length).toBeGreaterThan(0);
     expect(screen.queryByText("quoted")).toBeNull();
     // 2026-10-09T23:30:00Z is the 10th in Jakarta and the 9th in UTC. formatDate
     // is pinned to UTC so both sides of the shop read the same day. The month

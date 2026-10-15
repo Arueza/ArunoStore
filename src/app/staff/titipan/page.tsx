@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate, formatRupiah } from "@/lib/format";
-import { statusLabel } from "@/lib/commissionStatus";
+import { countByStatus, statusLabel } from "@/lib/commissionStatus";
 
 export const metadata: Metadata = {
   title: "Titipan — Ruang Staf",
@@ -92,65 +92,91 @@ export async function TitipanQueue() {
   }
 
   return (
-    <ul className="mt-8 divide-y divide-[#eeeae5] border-y border-[#eeeae5]">
-      {rows.map((row) => {
-        // What the buyer already told staff, in one line. Quantity only shows
-        // above one: "1 barang" on every row is noise, and a quantity of one is
-        // what most rows will say.
-        const details = [
-          row.size,
-          row.color,
-          row.quantity > 1 ? `${row.quantity} barang` : null,
-        ].filter((part): part is string => Boolean(part));
+    <>
+      <StatusSummary
+        counts={countByStatus(rows.map((row) => ({ status: row.status })))}
+      />
+      <ul className="mt-8 divide-y divide-[#eeeae5] border-y border-[#eeeae5]">
+        {rows.map((row) => {
+          // What the buyer already told staff, in one line. Quantity only shows
+          // above one: "1 barang" on every row is noise, and a quantity of one is
+          // what most rows will say.
+          const details = [
+            row.size,
+            row.color,
+            row.quantity > 1 ? `${row.quantity} barang` : null,
+          ].filter((part): part is string => Boolean(part));
 
-        return (
-          <li key={row.id} className="py-5">
-            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <p className="text-sm font-medium text-ink">
-                {buyerNames.get(row.buyer_id) ?? "Pembeli tanpa profil"}
-              </p>
-              <p className="text-xs text-[#6c6870]">
-                {statusLabel(row.status)} · {formatDate(row.created_at)}
-              </p>
-            </div>
+          return (
+            <li key={row.id} className="py-5">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <p className="text-sm font-medium text-ink">
+                  {buyerNames.get(row.buyer_id) ?? "Pembeli tanpa profil"}
+                </p>
+                <p className="text-xs text-[#6c6870]">
+                  {statusLabel(row.status)} · {formatDate(row.created_at)}
+                </p>
+              </div>
 
-            {/* The one thing staff need before they can price anything. 0006
-                stores it as plain text and 3.3 refuses anything but http/https,
-                so rendering it as an href cannot execute what the buyer typed. */}
-            <p className="mt-2 text-sm">
-              <a
-                href={row.product_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="break-all text-plum hover:underline"
+              {/* The one thing staff need before they can price anything. 0006
+                  stores it as plain text and 3.3 refuses anything but http/https,
+                  so rendering it as an href cannot execute what the buyer typed. */}
+              <p className="mt-2 text-sm">
+                <a
+                  href={row.product_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="break-all text-plum hover:underline"
+                >
+                  {row.product_link}
+                </a>
+              </p>
+
+              {details.length > 0 && (
+                <p className="mt-1 text-xs text-[#6c6870]">{details.join(" · ")}</p>
+              )}
+
+              {/* The buyer's guess, labelled as one. A quote does not exist yet —
+                  0006 ships no update policy — and a bare figure would read as a
+                  price the shop has agreed to. */}
+              {row.budget !== null && (
+                <p className="mt-1 text-xs text-[#6c6870]">
+                  Perkiraan budget {formatRupiah(row.budget)}
+                </p>
+              )}
+
+              <Link
+                href={`/staff/titipan/${row.id}`}
+                className="mt-3 inline-block text-sm font-semibold text-plum hover:underline"
               >
-                {row.product_link}
-              </a>
-            </p>
+                Buka & tulis kutipan →
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </>
+  );
+}
 
-            {details.length > 0 && (
-              <p className="mt-1 text-xs text-[#6c6870]">{details.join(" · ")}</p>
-            )}
+/**
+ * Counts of open requests per status (roadmap 5.1).
+ *
+ * Same shape as the commission queue: groups the rows already read, renders
+ * `{label} ({count})` lines, nothing to click.
+ */
+function StatusSummary({
+  counts,
+}: {
+  counts: Array<{ status: string; count: number }>;
+}) {
+  const total = counts.reduce((sum, entry) => sum + entry.count, 0);
 
-            {/* The buyer's guess, labelled as one. A quote does not exist yet —
-                0006 ships no update policy — and a bare figure would read as a
-                price the shop has agreed to. */}
-            {row.budget !== null && (
-              <p className="mt-1 text-xs text-[#6c6870]">
-                Perkiraan budget {formatRupiah(row.budget)}
-              </p>
-            )}
-
-            <Link
-              href={`/staff/titipan/${row.id}`}
-              className="mt-3 inline-block text-sm font-semibold text-plum hover:underline"
-            >
-              Buka & tulis kutipan →
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
+  return (
+    <p className="mt-6 text-sm text-[#6c6870]">
+      {total} permintaan —{" "}
+      {counts.map((entry) => `${statusLabel(entry.status)} (${entry.count})`).join(" · ")}
+    </p>
   );
 }
 
