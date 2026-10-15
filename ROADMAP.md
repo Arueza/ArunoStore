@@ -138,7 +138,7 @@ Do this after both halves can reach "buyer accepts a quote".
 - [x] **5.21** Side toggle on `/shop`: Semua / Commission / Titipan segmented control, filters preserved across switches *(`4070c28`)*
 - [x] **5.22** Global tactile buttons + loading feedback: press states, ring spinner on every async button, top progress bar, route skeleton *(`1e5c86d`)*
 - [x] **5.23** Catalog revamp: portrait cards with sisa stok, sidebar filters + sort on full-width `/shop`; section catalogs retired into `?side=` with redirects *(`a1d0338`)*
-- [ ] **5.24** Staff dashboards on `/commissions` + `/titipan`: role-aware Kelola queues, slim `/staff` hub, buyer links hidden for staff
+- [x] **5.24** Staff dashboards on `/commissions` + `/titipan`: role-aware Kelola queues, slim `/staff` hub, buyer links hidden for staff *(`850c979`)*
 
 **5.5 was built ahead of 5.4**, using the table that was already live; the page
 renders its empty state until 6.1 seeds rows.
