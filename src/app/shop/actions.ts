@@ -15,20 +15,29 @@ const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
- * Adds an item to the cookie cart. Redirects to login if signed out —
+ * Adds an item to the cookie cart. Returns a result instead of redirecting —
+ * the caller (a client component) decides what to do next, because a
+ * `redirect()` throw inside a `try/catch` on the client reads as a failure
+ * even though the cookie was already written.
+ *
+ * Signed-out buyers get `{ reason: "login" }` with the login URL to visit;
  * checkout needs an account, so there is no point holding a cart anonymously.
  * The buyer returns to the product page they were on after signing in.
  *
  * qty is a whole number 1–99. size is validated against the item's
  * product_sizes rows by the caller; here it is only type-checked.
  */
+export type AddToCartResult =
+  | { ok: true }
+  | { ok: false; reason: "login" | "invalid" | "unavailable" | "invalid-size"; next?: string };
+
 export async function addToCart(
   itemId: string,
   size: string | null,
   qty: number,
-): Promise<void> {
+): Promise<AddToCartResult> {
   if (!UUID.test(itemId)) {
-    redirect("/shop");
+    return { ok: false, reason: "invalid", next: "/shop" };
   }
 
   const supabase = await createClient();
@@ -38,7 +47,7 @@ export async function addToCart(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect(`/login?next=/shop/${itemId}`);
+    return { ok: false, reason: "login", next: `/login?next=/shop/${itemId}` };
   }
 
   const safeQty = Number.isInteger(qty) && qty > 0 && qty <= 99 ? qty : 1;
@@ -52,7 +61,7 @@ export async function addToCart(
     .maybeSingle();
 
   if (!item) {
-    redirect("/shop");
+    return { ok: false, reason: "unavailable", next: "/shop" };
   }
 
   if (safeSize) {
@@ -64,7 +73,7 @@ export async function addToCart(
       .maybeSingle();
 
     if (!sizeRow) {
-      redirect(`/shop/${itemId}`);
+      return { ok: false, reason: "invalid-size", next: `/shop/${itemId}` };
     }
   }
 
@@ -86,7 +95,7 @@ export async function addToCart(
   revalidatePath("/shop/commission");
   revalidatePath("/shop/titipan");
   revalidatePath(`/shop/${itemId}`);
-  redirect(`/shop/${itemId}?added=1`);
+  return { ok: true };
 }
 
 /**

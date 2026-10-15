@@ -23,7 +23,11 @@ function readCartCount(): number {
 
 function subscribe(callback: () => void) {
   window.addEventListener("focus", callback);
-  return () => window.removeEventListener("focus", callback);
+  window.addEventListener("aruno:cart-changed", callback);
+  return () => {
+    window.removeEventListener("focus", callback);
+    window.removeEventListener("aruno:cart-changed", callback);
+  };
 }
 
 function getSnapshot() {
@@ -43,7 +47,8 @@ function getServerSnapshot() {
  *
  * CartItems (a server component) reads the cookie cart and renders the lines,
  * subtotal, and Bayar button. revalidatePath in the cart actions keeps it
- * fresh after every mutation.
+ * fresh after every mutation. The badge count refreshes on `focus` and on
+ * the `aruno:cart-changed` event dispatched by AddToCart after a success.
  */
 export default function CartDrawer({
   children,

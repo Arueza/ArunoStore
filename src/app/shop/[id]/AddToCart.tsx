@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { addToCart } from "../actions";
+
+const FAILURE_MESSAGE: Record<string, string> = {
+  unavailable: "Produk ini sudah tidak tersedia.",
+  "invalid-size": "Ukuran ini tidak tersedia.",
+  invalid: "Produk tidak valid.",
+};
 
 export default function AddToCart({
   itemId,
@@ -10,10 +17,13 @@ export default function AddToCart({
   itemId: string;
   sizes?: { size: string; stock: number }[];
 }) {
+  const router = useRouter();
   const hasSizes = Array.isArray(sizes) && sizes.length > 0;
   const [qty, setQty] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const currentVariant = hasSizes
     ? sizes.find((s) => s.size === selectedSize)
@@ -22,6 +32,7 @@ export default function AddToCart({
 
   async function handleAdd() {
     setError(null);
+    setSuccess(false);
 
     if (hasSizes && !selectedSize) {
       setError("Pilih ukuran dulu.");
@@ -33,10 +44,31 @@ export default function AddToCart({
       return;
     }
 
+    setLoading(true);
+
     try {
-      await addToCart(itemId, selectedSize, qty);
+      const result = await addToCart(itemId, selectedSize, qty);
+
+      if (result.ok) {
+        setSuccess(true);
+        router.refresh();
+        window.dispatchEvent(new Event("aruno:cart-changed"));
+        return;
+      }
+
+      if (result.reason === "login" && result.next) {
+        router.push(result.next);
+        return;
+      }
+
+      if (result.next) {
+        router.push(result.next);
+      }
+      setError(FAILURE_MESSAGE[result.reason] ?? "Gagal menambahkan ke keranjang.");
     } catch {
       setError("Gagal menambahkan ke keranjang.");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -57,7 +89,7 @@ export default function AddToCart({
                   <button
                     key={s.size}
                     type="button"
-                    disabled={outOfStock}
+                    disabled={outOfStock || loading}
                     onClick={() => {
                       setSelectedSize(s.size);
                       setQty(1);
@@ -87,8 +119,9 @@ export default function AddToCart({
             <button
               type="button"
               aria-label="Kurangi"
+              disabled={loading}
               onClick={() => setQty((q) => Math.max(1, q - 1))}
-              className="px-3 py-2 text-ink hover:text-plum"
+              className="px-3 py-2 text-ink hover:text-plum disabled:opacity-50"
             >
               −
             </button>
@@ -96,8 +129,9 @@ export default function AddToCart({
             <button
               type="button"
               aria-label="Tambah"
+              disabled={loading}
               onClick={() => setQty((q) => Math.min(maxQty, q + 1))}
-              className="px-3 py-2 text-ink hover:text-plum"
+              className="px-3 py-2 text-ink hover:text-plum disabled:opacity-50"
             >
               +
             </button>
@@ -111,12 +145,19 @@ export default function AddToCart({
         </p>
       )}
 
+      {success && (
+        <p className="mt-3 text-sm text-[#2d6a4f]" role="status">
+          Ditambahkan ke keranjang ✓
+        </p>
+      )}
+
       <button
         type="button"
         onClick={handleAdd}
-        className="mt-6 w-full bg-plum px-6 py-3.5 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90"
+        disabled={loading}
+        className="mt-6 w-full bg-plum px-6 py-3.5 text-xs uppercase tracking-[0.18em] text-white transition-opacity hover:opacity-90 disabled:opacity-50"
       >
-        Tambah ke Keranjang
+        {loading ? "Menambahkan…" : "Tambah ke Keranjang"}
       </button>
     </div>
   );
