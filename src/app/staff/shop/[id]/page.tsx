@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import Link from "next/link";
+import BackButton from "@/components/BackButton";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatRupiah } from "@/lib/format";
@@ -83,12 +83,9 @@ async function ProductDetail({ id }: { id: string }) {
 
   return (
     <div className="mt-8 space-y-10">
-      <Link
-        href="/shop?tab=kelola"
-        className="text-sm font-semibold text-plum hover:underline"
-      >
+      <BackButton fallback="/shop?tab=kelola">
         ← Semua produk
-      </Link>
+      </BackButton>
 
       <dl className="divide-y divide-[#eeeae5] border-y border-[#eeeae5]">
         <div className="flex flex-wrap items-baseline gap-x-4 py-4">

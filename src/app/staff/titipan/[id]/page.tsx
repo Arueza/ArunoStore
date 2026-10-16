@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import Link from "next/link";
+import BackButton from "@/components/BackButton";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate, formatRupiah } from "@/lib/format";
@@ -82,12 +82,9 @@ async function RequestDetail({ params }: { params: Promise<{ id: string }> }) {
   return (
     <div className="mt-8 grid gap-12 lg:grid-cols-[1fr_20rem]">
       <div>
-        <Link
-          href="/titipan"
-          className="text-sm font-semibold text-plum hover:underline"
-        >
+        <BackButton fallback="/titipan#kelola">
           ← Semua permintaan titipan
-        </Link>
+        </BackButton>
 
         <dl className="mt-6 divide-y divide-[#eeeae5] border-y border-[#eeeae5]">
           <div className="flex flex-wrap items-baseline gap-x-4 py-4">

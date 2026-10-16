@@ -6,6 +6,7 @@ import { createPublicClient } from "@/lib/supabase/public";
 import { formatRupiah } from "@/lib/format";
 import AddToCart from "./AddToCart";
 import ProductGallery from "./ProductGallery";
+import BackButton from "@/components/BackButton";
 
 export async function generateMetadata({
   params,
@@ -83,6 +84,12 @@ async function ProductLoader({ id }: { id: string }) {
   // Commission goods are portrait artwork: full-width page, wider gallery
   // column. Everything else keeps the constrained two-column detail.
   const isArtwork = item.showcase === "commission";
+  const listFallback =
+    item.showcase === "titipan"
+      ? "/shop?side=titipan"
+      : item.showcase === "commission"
+        ? "/shop?side=commission"
+        : "/shop";
 
   return (
     <main
@@ -92,6 +99,9 @@ async function ProductLoader({ id }: { id: string }) {
           : "mx-auto w-full max-w-5xl px-5 py-14 sm:px-[6%] sm:py-20"
       }
     >
+    <div className="mb-8">
+      <BackButton fallback={listFallback}>← Kembali</BackButton>
+    </div>
     <div
       className={
         isArtwork

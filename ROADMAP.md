@@ -142,6 +142,7 @@ its own enum migration for accept/decline; 3.10 needs `purchased|shipped|arrived
 - [ ] **5.27** Seed commission merch: 18 prints × A4/A5 + 2 standees, `Print`/`Standee` categories (migration `0046`)
 - [x] **5.28** Full-size commission images on `/shop/[id]`: no-crop portrait stage + full-resolution link *(`17c99fd`)*
 - [x] **5.29** Full-width commission detail: page + gallery box widened, sharper image *(`bed1418`)*
+- [ ] **5.30** History-aware back button: detail pages return to list state, fallback when fresh
 
 **5.5 was built ahead of 5.4**, using the table that was already live; the page renders its empty state until 6.1 seeds rows.
 
@@ -168,6 +169,5 @@ Drop in this order, and do not drop them silently — say so in the final write-
 
 1. Phase 5, all of it.
 2. Task 3.12 and 6.7.
-3. Gallery uploads — use a link to an image instead.
 
 Never cut: payment, login, or the quote step. They are the assignment.
