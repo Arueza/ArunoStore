@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import ShopGrid from "@/components/ShopGrid";
 import ShopFilter from "@/components/ShopFilter";
 import ShopSideToggle, { parseSide } from "@/components/ShopSideToggle";
+import ShopRestore from "@/components/ShopRestore";
 import CatalogManager from "@/components/CatalogManager";
 import { createPublicClient } from "@/lib/supabase/public";
 import { getProfile } from "@/lib/auth";
@@ -44,6 +45,9 @@ export default async function ShopPage({
 }) {
   return (
     <main className="w-full px-5 py-14 sm:px-[6%] sm:py-20">
+      {/* Takes over popstate restoration for this route (5.30): Next's own
+          restore misfires to the bottom on deep returns. */}
+      <ShopRestore />
       <h1 className="font-display text-3xl font-semibold text-ink sm:text-4xl">
         Belanja
       </h1>
