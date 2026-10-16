@@ -4,6 +4,10 @@ import { useEffect } from "react";
 
 const KEY = "aruno-shop-scroll";
 
+/** Session key holding the last plain `/shop` list URL (filters included).
+ * Written by ShopRestore, read by BackButton's `recallKey`. */
+export const SHOP_LIST_URL_KEY = "aruno-last-shop";
+
 /** Position stashed when the list unloads; restored only on a back/forward
  * return to the very same URL. Everything else early-returns, so a fresh
  * load or a different filter set never jumps. */
@@ -30,6 +34,18 @@ export function isBackForward(): boolean {
 }
 
 export default function ShopRestore() {
+  // Remember the list URL itself on every plain /shop mount (detail pages
+  // excluded), so a return can push it fresh and land on top deterministically.
+  useEffect(() => {
+    try {
+      if (window.location.pathname === "/shop") {
+        sessionStorage.setItem(SHOP_LIST_URL_KEY, window.location.href);
+      }
+    } catch {
+      // Private mode and friends: losing the recall beats crashing the page.
+    }
+  }, []);
+
   useEffect(() => {
     const save = () => {
       try {

@@ -7,6 +7,7 @@ import { formatRupiah } from "@/lib/format";
 import AddToCart from "./AddToCart";
 import ProductGallery from "./ProductGallery";
 import BackButton from "@/components/BackButton";
+import { SHOP_LIST_URL_KEY } from "@/components/ShopRestore";
 
 export async function generateMetadata({
   params,
@@ -100,7 +101,9 @@ async function ProductLoader({ id }: { id: string }) {
       }
     >
     <div className="mb-8">
-      <BackButton fallback={listFallback}>← Kembali</BackButton>
+      <BackButton fallback={listFallback} recallKey={SHOP_LIST_URL_KEY}>
+        ← Kembali
+      </BackButton>
     </div>
     <div
       className={
