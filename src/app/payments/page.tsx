@@ -9,6 +9,7 @@ import {
   paymentGroup,
   paymentStatusLabel,
 } from "@/lib/paymentStatus";
+import InstagramHelpBox from "@/components/InstagramHelpBox";
 
 export const metadata: Metadata = {
   title: "Riwayat transaksi — Aruno Store",
@@ -247,6 +248,7 @@ async function PaymentHistory() {
         title="Sudah lunas"
         entries={settled}
         empty="Belum ada pembayaran lunas."
+        instagram
       />
       <HistorySection
         title="Gagal atau kedaluwarsa"
@@ -261,10 +263,12 @@ function HistorySection({
   title,
   entries,
   empty,
+  instagram,
 }: {
   title: string;
   entries: HistoryEntry[];
   empty: string;
+  instagram?: boolean;
 }) {
   return (
     <section className="mt-10">
@@ -318,6 +322,10 @@ function HistorySection({
                   Lihat pesanan
                 </Link>
               </div>
+
+              {/* Settled orders resolve delivery over Instagram DMs: the
+                  buyer sends the paid screenshot, staff finishes shipping. */}
+              {instagram && <InstagramHelpBox orderId={entry.orderId} />}
             </li>
           ))}
         </ul>

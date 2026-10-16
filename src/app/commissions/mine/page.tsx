@@ -8,6 +8,7 @@ import { formatDate, formatRupiah } from "@/lib/format";
 import { STATUS_ORDER, statusLabel } from "@/lib/commissionStatus";
 import { likePattern } from "@/lib/shop";
 import ListFilter from "@/components/ListFilter";
+import InstagramHelpBox from "@/components/InstagramHelpBox";
 import RatingForm from "@/components/RatingForm";
 import SubmitButton from "@/components/SubmitButton";
 import { respondToQuote, saveRating } from "./actions";
@@ -216,6 +217,13 @@ export async function MyCommissions({
                 Bayar
               </Link>
             </div>
+          )}
+
+          {/* Manual fulfillment: once accepted or paid, the buyer confirms
+              over Instagram DMs with the paid screenshot so staff can
+              resolve delivery. */}
+          {(row.status === "accepted" || row.status === "paid") && (
+            <InstagramHelpBox orderId={row.id} />
           )}
 
           {/* The finished drawing, visible to this buyer only. The signed URL

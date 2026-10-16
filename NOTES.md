@@ -131,6 +131,8 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
   also normalises U+00A0 to a plain space, so a pattern carrying ICU's
   non-breaking space after `Rp` never matches — assert on `.textContent`.
 
+- **Pengiriman diselesaikan manual via DM Instagram.** `InstagramHelpBox` + `src/lib/contact.ts` tampil di checkout/mine/payments; buyer kirim screenshot lunas, staff selesaikan alamat/pengiriman di chat.
+
 ## Known defects — not yet tasks
 
 - **`overlap: commission_orders` / `commission_categories` duplicate `commissions` / `services`.** P1 captured both; choosing one is undecided. Their money columns are `numeric`, against the whole-rupee rule.

@@ -8,6 +8,7 @@ import { formatRupiah } from "@/lib/format";
 import { quoteTotal } from "@/lib/quote";
 import { SnapButton } from "./SnapButton";
 import AddressForm from "./AddressForm";
+import InstagramHelpBox from "@/components/InstagramHelpBox";
 
 export const metadata: Metadata = {
   title: "Pembayaran — Aruno Store",
@@ -264,6 +265,8 @@ async function CheckoutContent({
             </div>
           </>
         )}
+
+        <InstagramHelpBox orderId={order.id} />
       </main>
     );
   }
@@ -393,6 +396,8 @@ async function CheckoutContent({
           </div>
         </>
       )}
+
+      <InstagramHelpBox orderId={id} />
     </main>
   );
 }
