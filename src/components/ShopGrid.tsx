@@ -165,7 +165,7 @@ export default async function ShopGrid({
                 )}
               </div>
 
-              <p className="mt-2 text-sm font-medium text-ink group-hover:text-plum">
+              <p className="mt-2 line-clamp-2 min-h-[2.5rem] text-sm font-medium text-ink group-hover:text-plum">
                 {item.name}
               </p>
 

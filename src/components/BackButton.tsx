@@ -5,11 +5,14 @@ import { useRouter } from "next/navigation";
 /**
  * History-aware back button.
  *
- * A same-origin referrer means the visitor arrived from inside the shop, so
- * `router.back()` restores their exact list state — filters in the query
- * string, scroll position handled by the browser. Fresh tabs and shared
- * links have no usable history, so they fall through to `fallback` instead
- * of ejecting the visitor onto whatever site they came from.
+ * Goes back through history when the visitor plausibly arrived from inside
+ * the shop — a same-origin referrer, or more than one history entry (the
+ * referrer never updates on in-app client navigation, so in-app hops would
+ * otherwise always miss the first check). `router.back()` then restores
+ * their exact list state: filters in the query string, scroll position
+ * handled by the browser. A fresh single-entry tab has no usable history,
+ * so it falls through to `fallback` instead of ejecting the visitor onto
+ * whatever site they came from.
  */
 export default function BackButton({
   fallback,
@@ -23,7 +26,10 @@ export default function BackButton({
   function goBack() {
     try {
       const ref = document.referrer ? new URL(document.referrer) : null;
-      if (ref && ref.origin === window.location.origin) {
+      if (
+        (ref && ref.origin === window.location.origin) ||
+        window.history.length > 1
+      ) {
         router.back();
         return;
       }

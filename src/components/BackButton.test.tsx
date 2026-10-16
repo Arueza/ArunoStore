@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi, beforeEach } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 const mocks = vi.hoisted(() => ({
@@ -12,8 +12,12 @@ vi.mock("next/navigation", () => ({
 
 import BackButton from "./BackButton";
 
-// document.referrer is read-only; redefine it per case like the page tests
-// redefine their Supabase selects.
+beforeEach(() => {
+  mocks.back.mockClear();
+  mocks.push.mockClear();
+});
+
+// document.referrer is read-only; redefine it per case.
 function setReferrer(value: string) {
   Object.defineProperty(document, "referrer", {
     value,
@@ -50,5 +54,19 @@ describe("BackButton", () => {
 
     expect(mocks.push).toHaveBeenCalledWith("/shop");
     expect(mocks.back).not.toHaveBeenCalled();
+  });
+
+  // The referrer never updates on in-app client navigation, so hops inside
+  // the shop would otherwise always miss the check above. Last: pushState
+  // bumps history.length for the rest of this file, so nothing may follow.
+  test("in-app hops go back through history even with no referrer", () => {
+    setReferrer("");
+    window.history.pushState({}, "", "/shop/item-1");
+    window.history.pushState({}, "", "/shop/item-2");
+
+    render(<BackButton fallback="/shop">← Kembali</BackButton>);
+    fireEvent.click(screen.getByRole("button", { name: "← Kembali" }));
+
+    expect(mocks.back).toHaveBeenCalledTimes(1);
   });
 });
