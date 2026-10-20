@@ -29,3 +29,36 @@ export function paymentGroup(status: string): "pending" | "settled" | "failed" {
   if (status === "settlement" || status === "capture") return "settled";
   return "failed";
 }
+
+/**
+ * shop_orders.status uses its own four values, not Midtrans
+ * transaction_status: `settled` (not `settlement`), `deny` and `expire`.
+ * Do not reuse paymentStatusLabel/group for these — `settled` would render as
+ * the raw word and group as failed. Only the webhook moves a row out of
+ * pending, so this list is the complete set the app can show.
+ */
+export const SHOP_ORDER_STATUSES: string[] = [
+  "pending",
+  "settled",
+  "deny",
+  "expire",
+];
+
+const SHOP_ORDER_LABELS: Record<string, string> = {
+  pending: "Menunggu pembayaran",
+  settled: "Lunas",
+  deny: "Ditolak",
+  expire: "Kedaluwarsa",
+};
+
+export function shopOrderStatusLabel(status: string): string {
+  return SHOP_ORDER_LABELS[status] ?? status;
+}
+
+export function shopOrderStatusGroup(
+  status: string,
+): "pending" | "settled" | "failed" {
+  if (status === "pending") return "pending";
+  if (status === "settled") return "settled";
+  return "failed";
+}

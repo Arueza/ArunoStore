@@ -12,12 +12,16 @@ export default function ListFilter({
   search,
   statusFilter,
   statuses,
+  labels,
   searchPlaceholder,
   baseHref,
 }: {
   search?: string;
   statusFilter?: string;
   statuses: string[];
+  /** Overrides the label per status value. Buyer lists keep the commission
+   *  statuses; the shop order list passes shop_orders' four values. */
+  labels?: Record<string, string>;
   searchPlaceholder: string;
   baseHref: string;
 }) {
@@ -58,7 +62,7 @@ export default function ListFilter({
           <option value="">Semua status</option>
           {statuses.map((status) => (
             <option key={status} value={status}>
-              {statusLabel(status)}
+              {labels?.[status] ?? statusLabel(status)}
             </option>
           ))}
         </select>

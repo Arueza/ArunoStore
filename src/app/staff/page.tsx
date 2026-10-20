@@ -21,7 +21,7 @@ export default function StaffPage() {
       </h1>
 
       <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#6c6870] sm:text-base">
-        Kelola commission, titipan, dan katalog dari halaman masing-masing.
+        Kelola commission, titipan, katalog, dan pesanan dari halaman masing-masing.
       </p>
 
       <nav aria-label="Menu staf" className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm">
@@ -33,6 +33,9 @@ export default function StaffPage() {
         </Link>
         <Link href="/shop?tab=kelola" className="font-semibold text-plum hover:underline">
           Kelola katalog
+        </Link>
+        <Link href="/staff/orders" className="font-semibold text-plum hover:underline">
+          Pesanan katalog
         </Link>
       </nav>
     </main>
