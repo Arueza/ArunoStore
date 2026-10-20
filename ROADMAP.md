@@ -144,6 +144,7 @@ its own enum migration for accept/decline; 3.10 needs `purchased|shipped|arrived
 - [x] **5.29** Full-width commission detail: page + gallery box widened, sharper image *(`bed1418`)*
 - [x] **5.30** History-aware back button + `/shop` restore: deterministic list-top return, deep-list bottom jump fixed *(`ee3bc7a`)*
 - [x] **5.31** Instagram fallback: box + tombol chat di checkout/mine/payments, buyer kirim screenshot lunas untuk selesaikan pengiriman *(`8b19a42`)*
+- [x] **5.32** Payment status auto-refresh after Snap: bounded refresh on checkout/mine, Cek status fallback *(`7d96b8b`)*
 
 **5.5 was built ahead of 5.4**, using the table that was already live; the page renders its empty state until 6.1 seeds rows.
 
