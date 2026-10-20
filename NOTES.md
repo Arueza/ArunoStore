@@ -17,6 +17,7 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
   `supabase/config.toml`. Backfill `supabase_migrations.schema_migrations` by hand.
 - **P1's files are captured, not authored** (`0010`–`0015`; no creation SQL ever existed). Functions and triggers live in `0015` — paste it last, the trigger needs the function — each preceded by `drop ... if exists` because triggers have no `if not exists`. `update_updated_at()` serves four tables. `ensure_rls`, an event trigger, puts RLS on all seventeen tables and is invisible to `pg_trigger` queries.
 - **0045 half-landed.** `delete from public.artworks` pasted clean; `delete from storage.objects` is refused to non-service-role keys by storage RLS. The stranded bucket files are unreachable (no code reads them) — delete via the Storage dashboard UI if they should not exist at all.
+- 0045: fix column grants on commissions + titipan_requests after 0044 wiped them
 
 ## RLS and policies
 
