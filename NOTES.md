@@ -133,6 +133,8 @@ One trap per line. **Hard cap: 150 lines**, checked by `ROADMAP.test.ts`.
 
 - **Pengiriman diselesaikan manual via DM Instagram.** `InstagramHelpBox` + `src/lib/contact.ts` tampil di checkout/mine/payments; buyer kirim screenshot bukti bayar, staff cek pembayaran lalu bantu pengiriman di chat.
 
+- **A paid order can still look pending after the Snap redirect: the webhook is fast, the client Router Cache is stale.** `PaymentStatusPoller` refreshes for 60s on `?saved=1`; `Cek status` is the fallback.
+
 ## Known defects — not yet tasks
 
 - **`overlap: commission_orders` / `commission_categories` duplicate `commissions` / `services`.** P1 captured both; choosing one is undecided. Their money columns are `numeric`, against the whole-rupee rule.

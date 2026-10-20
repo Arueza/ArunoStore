@@ -9,6 +9,7 @@ import { STATUS_ORDER, statusLabel } from "@/lib/commissionStatus";
 import { likePattern } from "@/lib/shop";
 import ListFilter from "@/components/ListFilter";
 import InstagramHelpBox from "@/components/InstagramHelpBox";
+import PaymentStatusPoller from "@/components/PaymentStatusPoller";
 import RatingForm from "@/components/RatingForm";
 import SubmitButton from "@/components/SubmitButton";
 import { respondToQuote, saveRating } from "./actions";
@@ -39,9 +40,11 @@ const STATUS_VALUES = STATUS_ORDER.filter((status) =>
 export async function MyCommissions({
   search,
   statusFilter,
+  saved,
 }: {
   search?: string;
   statusFilter?: string;
+  saved?: boolean;
 } = {}) {
   // The proxy already sent a signed-out visitor to /login. This is the same
   // check a page can rely on without: getClaims() reads the verified token and
@@ -76,6 +79,10 @@ export async function MyCommissions({
   });
 
   const rows = commissions ?? [];
+
+  const awaitingPayment = Boolean(
+    saved && rows.some((row) => row.status === "accepted"),
+  );
 
   // Same reason as the staff queue: no foreign key to services on the join path
   // we would want, and one mechanism for looking a name up is shorter than two.
@@ -144,7 +151,9 @@ export async function MyCommissions({
   }
 
   return (
-    <ul className="mt-8 divide-y divide-[#eeeae5] border-y border-[#eeeae5]">
+    <>
+      <PaymentStatusPoller active={awaitingPayment} />
+      <ul className="mt-8 divide-y divide-[#eeeae5] border-y border-[#eeeae5]">
       {rows.map((row) => (
         <li key={row.id} className="py-5">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -252,6 +261,7 @@ export async function MyCommissions({
         </li>
       ))}
     </ul>
+    </>
   );
 }
 
@@ -309,9 +319,9 @@ export default function MyCommissionsPage({
 async function FilteredList({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; saved?: string }>;
 }) {
-  const { q, status } = await searchParams;
+  const { saved, q, status } = await searchParams;
   const search = q?.trim() || undefined;
   const statusFilter = status?.trim() || undefined;
 
@@ -331,7 +341,7 @@ async function FilteredList({
         searchPlaceholder="Cari brief…"
         baseHref="/commissions/mine"
       />
-      <MyCommissions search={search} statusFilter={safeStatus} />
+      <MyCommissions search={search} statusFilter={safeStatus} saved={saved === "1"} />
     </>
   );
 }
@@ -355,7 +365,7 @@ async function SaveNotice({
       {error && <span className="font-medium text-plum">{error}</span>}
       {!error && saved === "1" && (
         <span className="font-medium text-ink">
-          Keputusan tersimpan.
+          Perubahan tersimpan.
         </span>
       )}
     </p>

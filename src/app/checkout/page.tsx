@@ -9,6 +9,7 @@ import { quoteTotal } from "@/lib/quote";
 import { SnapButton } from "./SnapButton";
 import AddressForm from "./AddressForm";
 import InstagramHelpBox from "@/components/InstagramHelpBox";
+import PaymentStatusPoller from "@/components/PaymentStatusPoller";
 
 export const metadata: Metadata = {
   title: "Pembayaran — Aruno Store",
@@ -115,6 +116,13 @@ async function CheckoutContent({
         order.postal_code?.trim(),
     );
 
+    const savedMessage =
+      order.status === "pending"
+        ? "Pembayaran sedang diverifikasi. Status diperbarui otomatis."
+        : order.status === "settled" || order.status === "paid"
+          ? "Pembayaran berhasil."
+          : "Pembayaran gagal atau kedaluwarsa.";
+
     return (
       <main className="mx-auto w-full max-w-3xl px-5 py-14 sm:px-[6%] sm:py-20">
         <Link
@@ -147,9 +155,13 @@ async function CheckoutContent({
 
         {saved === "1" && (
           <p className="mt-4 bg-[#f0f9f4] p-3 text-sm text-[#2d6a4f]" role="status">
-            Pembayaran sedang diverifikasi atau telah selesai.
+            {savedMessage}
           </p>
         )}
+
+        <PaymentStatusPoller
+          active={saved === "1" && order.status === "pending"}
+        />
 
         <ul className="mt-8 divide-y divide-[#eeeae5] border-y border-[#eeeae5]">
           {order.shop_order_items?.map((item) => {

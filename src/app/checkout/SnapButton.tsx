@@ -85,7 +85,9 @@ export function SnapButton({
         return;
       }
 
-      const successPath = redirectPath ?? "/commissions/mine?saved=1";
+      const successPath =
+        redirectPath ??
+        `/${type === "titipan" ? "titipan" : "commissions"}/mine?saved=1`;
 
       window.snap.pay(data.snap_token, {
         onSuccess: () => {

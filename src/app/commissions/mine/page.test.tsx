@@ -25,6 +25,7 @@ vi.mock("next/navigation", () => ({
   redirect: (to: string) => {
     throw new Redirect(to);
   },
+  useRouter: () => ({ refresh: vi.fn() }),
 }));
 
 // The list is the only thing here that talks to Supabase. Same chain shape as

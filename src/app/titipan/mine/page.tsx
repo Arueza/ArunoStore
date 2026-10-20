@@ -10,6 +10,7 @@ import { quoteTotal } from "@/lib/quote";
 import { likePattern } from "@/lib/shop";
 import ListFilter from "@/components/ListFilter";
 import InstagramHelpBox from "@/components/InstagramHelpBox";
+import PaymentStatusPoller from "@/components/PaymentStatusPoller";
 import RatingForm from "@/components/RatingForm";
 import SubmitButton from "@/components/SubmitButton";
 import { markAsArrived, respondToQuote, saveRating } from "./actions";
@@ -59,9 +60,11 @@ type TitipanRequest = {
 export async function MyTitipanRequests({
   search,
   statusFilter,
+  saved,
 }: {
   search?: string;
   statusFilter?: string;
+  saved?: boolean;
 } = {}) {
   // The proxy already sent a signed-out visitor to /login. This is the check a
   // page can rely on without: getClaims() reads the verified token and answers
@@ -99,6 +102,10 @@ export async function MyTitipanRequests({
 
   const rows: TitipanRequest[] = requests ?? [];
 
+  const awaitingPayment = Boolean(
+    saved && rows.some((row) => row.status === "accepted"),
+  );
+
   if (rows.length === 0) {
     return (
       <p className="mt-8 text-sm leading-relaxed text-[#6c6870]">
@@ -130,7 +137,9 @@ export async function MyTitipanRequests({
   }
 
   return (
-    <ul className="mt-8 divide-y divide-[#eeeae5] border-y border-[#eeeae5]">
+    <>
+      <PaymentStatusPoller active={awaitingPayment} />
+      <ul className="mt-8 divide-y divide-[#eeeae5] border-y border-[#eeeae5]">
       {rows.map((row) => {
         const details = [
           row.size,
@@ -304,6 +313,7 @@ export async function MyTitipanRequests({
         );
       })}
     </ul>
+    </>
   );
 }
 
@@ -359,9 +369,9 @@ export default function MyTitipanRequestsPage({
 async function FilteredList({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; saved?: string }>;
 }) {
-  const { q, status } = await searchParams;
+  const { saved, q, status } = await searchParams;
   const search = q?.trim() || undefined;
   const statusFilter = status?.trim() || undefined;
 
@@ -379,7 +389,7 @@ async function FilteredList({
         searchPlaceholder="Cari link produk…"
         baseHref="/titipan/mine"
       />
-      <MyTitipanRequests search={search} statusFilter={safeStatus} />
+      <MyTitipanRequests search={search} statusFilter={safeStatus} saved={saved === "1"} />
     </>
   );
 }
@@ -396,7 +406,7 @@ async function SaveNotice({
       {error && <span className="font-medium text-plum">{error}</span>}
       {!error && saved === "1" && (
         <span className="font-medium text-ink">
-          Keputusan tersimpan.
+          Perubahan tersimpan.
         </span>
       )}
     </p>
