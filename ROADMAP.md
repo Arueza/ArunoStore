@@ -139,7 +139,7 @@ its own enum migration for accept/decline; 3.10 needs `purchased|shipped|arrived
 - [x] **5.24** Staff dashboards on `/commissions` + `/titipan`: role-aware Kelola queues, slim `/staff` hub, buyer links hidden for staff *(`850c979`)*
 - [x] **5.25** Wide section pages with sticky rail, 3-up commission cards, artworks retired (rows+objects via `0045`) *(`03e03a9`)*
 - [x] **5.26** Catalog management in sections + `/shop` Kelola tab: shared manager, `/staff/shop` retired with redirect *(`3dc16d7`)*
-- [ ] **5.27** Seed commission merch: 18 prints × A4/A5 + 2 standees, `Print`/`Standee` categories (migration `0046`)
+- [x] **5.27** Seed commission merch: 18 prints × A4/A5 + 2 standees, `Print`/`Standee` categories (migration `0046`) *(`a720e03`)*
 - [x] **5.28** Full-size commission images on `/shop/[id]`: no-crop portrait stage + full-resolution link *(`17c99fd`)*
 - [x] **5.29** Full-width commission detail: page + gallery box widened, sharper image *(`bed1418`)*
 - [x] **5.30** History-aware back button + `/shop` restore: deterministic list-top return, deep-list bottom jump fixed *(`ee3bc7a`)*
