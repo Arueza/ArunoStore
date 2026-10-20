@@ -16,7 +16,7 @@ describe("InstagramHelpBox", () => {
     expect(link.getAttribute("rel")).toContain("noopener");
   });
 
-  test("tells the buyer to send the paid screenshot and shows the order id", () => {
+  test("tells the buyer to send the payment screenshot and shows the order id", () => {
     const { container } = render(<InstagramHelpBox orderId="order-123" />);
 
     expect(container.textContent).toMatch(/screenshot/i);

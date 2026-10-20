@@ -33,13 +33,13 @@ export default function InstagramHelpBox({ orderId }: { orderId?: string }) {
       className="mt-8 border border-[#eeeae5] bg-cream p-5"
     >
       <h2 className="font-display text-lg font-semibold text-ink">
-        Sudah bayar? Konfirmasi via Instagram
+        Konfirmasi pembayaran via Instagram
       </h2>
 
       <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm leading-relaxed text-[#6c6870]">
-        <li>Screenshot halaman checkout yang lunas sebagai bukti bayar.</li>
+        <li>Setelah bayar, simpan screenshot halaman checkout sebagai bukti.</li>
         <li>Chat Instagram kami dan kirim screenshot beserta ID pesanan.</li>
-        <li>Staff mengecek pembayaran lalu menyelesaikan alamat dan pengiriman di chat.</li>
+        <li>Staff mengecek pembayaran lalu membantu proses pengiriman di chat.</li>
       </ol>
 
       {orderId && (
