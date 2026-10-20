@@ -160,7 +160,8 @@ its own enum migration for accept/decline; 3.10 needs `purchased|shipped|arrived
 - [ ] **6.7** Custom domain, if time allows
 - [x] **6.8** Replace `admins` with `profiles` across all RLS policies, then drop table *(`21d0ebc`, `71f9d92`)*
 - [x] **6.9** Use "Nobu" (art account name) instead of "Verrel" on gallery page *(`343ee06`)*
-- [x] **6.10** Drop broken `handle_commission_order_confirmed()` trigger, add missing FK/status/created_at indexes, restore `consignment_items.status` after checkout (migration `0043`) *(`16f40b3`)*
+- [x] **6.10** Drop broken `handle_commission_order_confirmed()` trigger, add missing FK/status/created_at indexes, restore `consignment_items.status` after checkout (migration `0043`) *(`16f40b3`)
+lara*
 - [x] **6.11** Buyer shipping address on commission and titipan checkout: form gates Snap button, API enforces, staff sees address (migration `0044`) *(`a603441`)*
 - [x] **6.12** Auto-redirect buyer to `/checkout` after accepting a quote, instead of back to list *(`b61b22b`)*
 
